@@ -69,3 +69,28 @@ export const insertNewsSchema = z.object({
 });
 
 export type InsertNews = z.infer<typeof insertNewsSchema>;
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  imageUrl: string;
+  category: string;
+  inStock: boolean;
+  seller: string;
+}
+
+export const insertProductSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().min(1),
+  price: z.number().positive(),
+  originalPrice: z.number().positive().optional(),
+  imageUrl: z.string().url(),
+  category: z.string().min(1),
+  inStock: z.boolean().default(true),
+  seller: z.string().min(1),
+});
+
+export type InsertProduct = z.infer<typeof insertProductSchema>;

@@ -25,7 +25,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { CulturalEvent, NewsItem, EventCategory } from "@shared/schema";
+import type { CulturalEvent, NewsItem, EventCategory, Product } from "@shared/schema";
+import { ShoppingBag, Store } from "lucide-react";
 
 const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "시정소식"];
 
@@ -413,6 +414,96 @@ function NewsFeed({ news, isLoading }: { news: NewsItem[]; isLoading: boolean })
   );
 }
 
+function ProductCard({ product }: { product: Product }) {
+  const formattedPrice = new Intl.NumberFormat("ko-KR").format(product.price);
+  const formattedOriginalPrice = product.originalPrice
+    ? new Intl.NumberFormat("ko-KR").format(product.originalPrice)
+    : null;
+  const discountPercent = product.originalPrice
+    ? Math.round((1 - product.price / product.originalPrice) * 100)
+    : null;
+
+  return (
+    <Card className="overflow-hidden hover-elevate active-elevate-2" data-testid={`card-product-${product.id}`}>
+      <div className="aspect-square relative">
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="w-full h-full object-cover"
+        />
+        {discountPercent && (
+          <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
+            {discountPercent}% 할인
+          </Badge>
+        )}
+      </div>
+      <CardContent className="p-4">
+        <p className="text-xs text-muted-foreground mb-1">{product.seller}</p>
+        <h4 className="font-medium line-clamp-2 mb-2" data-testid={`text-product-name-${product.id}`}>
+          {product.name}
+        </h4>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-lg" data-testid={`text-product-price-${product.id}`}>
+            {formattedPrice}원
+          </span>
+          {formattedOriginalPrice && (
+            <span className="text-sm text-muted-foreground line-through">
+              {formattedOriginalPrice}원
+            </span>
+          )}
+        </div>
+        <Button className="w-full mt-3" size="sm" data-testid={`button-buy-${product.id}`}>
+          <ShoppingBag className="mr-1 h-4 w-4" />
+          구매하기
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProductCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <Skeleton className="aspect-square" />
+      <CardContent className="p-4">
+        <Skeleton className="h-3 w-16 mb-1" />
+        <Skeleton className="h-5 w-full mb-2" />
+        <Skeleton className="h-6 w-24 mb-3" />
+        <Skeleton className="h-9 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProductShop({ products, isLoading }: { products: Product[]; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <ProductCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">등록된 상품이 없습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {products.slice(0, 4).map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  );
+}
+
 function QuickLinks() {
   return (
     <section className="py-12 bg-muted/50">
@@ -513,6 +604,10 @@ export default function Home() {
     queryKey: ["/api/news"],
   });
 
+  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
   const featuredEvent = events.find((e) => e.isFeatured);
   const filteredEvents =
     selectedCategory === "전체"
@@ -539,18 +634,36 @@ export default function Home() {
 
         <section className="py-12 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">시정소식</h2>
-              <Button variant="ghost" size="sm" data-testid="button-news-more">
-                더보기
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold">시정소식</h2>
+                  <Button variant="ghost" size="sm" data-testid="button-news-more">
+                    더보기
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                <Card>
+                  <CardContent className="p-2">
+                    <NewsFeed news={news} isLoading={newsLoading} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Store className="h-6 w-6" />
+                    정읍상품관
+                  </h2>
+                  <Button variant="ghost" size="sm" data-testid="button-products-more">
+                    더보기
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                <ProductShop products={products} isLoading={productsLoading} />
+              </div>
             </div>
-            <Card>
-              <CardContent className="p-2">
-                <NewsFeed news={news} isLoading={newsLoading} />
-              </CardContent>
-            </Card>
           </div>
         </section>
 

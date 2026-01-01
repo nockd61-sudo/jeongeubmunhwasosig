@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { User, InsertUser, CulturalEvent, NewsItem, InsertEvent, InsertNews } from "@shared/schema";
+import type { User, InsertUser, CulturalEvent, NewsItem, InsertEvent, InsertNews, Product, InsertProduct } from "@shared/schema";
 import { 
   scrapeJeongeupNews, 
   scrapeJeongeupCulture, 
@@ -24,6 +24,10 @@ export interface IStorage {
   getNewsById(id: string): Promise<NewsItem | undefined>;
   createNews(news: InsertNews): Promise<NewsItem>;
 
+  getProducts(): Promise<Product[]>;
+  getProductById(id: string): Promise<Product | undefined>;
+  createProduct(product: InsertProduct): Promise<Product>;
+
   getSources(): Promise<ExternalSource[]>;
   updateSource(id: string, updates: Partial<ExternalSource>): Promise<ExternalSource | undefined>;
   syncExternalData(): Promise<{ events: number; news: number }>;
@@ -34,6 +38,7 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private events: Map<string, CulturalEvent>;
   private news: Map<string, NewsItem>;
+  private products: Map<string, Product>;
   private sources: Map<string, ExternalSource>;
   private lastSyncTime: string | null = null;
   private publicDataApiKey: string | null = null;
@@ -42,6 +47,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.events = new Map();
     this.news = new Map();
+    this.products = new Map();
     this.sources = new Map();
     this.seedData();
     this.initSources();
@@ -156,8 +162,75 @@ export class MemStorage implements IStorage {
       },
     ];
 
+    const sampleProducts: Product[] = [
+      {
+        id: randomUUID(),
+        name: "정읍 쌍화차 선물세트",
+        description: "전통 방식으로 우려낸 정읍의 명물 쌍화차입니다. 건강과 따뜻함을 선물하세요.",
+        price: 25000,
+        originalPrice: 30000,
+        imageUrl: "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=300&h=300&fit=crop",
+        category: "식품",
+        inStock: true,
+        seller: "정읍전통차마을",
+      },
+      {
+        id: randomUUID(),
+        name: "내장산 천연 벌꿀",
+        description: "내장산 자락에서 채취한 100% 천연 벌꿀. 건강한 단맛을 느껴보세요.",
+        price: 35000,
+        imageUrl: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=300&h=300&fit=crop",
+        category: "식품",
+        inStock: true,
+        seller: "내장산양봉농장",
+      },
+      {
+        id: randomUUID(),
+        name: "정읍사 한지 공예품",
+        description: "전통 한지로 만든 수공예 작품입니다. 정읍의 문화유산을 집에서 느껴보세요.",
+        price: 45000,
+        originalPrice: 55000,
+        imageUrl: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=300&h=300&fit=crop",
+        category: "공예품",
+        inStock: true,
+        seller: "정읍한지공방",
+      },
+      {
+        id: randomUUID(),
+        name: "정읍 특산 복분자 와인",
+        description: "정읍 지역 특산물인 복분자로 만든 프리미엄 와인입니다.",
+        price: 28000,
+        imageUrl: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&h=300&fit=crop",
+        category: "음료",
+        inStock: true,
+        seller: "정읍복분자농원",
+      },
+      {
+        id: randomUUID(),
+        name: "내장산 단풍 엽서 세트",
+        description: "내장산의 아름다운 단풍을 담은 수채화 엽서 10장 세트입니다.",
+        price: 12000,
+        imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop",
+        category: "기념품",
+        inStock: true,
+        seller: "정읍문화상점",
+      },
+      {
+        id: randomUUID(),
+        name: "정읍 전통 고추장",
+        description: "3년 이상 숙성시킨 전통 방식의 고추장입니다. 깊은 맛이 일품입니다.",
+        price: 18000,
+        originalPrice: 22000,
+        imageUrl: "https://images.unsplash.com/photo-1635321593217-40050ad13c74?w=300&h=300&fit=crop",
+        category: "식품",
+        inStock: true,
+        seller: "정읍장류마을",
+      },
+    ];
+
     sampleEvents.forEach((event) => this.events.set(event.id, event));
     sampleNews.forEach((news) => this.news.set(news.id, news));
+    sampleProducts.forEach((product) => this.products.set(product.id, product));
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -215,6 +288,21 @@ export class MemStorage implements IStorage {
     const news: NewsItem = { ...insertNews, id };
     this.news.set(id, news);
     return news;
+  }
+
+  async getProducts(): Promise<Product[]> {
+    return Array.from(this.products.values());
+  }
+
+  async getProductById(id: string): Promise<Product | undefined> {
+    return this.products.get(id);
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const id = randomUUID();
+    const product: Product = { ...insertProduct, id };
+    this.products.set(id, product);
+    return product;
   }
 
   async getSources(): Promise<ExternalSource[]> {
