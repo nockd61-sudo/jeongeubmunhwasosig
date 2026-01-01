@@ -1,5 +1,14 @@
 import { randomUUID } from "crypto";
 import type { User, InsertUser, CulturalEvent, NewsItem, InsertEvent, InsertNews } from "@shared/schema";
+import { 
+  scrapeJeongeupNews, 
+  scrapeJeongeupCulture, 
+  scrapeRssFeed,
+  fetchPublicDataEvents,
+  defaultSources,
+  type ExternalSource,
+  type PublicDataApiConfig 
+} from "./data-sync";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -14,18 +23,32 @@ export interface IStorage {
   getNews(): Promise<NewsItem[]>;
   getNewsById(id: string): Promise<NewsItem | undefined>;
   createNews(news: InsertNews): Promise<NewsItem>;
+
+  getSources(): Promise<ExternalSource[]>;
+  updateSource(id: string, updates: Partial<ExternalSource>): Promise<ExternalSource | undefined>;
+  syncExternalData(): Promise<{ events: number; news: number }>;
+  getLastSyncTime(): Promise<string | null>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private events: Map<string, CulturalEvent>;
   private news: Map<string, NewsItem>;
+  private sources: Map<string, ExternalSource>;
+  private lastSyncTime: string | null = null;
+  private publicDataApiKey: string | null = null;
 
   constructor() {
     this.users = new Map();
     this.events = new Map();
     this.news = new Map();
+    this.sources = new Map();
     this.seedData();
+    this.initSources();
+  }
+
+  private initSources() {
+    defaultSources.forEach((source) => this.sources.set(source.id, source));
   }
 
   private seedData() {
@@ -192,6 +215,79 @@ export class MemStorage implements IStorage {
     const news: NewsItem = { ...insertNews, id };
     this.news.set(id, news);
     return news;
+  }
+
+  async getSources(): Promise<ExternalSource[]> {
+    return Array.from(this.sources.values());
+  }
+
+  async updateSource(id: string, updates: Partial<ExternalSource>): Promise<ExternalSource | undefined> {
+    const source = this.sources.get(id);
+    if (!source) return undefined;
+    
+    const updated = { ...source, ...updates };
+    this.sources.set(id, updated);
+    return updated;
+  }
+
+  async syncExternalData(): Promise<{ events: number; news: number }> {
+    let newEventsCount = 0;
+    let newNewsCount = 0;
+
+    const enabledSources = Array.from(this.sources.values()).filter(s => s.enabled);
+
+    for (const source of enabledSources) {
+      try {
+        if (source.type === "webpage") {
+          if (source.id === "jeongeup-news") {
+            const newsItems = await scrapeJeongeupNews();
+            newsItems.forEach((item) => {
+              if (!Array.from(this.news.values()).some(n => n.title === item.title)) {
+                this.news.set(item.id, item);
+                newNewsCount++;
+              }
+            });
+          } else if (source.id === "jeongeup-culture") {
+            const events = await scrapeJeongeupCulture();
+            events.forEach((event) => {
+              if (!Array.from(this.events.values()).some(e => e.title === event.title)) {
+                this.events.set(event.id, event);
+                newEventsCount++;
+              }
+            });
+          }
+        } else if (source.type === "rss" && source.url) {
+          const newsItems = await scrapeRssFeed(source.url);
+          newsItems.forEach((item) => {
+            if (!Array.from(this.news.values()).some(n => n.title === item.title)) {
+              this.news.set(item.id, item);
+              newNewsCount++;
+            }
+          });
+        } else if (source.type === "api" && source.apiKey) {
+          const events = await fetchPublicDataEvents({ apiKey: source.apiKey });
+          events.forEach((event) => {
+            if (!Array.from(this.events.values()).some(e => e.title === event.title)) {
+              this.events.set(event.id, event);
+              newEventsCount++;
+            }
+          });
+        }
+
+        source.lastSync = new Date().toISOString();
+        this.sources.set(source.id, source);
+      } catch (error) {
+        console.error(`Error syncing source ${source.name}:`, error);
+      }
+    }
+
+    this.lastSyncTime = new Date().toISOString();
+
+    return { events: newEventsCount, news: newNewsCount };
+  }
+
+  async getLastSyncTime(): Promise<string | null> {
+    return this.lastSyncTime;
   }
 }
 

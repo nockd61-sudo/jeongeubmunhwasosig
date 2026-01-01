@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { Link } from "wouter";
 import {
   Search,
   Bell,
@@ -16,6 +17,7 @@ import {
   Info,
   Phone,
   X,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -480,6 +482,12 @@ function Footer() {
             © 2026 정읍시. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
+            <Link href="/admin">
+              <Button variant="ghost" size="sm" data-testid="button-admin">
+                <Settings className="mr-1 h-4 w-4" />
+                관리
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" data-testid="button-lang-ko">
               한국어
             </Button>

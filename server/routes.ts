@@ -57,5 +57,62 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/sources", async (req, res) => {
+    try {
+      const sources = await storage.getSources();
+      const lastSync = await storage.getLastSyncTime();
+      const safeSources = sources.map(source => ({
+        ...source,
+        apiKey: source.apiKey ? "***설정됨***" : undefined,
+      }));
+      res.json({ sources: safeSources, lastSync });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sources" });
+    }
+  });
+
+  app.patch("/api/sources/:id", async (req, res) => {
+    try {
+      const { enabled, apiKey } = req.body;
+      
+      const updates: { enabled?: boolean; apiKey?: string } = {};
+      if (typeof enabled === "boolean") {
+        updates.enabled = enabled;
+      }
+      if (typeof apiKey === "string" && apiKey.length > 0 && apiKey.length < 500) {
+        updates.apiKey = apiKey;
+      }
+      
+      const source = await storage.updateSource(req.params.id, updates);
+      if (!source) {
+        return res.status(404).json({ error: "Source not found" });
+      }
+      
+      const safeSource = {
+        ...source,
+        apiKey: source.apiKey ? "***설정됨***" : undefined,
+      };
+      res.json(safeSource);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update source" });
+    }
+  });
+
+  app.post("/api/sync", async (req, res) => {
+    try {
+      const result = await storage.syncExternalData();
+      const lastSync = await storage.getLastSyncTime();
+      res.json({ 
+        success: true, 
+        message: `동기화 완료: 행사 ${result.events}건, 소식 ${result.news}건 추가됨`,
+        ...result,
+        lastSync
+      });
+    } catch (error) {
+      console.error("Sync error:", error);
+      res.status(500).json({ error: "동기화 중 오류가 발생했습니다" });
+    }
+  });
+
   return httpServer;
 }
