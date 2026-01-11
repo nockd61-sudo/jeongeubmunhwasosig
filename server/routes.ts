@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
-import { insertGuestPostSchema, insertEventSchema } from "@shared/schema";
+import { insertGuestPostSchema, insertEventSchema, insertNewsSchema } from "@shared/schema";
 import { fetchAndSummarizeNews, testAiConnection, defaultRssSources } from "./ai-news-service";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
@@ -117,6 +117,31 @@ export async function registerRoutes(
       res.json(news);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch news" });
+    }
+  });
+
+  app.post("/api/news", async (req, res) => {
+    try {
+      const parsed = insertNewsSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid news data", details: parsed.error.errors });
+      }
+      const newsItem = await storage.createNews(parsed.data);
+      res.status(201).json(newsItem);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create news" });
+    }
+  });
+
+  app.delete("/api/news/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteNews(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "News not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete news" });
     }
   });
 
@@ -263,7 +288,7 @@ export async function registerRoutes(
             await storage.createNews({
               title: newsItem.title,
               summary: newsItem.summary,
-              category: newsItem.category,
+              category: newsItem.category as "문화행사" | "축제" | "전시" | "공연" | "기타소식",
               imageUrl: newsItem.imageUrl,
               publishedAt: newsItem.publishedAt,
             });

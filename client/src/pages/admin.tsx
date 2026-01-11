@@ -46,8 +46,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { GuestPost, PostStatus, CulturalEvent } from "@shared/schema";
-import { insertEventSchema } from "@shared/schema";
+import type { GuestPost, PostStatus, CulturalEvent, NewsItem } from "@shared/schema";
+import { insertEventSchema, insertNewsSchema } from "@shared/schema";
 
 interface ExternalSource {
   id: string;
@@ -100,13 +100,13 @@ function GuestPostCard({
     inquiry: "문의",
   };
 
-  const statusColors: Record<PostStatus, string> = {
+  const statusColors: Record<string, string> = {
     pending: "bg-yellow-500",
     approved: "bg-green-500",
     rejected: "bg-red-500",
   };
 
-  const statusLabels: Record<PostStatus, string> = {
+  const statusLabels: Record<string, string> = {
     pending: "대기중",
     approved: "승인됨",
     rejected: "거절됨",
@@ -122,8 +122,8 @@ function GuestPostCard({
                 <Badge variant="outline" className="text-xs">
                   {typeLabels[post.type] || post.type}
                 </Badge>
-                <Badge className={`text-xs ${statusColors[post.status]} text-white`}>
-                  {statusLabels[post.status]}
+                <Badge className={`text-xs ${statusColors[post.status] || "bg-gray-500"} text-white`}>
+                  {statusLabels[post.status] || post.status}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
                   {post.authorName}
@@ -137,7 +137,7 @@ function GuestPostCard({
                 {post.content}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                등록일: {format(new Date(post.createdAt), "yyyy.MM.dd HH:mm", { locale: ko })}
+                등록일: {post.createdAt ? format(new Date(post.createdAt), "yyyy.MM.dd HH:mm", { locale: ko }) : "-"}
               </p>
             </div>
           </div>
@@ -579,6 +579,222 @@ function EventManager() {
   );
 }
 
+function NewsManager() {
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const { data: newsItems = [], isLoading } = useQuery<NewsItem[]>({
+    queryKey: ["/api/news"],
+  });
+
+  const form = useForm({
+    resolver: zodResolver(insertNewsSchema),
+    defaultValues: {
+      title: "",
+      summary: "",
+      category: "기타소식" as const,
+      imageUrl: "",
+      publishedAt: new Date().toISOString().split("T")[0],
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/news", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      toast({ title: "뉴스 등록 완료", description: "새 뉴스가 등록되었습니다." });
+      form.reset();
+      setIsDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: "등록 실패", description: "뉴스 등록에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/news/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      toast({ title: "삭제 완료", description: "뉴스가 삭제되었습니다." });
+    },
+    onError: () => {
+      toast({ title: "삭제 실패", description: "뉴스 삭제에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    createMutation.mutate(data);
+  };
+
+  const categories = ["문화행사", "축제", "전시", "공연", "기타소식"];
+
+  return (
+    <Card className="mb-8">
+      <CardHeader>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              뉴스/소식 관리
+            </CardTitle>
+            <CardDescription>
+              기타소식 및 뉴스를 등록하고 관리합니다.
+            </CardDescription>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2" data-testid="button-add-news">
+                <Plus className="h-4 w-4" />
+                뉴스 등록
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>새 뉴스 등록</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>제목 *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="뉴스 제목" {...field} data-testid="input-news-title" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="summary"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>요약 *</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="뉴스 요약" rows={3} {...field} data-testid="input-news-summary" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>카테고리 *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-news-category">
+                              <SelectValue placeholder="카테고리 선택" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="publishedAt"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>게시일 *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} data-testid="input-news-date" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <AdminImageUploadField form={form} />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={createMutation.isPending}
+                    data-testid="button-submit-news"
+                  >
+                    {createMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        등록 중...
+                      </>
+                    ) : (
+                      "등록하기"
+                    )}
+                  </Button>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </div>
+        ) : newsItems.length === 0 ? (
+          <div className="text-center py-8">
+            <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">등록된 뉴스가 없습니다.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {newsItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-3 p-3 border rounded-md"
+                data-testid={`card-news-${item.id}`}
+              >
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    className="w-12 h-12 object-cover rounded-md flex-shrink-0"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h4 className="font-medium truncate text-sm">{item.title}</h4>
+                    <Badge variant="outline" className="text-xs">{item.category}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground truncate mt-1">{item.summary}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{item.publishedAt}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => deleteMutation.mutate(item.id)}
+                  disabled={deleteMutation.isPending}
+                  data-testid={`button-delete-news-${item.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function GuestPostsManager() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("pending");
@@ -912,6 +1128,7 @@ export default function Admin() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">
         <EventManager />
+        <NewsManager />
         <GuestPostsManager />
         
         <div className="mt-8" />
