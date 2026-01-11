@@ -44,10 +44,10 @@ import { ShoppingBag, Store } from "lucide-react";
 const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
 const quickLinks = [
-  { id: "1", title: "문화시설", icon: Building2, url: "#" },
-  { id: "2", title: "온라인예약", icon: CalendarCheck, url: "#" },
-  { id: "3", title: "관광정보", icon: Info, url: "#" },
-  { id: "4", title: "문의하기", icon: Phone, url: "#" },
+  { id: "1", title: "문화시설", icon: Building2, url: "#", action: null },
+  { id: "2", title: "온라인예약", icon: CalendarCheck, url: "#", action: null },
+  { id: "3", title: "관광정보", icon: Info, url: "#", action: null },
+  { id: "4", title: "문의하기", icon: PenLine, url: "#", action: "inquiry" as const },
 ];
 
 function Header({
@@ -517,22 +517,42 @@ function ProductShop({ products, isLoading }: { products: Product[]; isLoading: 
   );
 }
 
-function GuestPostForm({ onSuccess }: { onSuccess: () => void }) {
+function GuestPostForm({ 
+  onSuccess, 
+  initialType,
+  triggerButton,
+  externalOpen,
+  onOpenChange,
+}: { 
+  onSuccess: () => void;
+  initialType?: "event" | "news" | "product" | "general" | "inquiry";
+  triggerButton?: React.ReactNode;
+  externalOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const form = useForm({
     resolver: zodResolver(insertGuestPostSchema),
     defaultValues: {
-      type: "general" as const,
+      type: (initialType || "general") as "event" | "news" | "product" | "general" | "inquiry",
       title: "",
       content: "",
       category: "",
       authorName: "",
       authorContact: "",
       imageUrl: "",
+      price: undefined as number | undefined,
+      originalPrice: undefined as number | undefined,
+      seller: "",
     },
   });
+
+  const watchType = form.watch("type");
 
   const submitMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -561,50 +581,64 @@ function GuestPostForm({ onSuccess }: { onSuccess: () => void }) {
     submitMutation.mutate(data);
   };
 
+  const dialogTitle = initialType === "inquiry" ? "문의하기" : 
+                       initialType === "product" ? "상품 등록" : "정보 공유하기";
+  const dialogDesc = initialType === "inquiry" 
+    ? "문의 내용을 남겨주세요. 확인 후 답변 드리겠습니다."
+    : initialType === "product"
+    ? "정읍 지역 상품을 등록해주세요. 관리자 승인 후 상품관에 공개됩니다."
+    : "정읍 관련 행사, 소식, 상품 등을 자유롭게 공유해주세요. 관리자 승인 후 공개됩니다.";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="gap-2" data-testid="button-submit-post">
-          <PenLine className="h-5 w-5" />
-          정보 공유하기
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      {triggerButton ? (
+        <DialogTrigger asChild>{triggerButton}</DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button size="lg" className="gap-2" data-testid="button-submit-post">
+            <PenLine className="h-5 w-5" />
+            정보 공유하기
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MessageSquarePlus className="h-5 w-5" />
-            정보 공유하기
+            {dialogTitle}
           </DialogTitle>
           <DialogDescription>
-            정읍 관련 행사, 소식, 상품 등을 자유롭게 공유해주세요. 
-            관리자 승인 후 공개됩니다.
+            {dialogDesc}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>유형</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-post-type">
-                        <SelectValue placeholder="유형을 선택하세요" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="event">행사/축제</SelectItem>
-                      <SelectItem value="news">소식</SelectItem>
-                      <SelectItem value="product">상품</SelectItem>
-                      <SelectItem value="general">일반</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!initialType && (
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>유형</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-post-type">
+                          <SelectValue placeholder="유형을 선택하세요" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="event">행사/축제</SelectItem>
+                        <SelectItem value="news">소식</SelectItem>
+                        <SelectItem value="product">상품</SelectItem>
+                        <SelectItem value="general">일반</SelectItem>
+                        <SelectItem value="inquiry">문의</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="title"
@@ -636,6 +670,65 @@ function GuestPostForm({ onSuccess }: { onSuccess: () => void }) {
                 </FormItem>
               )}
             />
+            {(watchType === "product" || initialType === "product") && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>판매가격 (원)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="10000" 
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            value={field.value || ""}
+                            data-testid="input-product-price" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="originalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>원래가격 (선택)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            placeholder="15000" 
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            value={field.value || ""}
+                            data-testid="input-product-original-price" 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="seller"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>판매자/농장명</FormLabel>
+                      <FormControl>
+                        <Input placeholder="예: 정읍농장" {...field} data-testid="input-product-seller" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -655,7 +748,7 @@ function GuestPostForm({ onSuccess }: { onSuccess: () => void }) {
                 name="authorContact"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>연락처 (선택)</FormLabel>
+                    <FormLabel>연락처 {watchType === "inquiry" || initialType === "inquiry" ? "" : "(선택)"}</FormLabel>
                     <FormControl>
                       <Input placeholder="연락처" {...field} data-testid="input-author-contact" />
                     </FormControl>
@@ -747,25 +840,42 @@ function CommunityPosts({ posts, isLoading }: { posts: GuestPost[]; isLoading: b
   );
 }
 
-function QuickLinks() {
+function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
   return (
     <section className="py-12 bg-muted/50">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-xl font-bold mb-6">바로가기</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {quickLinks.map((link) => (
-            <a
-              key={link.id}
-              href={link.url}
-              className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
-              data-testid={`link-quick-${link.id}`}
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <link.icon className="h-6 w-6 text-primary" />
-              </div>
-              <span className="font-medium text-sm">{link.title}</span>
-            </a>
-          ))}
+          {quickLinks.map((link) => {
+            if (link.action === "inquiry") {
+              return (
+                <button
+                  key={link.id}
+                  onClick={onInquiryClick}
+                  className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
+                  data-testid={`link-quick-${link.id}`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <link.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="font-medium text-sm">{link.title}</span>
+                </button>
+              );
+            }
+            return (
+              <a
+                key={link.id}
+                href={link.url}
+                className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
+                data-testid={`link-quick-${link.id}`}
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <link.icon className="h-6 w-6 text-primary" />
+                </div>
+                <span className="font-medium text-sm">{link.title}</span>
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -839,6 +949,8 @@ function Footer() {
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "전체">("전체");
+  const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
 
   const { data: events = [], isLoading: eventsLoading } = useQuery<CulturalEvent[]>({
     queryKey: ["/api/events"],
@@ -864,6 +976,7 @@ export default function Home() {
 
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
   };
 
   return (
@@ -936,10 +1049,21 @@ export default function Home() {
                     <Store className="h-6 w-6" />
                     정읍상품관
                   </h2>
-                  <Button variant="ghost" size="sm" data-testid="button-products-more">
-                    더보기
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setProductOpen(true)}
+                      data-testid="button-register-product"
+                    >
+                      <PenLine className="mr-1 h-4 w-4" />
+                      상품등록
+                    </Button>
+                    <Button variant="ghost" size="sm" data-testid="button-products-more">
+                      더보기
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <ProductShop products={products} isLoading={productsLoading} />
               </div>
@@ -947,10 +1071,26 @@ export default function Home() {
           </div>
         </section>
 
-        <QuickLinks />
+        <QuickLinks onInquiryClick={() => setInquiryOpen(true)} />
       </main>
 
       <Footer />
+
+      <GuestPostForm 
+        onSuccess={handlePostSuccess} 
+        initialType="inquiry"
+        externalOpen={inquiryOpen}
+        onOpenChange={setInquiryOpen}
+        triggerButton={<span className="hidden" />}
+      />
+
+      <GuestPostForm 
+        onSuccess={handlePostSuccess} 
+        initialType="product"
+        externalOpen={productOpen}
+        onOpenChange={setProductOpen}
+        triggerButton={<span className="hidden" />}
+      />
     </div>
   );
 }
