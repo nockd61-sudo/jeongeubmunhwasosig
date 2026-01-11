@@ -23,6 +23,7 @@ export interface IStorage {
   getEventById(id: string): Promise<CulturalEvent | undefined>;
   getEventsByCategory(category: string): Promise<CulturalEvent[]>;
   createEvent(event: InsertEvent): Promise<CulturalEvent>;
+  updateEvent(id: string, updates: Partial<InsertEvent>): Promise<CulturalEvent | undefined>;
   deleteEvent(id: string): Promise<boolean>;
   
   getNews(): Promise<NewsItem[]>;
@@ -220,6 +221,11 @@ export class DatabaseStorage implements IStorage {
 
   async createEvent(event: InsertEvent): Promise<CulturalEvent> {
     const result = await db.insert(events).values(event).returning();
+    return result[0];
+  }
+
+  async updateEvent(id: string, updates: Partial<InsertEvent>): Promise<CulturalEvent | undefined> {
+    const result = await db.update(events).set(updates).where(eq(events.id, id)).returning();
     return result[0];
   }
 

@@ -99,6 +99,22 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/events/:id", async (req, res) => {
+    try {
+      const parsed = insertEventSchema.partial().safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid event data", details: parsed.error.errors });
+      }
+      const event = await storage.updateEvent(req.params.id, parsed.data);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update event" });
+    }
+  });
+
   app.get("/api/news", async (req, res) => {
     try {
       const news = await storage.getNews();

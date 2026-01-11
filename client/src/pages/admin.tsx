@@ -25,6 +25,7 @@ import {
   Calendar,
   MapPin,
   Trash2,
+  Pencil,
   ImagePlus,
   Upload,
   Link2,
@@ -310,6 +311,7 @@ function AdminImageUploadField({ form }: { form: any }) {
 function EventManager() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CulturalEvent | null>(null);
 
   const { data: events = [], isLoading } = useQuery<CulturalEvent[]>({
     queryKey: ["/api/events"],
@@ -329,6 +331,36 @@ function EventManager() {
     },
   });
 
+  const openEditDialog = (event: CulturalEvent) => {
+    setEditingEvent(event);
+    form.reset({
+      title: event.title,
+      description: event.description,
+      category: event.category as any,
+      imageUrl: event.imageUrl || "",
+      startDate: event.startDate,
+      endDate: event.endDate,
+      location: event.location,
+      isFeatured: event.isFeatured || false,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setEditingEvent(null);
+    form.reset({
+      title: "",
+      description: "",
+      category: "문화행사",
+      imageUrl: "",
+      startDate: "",
+      endDate: "",
+      location: "",
+      isFeatured: false,
+    });
+    setIsDialogOpen(true);
+  };
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest("POST", "/api/events", data);
@@ -342,6 +374,23 @@ function EventManager() {
     },
     onError: () => {
       toast({ title: "등록 실패", description: "행사 등록에 실패했습니다.", variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await apiRequest("PATCH", `/api/events/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/events"] });
+      toast({ title: "수정 완료", description: "행사가 수정되었습니다." });
+      form.reset();
+      setEditingEvent(null);
+      setIsDialogOpen(false);
+    },
+    onError: () => {
+      toast({ title: "수정 실패", description: "행사 수정에 실패했습니다.", variant: "destructive" });
     },
   });
 
@@ -359,8 +408,14 @@ function EventManager() {
   });
 
   const onSubmit = (data: any) => {
-    createMutation.mutate(data);
+    if (editingEvent) {
+      updateMutation.mutate({ id: editingEvent.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   const categories = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
@@ -377,16 +432,19 @@ function EventManager() {
               문화행사, 축제, 전시, 공연 등을 등록하고 관리합니다.
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingEvent(null);
+          }}>
             <DialogTrigger asChild>
-              <Button className="gap-2" data-testid="button-add-event">
+              <Button className="gap-2" data-testid="button-add-event" onClick={openCreateDialog}>
                 <Plus className="h-4 w-4" />
                 행사 등록
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>새 행사 등록</DialogTitle>
+                <DialogTitle>{editingEvent ? "행사 수정" : "새 행사 등록"}</DialogTitle>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -499,16 +557,16 @@ function EventManager() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={createMutation.isPending}
+                    disabled={isPending}
                     data-testid="button-submit-event"
                   >
-                    {createMutation.isPending ? (
+                    {isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        등록 중...
+                        {editingEvent ? "수정 중..." : "등록 중..."}
                       </>
                     ) : (
-                      "등록하기"
+                      editingEvent ? "수정하기" : "등록하기"
                     )}
                   </Button>
                 </form>
@@ -561,15 +619,25 @@ function EventManager() {
                     </span>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => deleteMutation.mutate(event.id)}
-                  disabled={deleteMutation.isPending}
-                  data-testid={`button-delete-event-${event.id}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEditDialog(event)}
+                    data-testid={`button-edit-event-${event.id}`}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => deleteMutation.mutate(event.id)}
+                    disabled={deleteMutation.isPending}
+                    data-testid={`button-delete-event-${event.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
