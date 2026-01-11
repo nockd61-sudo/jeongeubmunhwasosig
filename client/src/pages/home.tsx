@@ -317,53 +317,142 @@ function CategoryFilter({
 
 function EventCard({ event }: { event: CulturalEvent }) {
   const [isLiked, setIsLiked] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: event.title,
+          text: event.description,
+          url: window.location.origin,
+        });
+      } catch (err) {
+        console.log("Share cancelled");
+      }
+    }
+  };
 
   return (
-    <Card className="group overflow-hidden hover-elevate" data-testid={`card-event-${event.id}`}>
-      <div className="relative aspect-video overflow-hidden">
-        <img
-          src={event.imageUrl}
-          alt={event.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <Badge
-          variant="secondary"
-          className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm"
-        >
-          {event.category}
-        </Badge>
-        <Button
-          variant="ghost"
-          size="icon"
-          className={`absolute top-3 right-3 bg-background/90 backdrop-blur-sm ${
-            isLiked ? "text-red-500" : ""
-          }`}
-          onClick={() => setIsLiked(!isLiked)}
-          data-testid={`button-like-${event.id}`}
-        >
-          <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-        </Button>
-      </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2" data-testid={`text-event-title-${event.id}`}>
-          {event.title}
-        </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {event.description}
-        </p>
-        <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-          <span className="flex items-center gap-2">
-            <Calendar className="h-3.5 w-3.5" />
-            {format(new Date(event.startDate), "MM.dd", { locale: ko })} ~{" "}
-            {format(new Date(event.endDate), "MM.dd", { locale: ko })}
-          </span>
-          <span className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5" />
-            {event.location}
-          </span>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Card 
+        className="group overflow-hidden hover-elevate cursor-pointer" 
+        data-testid={`card-event-${event.id}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <div className="relative aspect-video overflow-hidden">
+          <img
+            src={event.imageUrl}
+            alt={event.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+          <Badge
+            variant="secondary"
+            className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm"
+          >
+            {event.category}
+          </Badge>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`absolute top-3 right-3 bg-background/90 backdrop-blur-sm ${
+              isLiked ? "text-red-500" : ""
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsLiked(!isLiked);
+            }}
+            data-testid={`button-like-${event.id}`}
+          >
+            <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-2 line-clamp-2" data-testid={`text-event-title-${event.id}`}>
+            {event.title}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+            {event.description}
+          </p>
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <Calendar className="h-3.5 w-3.5" />
+              {format(new Date(event.startDate), "MM.dd", { locale: ko })} ~{" "}
+              {format(new Date(event.endDate), "MM.dd", { locale: ko })}
+            </span>
+            <span className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5" />
+              {event.location}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge>{event.category}</Badge>
+            {event.isFeatured && <Badge variant="secondary">추천</Badge>}
+          </div>
+          <DialogTitle className="text-xl md:text-2xl leading-tight">
+            {event.title}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {event.title} 행사 상세 정보
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="aspect-video rounded-lg overflow-hidden">
+            <img
+              src={event.imageUrl}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">일정</p>
+                  <p className="font-medium">
+                    {format(new Date(event.startDate), "yyyy년 M월 d일 (EEE)", { locale: ko })} ~{" "}
+                    {format(new Date(event.endDate), "yyyy년 M월 d일 (EEE)", { locale: ko })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-primary flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">장소</p>
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">행사 소개</h4>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {event.description}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 pt-4 border-t">
+              <Button
+                variant={isLiked ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsLiked(!isLiked)}
+                className="gap-2"
+              >
+                <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                {isLiked ? "관심 등록됨" : "관심 등록"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleShare} className="gap-2">
+                <Share2 className="h-4 w-4" />
+                공유하기
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -933,6 +1022,90 @@ function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
   );
 }
 
+function PastEventItem({ event }: { event: CulturalEvent }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <div
+        className="flex items-center justify-between gap-4 p-3 rounded-md bg-background border hover-elevate cursor-pointer"
+        data-testid={`past-event-${event.id}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-sm truncate" data-testid={`text-past-event-title-${event.id}`}>
+            {event.title}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="outline" className="text-xs">
+              {event.category}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              {event.location}
+            </span>
+          </div>
+        </div>
+        <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
+          <p>{format(new Date(event.startDate), "yyyy.MM.dd", { locale: ko })}</p>
+          <p>~ {format(new Date(event.endDate), "MM.dd", { locale: ko })}</p>
+        </div>
+      </div>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge>{event.category}</Badge>
+            <Badge variant="outline">지난 행사</Badge>
+          </div>
+          <DialogTitle className="text-xl md:text-2xl leading-tight">
+            {event.title}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            {event.title} 지난 행사 상세 정보
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          {event.imageUrl && (
+            <div className="aspect-video rounded-lg overflow-hidden">
+              <img
+                src={event.imageUrl}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">일정 (종료됨)</p>
+                  <p className="font-medium">
+                    {format(new Date(event.startDate), "yyyy년 M월 d일", { locale: ko })} ~{" "}
+                    {format(new Date(event.endDate), "yyyy년 M월 d일", { locale: ko })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-muted-foreground">장소</p>
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">행사 소개</h4>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {event.description}
+              </p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PastEventsList({ events, isLoading }: { events: CulturalEvent[]; isLoading: boolean }) {
   const [showAll, setShowAll] = useState(false);
   const displayEvents = showAll ? events : events.slice(0, 5);
@@ -959,29 +1132,7 @@ function PastEventsList({ events, isLoading }: { events: CulturalEvent[]; isLoad
   return (
     <div className="space-y-2">
       {displayEvents.map((event) => (
-        <div
-          key={event.id}
-          className="flex items-center justify-between gap-4 p-3 rounded-md bg-background border hover-elevate"
-          data-testid={`past-event-${event.id}`}
-        >
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm truncate" data-testid={`text-past-event-title-${event.id}`}>
-              {event.title}
-            </p>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-xs">
-                {event.category}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {event.location}
-              </span>
-            </div>
-          </div>
-          <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
-            <p>{format(new Date(event.startDate), "yyyy.MM.dd", { locale: ko })}</p>
-            <p>~ {format(new Date(event.endDate), "MM.dd", { locale: ko })}</p>
-          </div>
-        </div>
+        <PastEventItem key={event.id} event={event} />
       ))}
       {events.length > 5 && (
         <Button
