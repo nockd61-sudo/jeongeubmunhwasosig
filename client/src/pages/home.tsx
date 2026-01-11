@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import useEmblaCarousel from "embla-carousel-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
@@ -167,8 +168,37 @@ function MobileMenu({ isOpen }: { isOpen: boolean }) {
   );
 }
 
-function HeroSection({ featuredEvent }: { featuredEvent?: CulturalEvent }) {
-  if (!featuredEvent) {
+function HeroSection({ events }: { events: CulturalEvent[] }) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setSelectedIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    onSelect();
+    emblaApi.on("select", onSelect);
+    
+    const autoplay = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000);
+
+    return () => {
+      emblaApi.off("select", onSelect);
+      clearInterval(autoplay);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollTo = useCallback((index: number) => {
+    if (emblaApi) emblaApi.scrollTo(index);
+  }, [emblaApi]);
+
+  const heroEvents = events.slice(0, 5);
+
+  if (heroEvents.length === 0) {
     return (
       <section className="relative h-[400px] md:h-[500px] bg-muted">
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
@@ -186,43 +216,69 @@ function HeroSection({ featuredEvent }: { featuredEvent?: CulturalEvent }) {
 
   return (
     <section className="relative h-[400px] md:h-[500px] overflow-hidden">
-      <img
-        src={featuredEvent.imageUrl}
-        alt={featuredEvent.title}
-        className="absolute inset-0 w-full h-full object-cover"
-        data-testid="img-hero"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-        <div className="max-w-7xl mx-auto">
-          <Badge variant="secondary" className="mb-4 bg-white/20 text-white border-white/30 backdrop-blur-sm">
-            {featuredEvent.category}
-          </Badge>
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight" data-testid="text-hero-title">
-            {featuredEvent.title}
-          </h2>
-          <div className="flex flex-wrap items-center gap-4 text-white/90 mb-6">
-            <span className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              {format(new Date(featuredEvent.startDate), "yyyy.MM.dd", { locale: ko })} ~{" "}
-              {format(new Date(featuredEvent.endDate), "MM.dd", { locale: ko })}
-            </span>
-            <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              {featuredEvent.location}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white" data-testid="button-hero-details">
-              자세히 보기
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-white border border-white/30 backdrop-blur-sm" data-testid="button-hero-share">
-              <Share2 className="h-5 w-5" />
-            </Button>
-          </div>
+      <div className="overflow-hidden h-full" ref={emblaRef}>
+        <div className="flex h-full">
+          {heroEvents.map((event, index) => (
+            <div key={event.id} className="flex-[0_0_100%] min-w-0 relative h-full">
+              <img
+                src={event.imageUrl}
+                alt={event.title}
+                className="absolute inset-0 w-full h-full object-cover"
+                data-testid={`img-hero-${index}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+                <div className="max-w-7xl mx-auto">
+                  <Badge variant="secondary" className="mb-4 bg-white/20 text-white border-white/30 backdrop-blur-sm">
+                    {event.category}
+                  </Badge>
+                  <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight" data-testid={`text-hero-title-${index}`}>
+                    {event.title}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-4 text-white/90 mb-6">
+                    <span className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(event.startDate), "yyyy.MM.dd", { locale: ko })} ~{" "}
+                      {format(new Date(event.endDate), "MM.dd", { locale: ko })}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {event.location}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white" data-testid={`button-hero-details-${index}`}>
+                      자세히 보기
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-white border border-white/30 backdrop-blur-sm" data-testid={`button-hero-share-${index}`}>
+                      <Share2 className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+      
+      {heroEvents.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+          {heroEvents.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => scrollTo(index)}
+              className={`w-3 h-3 rounded-full transition-all ${
+                selectedIndex === index 
+                  ? "bg-white w-8" 
+                  : "bg-white/50 hover:bg-white/70"
+              }`}
+              data-testid={`button-hero-dot-${index}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -807,11 +863,11 @@ export default function Home() {
     queryKey: ["/api/guest-posts/approved"],
   });
 
-  const featuredEvent = events.find((e) => e.isFeatured);
+  const heroEvents = events.filter((e) => e.isFeatured || events.indexOf(e) < 5);
   const filteredEvents =
     selectedCategory === "전체"
-      ? events.filter((e) => !e.isFeatured)
-      : events.filter((e) => e.category === selectedCategory && !e.isFeatured);
+      ? events
+      : events.filter((e) => e.category === selectedCategory);
 
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
@@ -823,7 +879,7 @@ export default function Home() {
       <MobileMenu isOpen={isMenuOpen} />
 
       <main>
-        <HeroSection featuredEvent={featuredEvent} />
+        <HeroSection events={heroEvents} />
 
         <section className="py-8 bg-primary/5">
           <div className="max-w-7xl mx-auto px-4">
