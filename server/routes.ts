@@ -35,12 +35,22 @@ export async function registerRoutes(
   app.get("/api/events", async (req, res) => {
     try {
       const category = req.query.category as string | undefined;
+      const status = req.query.status as string | undefined;
       let events;
       
       if (category && category !== "전체") {
         events = await storage.getEventsByCategory(category);
       } else {
         events = await storage.getEvents();
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (status === "upcoming") {
+        events = events.filter(e => new Date(e.endDate) >= today);
+      } else if (status === "past") {
+        events = events.filter(e => new Date(e.endDate) < today);
       }
       
       res.json(events);

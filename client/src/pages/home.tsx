@@ -26,6 +26,7 @@ import {
   Loader2,
   MessageSquarePlus,
   Users,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -783,6 +784,72 @@ function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
   );
 }
 
+function PastEventsList({ events, isLoading }: { events: CulturalEvent[]; isLoading: boolean }) {
+  const [showAll, setShowAll] = useState(false);
+  const displayEvents = showAll ? events : events.slice(0, 5);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-12 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="text-center py-6 text-muted-foreground">
+        <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
+        <p className="text-sm">지난 행사 기록이 없습니다</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {displayEvents.map((event) => (
+        <div
+          key={event.id}
+          className="flex items-center justify-between gap-4 p-3 rounded-md bg-background border hover-elevate"
+          data-testid={`past-event-${event.id}`}
+        >
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm truncate" data-testid={`text-past-event-title-${event.id}`}>
+              {event.title}
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline" className="text-xs">
+                {event.category}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {event.location}
+              </span>
+            </div>
+          </div>
+          <div className="text-right text-xs text-muted-foreground whitespace-nowrap">
+            <p>{format(new Date(event.startDate), "yyyy.MM.dd", { locale: ko })}</p>
+            <p>~ {format(new Date(event.endDate), "MM.dd", { locale: ko })}</p>
+          </div>
+        </div>
+      ))}
+      {events.length > 5 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full"
+          onClick={() => setShowAll(!showAll)}
+          data-testid="button-toggle-past-events"
+        >
+          {showAll ? "접기" : `더보기 (${events.length - 5}개)`}
+          <ChevronRight className={`ml-1 h-4 w-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        </Button>
+      )}
+    </div>
+  );
+}
+
 function Footer() {
   const { data: visitorData } = useQuery<{ count: number }>({
     queryKey: ["/api/visitors"],
@@ -870,8 +937,20 @@ export default function Home() {
     }
   }, []);
 
-  const { data: events = [], isLoading: eventsLoading } = useQuery<CulturalEvent[]>({
-    queryKey: ["/api/events"],
+  const { data: upcomingEvents = [], isLoading: eventsLoading } = useQuery<CulturalEvent[]>({
+    queryKey: ["/api/events", "upcoming"],
+    queryFn: async () => {
+      const res = await fetch("/api/events?status=upcoming");
+      return res.json();
+    },
+  });
+
+  const { data: pastEvents = [], isLoading: pastEventsLoading } = useQuery<CulturalEvent[]>({
+    queryKey: ["/api/events", "past"],
+    queryFn: async () => {
+      const res = await fetch("/api/events?status=past");
+      return res.json();
+    },
   });
 
   const { data: news = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
@@ -882,11 +961,11 @@ export default function Home() {
     queryKey: ["/api/guest-posts/approved"],
   });
 
-  const heroEvents = events.filter((e) => e.isFeatured || events.indexOf(e) < 5);
+  const heroEvents = upcomingEvents.filter((e) => e.isFeatured || upcomingEvents.indexOf(e) < 5);
   const filteredEvents =
     selectedCategory === "전체"
-      ? events
-      : events.filter((e) => e.category === selectedCategory);
+      ? upcomingEvents
+      : upcomingEvents.filter((e) => e.category === selectedCategory);
 
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
@@ -917,7 +996,7 @@ export default function Home() {
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-              <h2 className="text-2xl font-bold">문화행사</h2>
+              <h2 className="text-2xl font-bold">다가오는 행사</h2>
               <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
             </div>
             <EventsGrid events={filteredEvents} isLoading={eventsLoading} />
@@ -925,6 +1004,23 @@ export default function Home() {
         </section>
 
         <section className="py-12 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center gap-2 mb-6">
+              <History className="h-6 w-6 text-muted-foreground" />
+              <h2 className="text-2xl font-bold">지난 행사 기록</h2>
+              <Badge variant="secondary" className="ml-2">
+                {pastEvents.length}건
+              </Badge>
+            </div>
+            <Card>
+              <CardContent className="p-4">
+                <PastEventsList events={pastEvents} isLoading={pastEventsLoading} />
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        <section className="py-12">
           <div className="max-w-7xl mx-auto px-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
