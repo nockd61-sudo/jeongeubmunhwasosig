@@ -123,8 +123,8 @@ export const insertGuestPostSchema = z.object({
   authorName: z.string().min(1, "이름을 입력해주세요").max(50),
   authorContact: z.string().max(100).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")).transform(v => v || undefined),
-  price: z.number().positive().optional(),
-  originalPrice: z.number().positive().optional(),
+  price: z.coerce.number().positive().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
+  originalPrice: z.coerce.number().positive().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
   seller: z.string().max(100).optional(),
 });
 

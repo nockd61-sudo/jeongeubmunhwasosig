@@ -66,7 +66,21 @@ export async function registerRoutes(
   app.get("/api/products", async (req, res) => {
     try {
       const products = await storage.getProducts();
-      res.json(products);
+      const approvedProductPosts = await storage.getApprovedGuestPosts();
+      const guestProducts = approvedProductPosts
+        .filter(post => post.type === "product" && post.price)
+        .map(post => ({
+          id: `guest-${post.id}`,
+          name: post.title,
+          description: post.content,
+          price: post.price!,
+          originalPrice: post.originalPrice,
+          imageUrl: post.imageUrl || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop",
+          category: post.category || "기타",
+          inStock: true,
+          seller: post.seller || post.authorName,
+        }));
+      res.json([...products, ...guestProducts]);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch products" });
     }

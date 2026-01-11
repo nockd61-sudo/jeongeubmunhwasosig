@@ -851,6 +851,7 @@ function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
               return (
                 <button
                   key={link.id}
+                  type="button"
                   onClick={onInquiryClick}
                   className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
                   data-testid={`link-quick-${link.id}`}
