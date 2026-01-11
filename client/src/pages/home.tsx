@@ -28,6 +28,8 @@ import {
   Users,
   History,
   ImagePlus,
+  Upload,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -485,6 +487,149 @@ function NewsFeed({ news, isLoading }: { news: NewsItem[]; isLoading: boolean })
   );
 }
 
+function ImageUploadField({ form }: { form: any }) {
+  const [uploadMode, setUploadMode] = useState<"url" | "file">("url");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError("파일 크기는 2MB 이하여야 합니다");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setUploadError("이미지 파일만 업로드 가능합니다");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const response = await fetch("/api/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type,
+        }),
+      });
+
+      if (!response.ok) throw new Error("업로드 URL 생성 실패");
+
+      const { uploadURL, objectPath } = await response.json();
+
+      await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+
+      form.setValue("imageUrl", objectPath);
+    } catch (error) {
+      setUploadError("이미지 업로드에 실패했습니다");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const imageValue = form.watch("imageUrl");
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <label className="text-sm font-medium flex items-center gap-2">
+          <ImagePlus className="h-4 w-4" />
+          이미지 (선택)
+        </label>
+        <div className="flex gap-1">
+          <Button
+            type="button"
+            variant={uploadMode === "url" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUploadMode("url")}
+            className="gap-1 h-7 text-xs"
+          >
+            <Link2 className="h-3 w-3" />
+            URL
+          </Button>
+          <Button
+            type="button"
+            variant={uploadMode === "file" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setUploadMode("file")}
+            className="gap-1 h-7 text-xs"
+          >
+            <Upload className="h-3 w-3" />
+            파일
+          </Button>
+        </div>
+      </div>
+
+      {uploadMode === "url" ? (
+        <div>
+          <Input
+            placeholder="https://example.com/image.jpg"
+            value={imageValue || ""}
+            onChange={(e) => form.setValue("imageUrl", e.target.value)}
+            data-testid="input-image-url"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            권장 크기: 800x450px (16:9 비율)
+          </p>
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={isUploading}
+              className="flex-1"
+              data-testid="input-image-file"
+            />
+            {isUploading && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            권장 크기: 800x450px (16:9 비율) / 최대 2MB
+          </p>
+          {uploadError && (
+            <p className="text-xs text-destructive mt-1">{uploadError}</p>
+          )}
+        </div>
+      )}
+
+      {imageValue && (
+        <div className="mt-2 rounded-md border overflow-hidden relative">
+          <img
+            src={imageValue.startsWith("/objects/") ? imageValue : imageValue}
+            alt="미리보기"
+            className="w-full h-32 object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = "none";
+            }}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-1 right-1 h-6 w-6 bg-background/80"
+            onClick={() => form.setValue("imageUrl", "")}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GuestPostForm({ 
   onSuccess, 
   initialType,
@@ -632,41 +777,7 @@ function GuestPostForm({
               )}
             />
             {watchType !== "inquiry" && initialType !== "inquiry" && (
-              <FormField
-                control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <ImagePlus className="h-4 w-4" />
-                      이미지 URL (선택)
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://example.com/image.jpg" 
-                        {...field} 
-                        data-testid="input-image-url"
-                      />
-                    </FormControl>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      권장 크기: 800x450px (16:9 비율) / 최대 2MB
-                    </p>
-                    {field.value && (
-                      <div className="mt-2 rounded-md border overflow-hidden">
-                        <img 
-                          src={field.value} 
-                          alt="미리보기" 
-                          className="w-full h-32 object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <ImageUploadField form={form} />
             )}
             <div className="grid grid-cols-2 gap-4">
               <FormField

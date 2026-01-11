@@ -4,6 +4,7 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { insertGuestPostSchema } from "@shared/schema";
 import { fetchAndSummarizeNews, testAiConnection, defaultRssSources } from "./ai-news-service";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 const updateStatusSchema = z.object({
   status: z.enum(["pending", "approved", "rejected"]),
@@ -14,6 +15,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  registerObjectStorageRoutes(app);
+
   app.get("/api/visitors", async (req, res) => {
     try {
       const count = await storage.getVisitorCount();
