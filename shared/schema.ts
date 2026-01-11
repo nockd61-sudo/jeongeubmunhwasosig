@@ -96,7 +96,7 @@ export const insertProductSchema = z.object({
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 
 export type PostStatus = "pending" | "approved" | "rejected";
-export type PostType = "event" | "news" | "product" | "general" | "inquiry";
+export type PostType = "event" | "news" | "general" | "inquiry";
 
 export interface GuestPost {
   id: string;
@@ -110,22 +110,16 @@ export interface GuestPost {
   status: PostStatus;
   createdAt: string;
   approvedAt?: string;
-  price?: number;
-  originalPrice?: number;
-  seller?: string;
 }
 
 export const insertGuestPostSchema = z.object({
-  type: z.enum(["event", "news", "product", "general", "inquiry"]),
+  type: z.enum(["event", "news", "general", "inquiry"]),
   title: z.string().min(1, "제목을 입력해주세요").max(200),
   content: z.string().min(1, "내용을 입력해주세요").max(5000),
   category: z.string().max(50).optional(),
   authorName: z.string().min(1, "이름을 입력해주세요").max(50),
   authorContact: z.string().max(100).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")).transform(v => v || undefined),
-  price: z.coerce.number().positive().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
-  originalPrice: z.coerce.number().positive().optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
-  seller: z.string().max(100).optional(),
 });
 
 export type InsertGuestPost = z.infer<typeof insertGuestPostSchema>;

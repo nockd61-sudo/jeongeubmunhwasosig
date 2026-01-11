@@ -37,9 +37,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { CulturalEvent, NewsItem, EventCategory, Product, GuestPost } from "@shared/schema";
+import type { CulturalEvent, NewsItem, EventCategory, GuestPost } from "@shared/schema";
 import { insertGuestPostSchema } from "@shared/schema";
-import { ShoppingBag, Store } from "lucide-react";
 
 const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
@@ -427,96 +426,6 @@ function NewsFeed({ news, isLoading }: { news: NewsItem[]; isLoading: boolean })
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const formattedPrice = new Intl.NumberFormat("ko-KR").format(product.price);
-  const formattedOriginalPrice = product.originalPrice
-    ? new Intl.NumberFormat("ko-KR").format(product.originalPrice)
-    : null;
-  const discountPercent = product.originalPrice
-    ? Math.round((1 - product.price / product.originalPrice) * 100)
-    : null;
-
-  return (
-    <Card className="overflow-hidden hover-elevate active-elevate-2" data-testid={`card-product-${product.id}`}>
-      <div className="aspect-square relative">
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
-        {discountPercent && (
-          <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-            {discountPercent}% 할인
-          </Badge>
-        )}
-      </div>
-      <CardContent className="p-4">
-        <p className="text-xs text-muted-foreground mb-1">{product.seller}</p>
-        <h4 className="font-medium line-clamp-2 mb-2" data-testid={`text-product-name-${product.id}`}>
-          {product.name}
-        </h4>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-lg" data-testid={`text-product-price-${product.id}`}>
-            {formattedPrice}원
-          </span>
-          {formattedOriginalPrice && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formattedOriginalPrice}원
-            </span>
-          )}
-        </div>
-        <Button className="w-full mt-3" size="sm" data-testid={`button-buy-${product.id}`}>
-          <ShoppingBag className="mr-1 h-4 w-4" />
-          구매하기
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductCardSkeleton() {
-  return (
-    <Card className="overflow-hidden">
-      <Skeleton className="aspect-square" />
-      <CardContent className="p-4">
-        <Skeleton className="h-3 w-16 mb-1" />
-        <Skeleton className="h-5 w-full mb-2" />
-        <Skeleton className="h-6 w-24 mb-3" />
-        <Skeleton className="h-9 w-full" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProductShop({ products, isLoading }: { products: Product[]; isLoading: boolean }) {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <ProductCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <p className="text-muted-foreground">등록된 상품이 없습니다.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {products.slice(0, 4).map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
-  );
-}
-
 function GuestPostForm({ 
   onSuccess, 
   initialType,
@@ -525,7 +434,7 @@ function GuestPostForm({
   onOpenChange,
 }: { 
   onSuccess: () => void;
-  initialType?: "event" | "news" | "product" | "general" | "inquiry";
+  initialType?: "event" | "news" | "general" | "inquiry";
   triggerButton?: React.ReactNode;
   externalOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -539,20 +448,17 @@ function GuestPostForm({
   const form = useForm({
     resolver: zodResolver(insertGuestPostSchema),
     defaultValues: {
-      type: (initialType || "general") as "event" | "news" | "product" | "general" | "inquiry",
+      type: (initialType || "general") as "event" | "news" | "general" | "inquiry",
       title: "",
       content: "",
       category: "",
       authorName: "",
       authorContact: "",
       imageUrl: "",
-      price: undefined as number | undefined,
-      originalPrice: undefined as number | undefined,
-      seller: "",
     },
   });
 
-  const watchType = form.watch("type");
+  const watchType = form.watch("type") as "event" | "news" | "general" | "inquiry";
 
   const submitMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -581,13 +487,10 @@ function GuestPostForm({
     submitMutation.mutate(data);
   };
 
-  const dialogTitle = initialType === "inquiry" ? "문의하기" : 
-                       initialType === "product" ? "상품 등록" : "정보 공유하기";
+  const dialogTitle = initialType === "inquiry" ? "문의하기" : "정보 공유하기";
   const dialogDesc = initialType === "inquiry" 
     ? "문의 내용을 남겨주세요. 확인 후 답변 드리겠습니다."
-    : initialType === "product"
-    ? "정읍 지역 상품을 등록해주세요. 관리자 승인 후 상품관에 공개됩니다."
-    : "정읍 관련 행사, 소식, 상품 등을 자유롭게 공유해주세요. 관리자 승인 후 공개됩니다.";
+    : "정읍 관련 행사, 소식 등을 자유롭게 공유해주세요. 관리자 승인 후 공개됩니다.";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -629,7 +532,6 @@ function GuestPostForm({
                       <SelectContent>
                         <SelectItem value="event">행사/축제</SelectItem>
                         <SelectItem value="news">소식</SelectItem>
-                        <SelectItem value="product">상품</SelectItem>
                         <SelectItem value="general">일반</SelectItem>
                         <SelectItem value="inquiry">문의</SelectItem>
                       </SelectContent>
@@ -670,65 +572,6 @@ function GuestPostForm({
                 </FormItem>
               )}
             />
-            {(watchType === "product" || initialType === "product") && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>판매가격 (원)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="10000" 
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                            value={field.value || ""}
-                            data-testid="input-product-price" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="originalPrice"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>원래가격 (선택)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="15000" 
-                            {...field}
-                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                            value={field.value || ""}
-                            data-testid="input-product-original-price" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="seller"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>판매자/농장명</FormLabel>
-                      <FormControl>
-                        <Input placeholder="예: 정읍농장" {...field} data-testid="input-product-seller" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -951,7 +794,6 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "전체">("전체");
   const [inquiryOpen, setInquiryOpen] = useState(false);
-  const [productOpen, setProductOpen] = useState(false);
 
   const { data: events = [], isLoading: eventsLoading } = useQuery<CulturalEvent[]>({
     queryKey: ["/api/events"],
@@ -959,10 +801,6 @@ export default function Home() {
 
   const { data: news = [], isLoading: newsLoading } = useQuery<NewsItem[]>({
     queryKey: ["/api/news"],
-  });
-
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
   });
 
   const { data: communityPosts = [], isLoading: postsLoading } = useQuery<GuestPost[]>({
@@ -977,7 +815,6 @@ export default function Home() {
 
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/products"] });
   };
 
   return (
@@ -1014,7 +851,7 @@ export default function Home() {
 
         <section className="py-12 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold">기타소식</h2>
@@ -1044,30 +881,6 @@ export default function Home() {
                 <CommunityPosts posts={communityPosts} isLoading={postsLoading} />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-2">
-                    <Store className="h-6 w-6" />
-                    정읍상품관
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setProductOpen(true)}
-                      data-testid="button-register-product"
-                    >
-                      <PenLine className="mr-1 h-4 w-4" />
-                      상품등록
-                    </Button>
-                    <Button variant="ghost" size="sm" data-testid="button-products-more">
-                      더보기
-                      <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <ProductShop products={products} isLoading={productsLoading} />
-              </div>
             </div>
           </div>
         </section>
@@ -1085,13 +898,6 @@ export default function Home() {
         triggerButton={<span className="hidden" />}
       />
 
-      <GuestPostForm 
-        onSuccess={handlePostSuccess} 
-        initialType="product"
-        externalOpen={productOpen}
-        onOpenChange={setProductOpen}
-        triggerButton={<span className="hidden" />}
-      />
     </div>
   );
 }

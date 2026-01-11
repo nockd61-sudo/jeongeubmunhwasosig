@@ -69,7 +69,6 @@ function GuestPostCard({
   const typeLabels: Record<string, string> = {
     event: "행사",
     news: "소식",
-    product: "상품",
     general: "일반",
     inquiry: "문의",
   };

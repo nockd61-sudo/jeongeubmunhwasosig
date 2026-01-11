@@ -11,6 +11,7 @@ Built as a full-stack TypeScript application with a React frontend and Express b
 - Preferred communication style: Simple, everyday language
 - Site operator: 친절한 세웅씨 (personal, not government)
 - Categories: 문화행사, 축제, 전시, 공연, 기타소식 (changed from 시정소식)
+- 정읍상품관 removed per user request
 
 ## Key Features
 
