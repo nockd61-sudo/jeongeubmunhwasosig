@@ -1,7 +1,10 @@
-# Design Guidelines: Jeongeup City Cultural Information App
+# Design Guidelines: 정읍에서뭐하지 (What to do in Jeongeup)
+
+## About This Platform
+**Personal Community Platform** operated by "친절한 세웅씨" (Kind Sewoong). This is NOT an official government website - it's a community-driven platform for residents and visitors of Jeongeup City to discover local events and share information.
 
 ## Design Approach
-**System-Based Approach** using Material Design principles for content-rich civic applications with strong visual feedback and accessibility. The design prioritizes information clarity, easy navigation, and efficient access to cultural events and city updates.
+**System-Based Approach** using Material Design principles for content-rich community applications with strong visual feedback and accessibility. The design prioritizes information clarity, easy navigation, warm community atmosphere, and efficient access to cultural events and local news.
 
 ## Core Design Elements
 
