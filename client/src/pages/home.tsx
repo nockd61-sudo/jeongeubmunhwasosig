@@ -131,45 +131,8 @@ function Header({
             </div>
           </div>
         )}
-
-        <nav className="hidden md:flex items-center gap-1 pb-2 overflow-x-auto">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant="ghost"
-              size="sm"
-              className="whitespace-nowrap"
-              data-testid={`button-nav-${category}`}
-            >
-              {category}
-            </Button>
-          ))}
-        </nav>
       </div>
     </header>
-  );
-}
-
-function MobileMenu({ isOpen }: { isOpen: boolean }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-background border-b shadow-lg">
-      <nav className="max-w-7xl mx-auto px-4 py-4">
-        <div className="flex flex-col gap-1">
-          {categories.map((category) => (
-            <Button
-              key={category}
-              variant="ghost"
-              className="justify-start"
-              data-testid={`button-mobile-nav-${category}`}
-            >
-              {category}
-            </Button>
-          ))}
-        </div>
-      </nav>
-    </div>
   );
 }
 
@@ -1274,7 +1237,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Header onMenuToggle={() => setIsMenuOpen(!isMenuOpen)} isMenuOpen={isMenuOpen} />
-      <MobileMenu isOpen={isMenuOpen} />
 
       <main>
         <HeroSection events={heroEvents} />
