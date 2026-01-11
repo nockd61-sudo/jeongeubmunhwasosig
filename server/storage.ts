@@ -19,6 +19,7 @@ export interface IStorage {
   getEventById(id: string): Promise<CulturalEvent | undefined>;
   getEventsByCategory(category: string): Promise<CulturalEvent[]>;
   createEvent(event: InsertEvent): Promise<CulturalEvent>;
+  deleteEvent(id: string): Promise<boolean>;
   
   getNews(): Promise<NewsItem[]>;
   getNewsById(id: string): Promise<NewsItem | undefined>;
@@ -283,6 +284,10 @@ export class MemStorage implements IStorage {
     const event: CulturalEvent = { ...insertEvent, id };
     this.events.set(id, event);
     return event;
+  }
+
+  async deleteEvent(id: string): Promise<boolean> {
+    return this.events.delete(id);
   }
 
   async getNews(): Promise<NewsItem[]> {

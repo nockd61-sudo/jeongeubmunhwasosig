@@ -48,13 +48,13 @@ export interface QuickLink {
 }
 
 export const insertEventSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
+  title: z.string().min(1, "제목을 입력해주세요"),
+  description: z.string().min(1, "설명을 입력해주세요"),
   category: z.enum(["문화행사", "축제", "전시", "공연", "기타소식"]),
-  imageUrl: z.string().url(),
-  startDate: z.string(),
-  endDate: z.string(),
-  location: z.string(),
+  imageUrl: z.string().url().optional().or(z.literal("")).transform(v => v || ""),
+  startDate: z.string().min(1, "시작일을 입력해주세요"),
+  endDate: z.string().min(1, "종료일을 입력해주세요"),
+  location: z.string().min(1, "장소를 입력해주세요"),
   isFeatured: z.boolean().default(false),
 });
 

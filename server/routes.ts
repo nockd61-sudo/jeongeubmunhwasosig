@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
-import { insertGuestPostSchema } from "@shared/schema";
+import { insertGuestPostSchema, insertEventSchema } from "@shared/schema";
 import { fetchAndSummarizeNews, testAiConnection, defaultRssSources } from "./ai-news-service";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
@@ -71,6 +71,31 @@ export async function registerRoutes(
       res.json(event);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch event" });
+    }
+  });
+
+  app.post("/api/events", async (req, res) => {
+    try {
+      const parsed = insertEventSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid event data", details: parsed.error.errors });
+      }
+      const event = await storage.createEvent(parsed.data);
+      res.status(201).json(event);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create event" });
+    }
+  });
+
+  app.delete("/api/events/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteEvent(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete event" });
     }
   });
 
