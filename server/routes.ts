@@ -19,8 +19,9 @@ export async function registerRoutes(
 
   app.get("/api/visitors", async (req, res) => {
     try {
-      const count = await storage.getVisitorCount();
-      res.json({ count });
+      const total = await storage.getVisitorCount();
+      const today = await storage.getTodayVisitorCount();
+      res.json({ total, today });
     } catch (error) {
       res.status(500).json({ error: "Failed to get visitor count" });
     }
@@ -28,8 +29,8 @@ export async function registerRoutes(
 
   app.post("/api/visitors/increment", async (req, res) => {
     try {
-      const count = await storage.incrementVisitorCount();
-      res.json({ count });
+      const result = await storage.incrementVisitorCount();
+      res.json(result);
     } catch (error) {
       res.status(500).json({ error: "Failed to increment visitor count" });
     }

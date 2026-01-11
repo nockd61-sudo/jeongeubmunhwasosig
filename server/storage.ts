@@ -47,7 +47,8 @@ export interface IStorage {
   getLastSyncTime(): Promise<string | null>;
 
   getVisitorCount(): Promise<number>;
-  incrementVisitorCount(): Promise<number>;
+  getTodayVisitorCount(): Promise<number>;
+  incrementVisitorCount(): Promise<{ total: number; today: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -337,13 +338,31 @@ export class DatabaseStorage implements IStorage {
     return 1247;
   }
 
-  async incrementVisitorCount(): Promise<number> {
+  async getTodayVisitorCount(): Promise<number> {
+    const todayKey = `visitorCount_${new Date().toISOString().split("T")[0]}`;
+    const result = await db.select().from(siteSettings).where(eq(siteSettings.key, todayKey));
+    return result.length > 0 ? parseInt(result[0].value, 10) : 0;
+  }
+
+  async incrementVisitorCount(): Promise<{ total: number; today: number }> {
     const current = await this.getVisitorCount();
     const newCount = current + 1;
     await db.update(siteSettings)
       .set({ value: newCount.toString(), updatedAt: new Date() })
       .where(eq(siteSettings.key, "visitorCount"));
-    return newCount;
+
+    const todayKey = `visitorCount_${new Date().toISOString().split("T")[0]}`;
+    const todayResult = await db.select().from(siteSettings).where(eq(siteSettings.key, todayKey));
+    let todayCount = 1;
+    if (todayResult.length > 0) {
+      todayCount = parseInt(todayResult[0].value, 10) + 1;
+      await db.update(siteSettings)
+        .set({ value: todayCount.toString(), updatedAt: new Date() })
+        .where(eq(siteSettings.key, todayKey));
+    } else {
+      await db.insert(siteSettings).values({ key: todayKey, value: "1" });
+    }
+    return { total: newCount, today: todayCount };
   }
 }
 

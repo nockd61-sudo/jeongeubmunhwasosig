@@ -1114,7 +1114,7 @@ function PastEventsList({ events, isLoading }: { events: CulturalEvent[]; isLoad
 }
 
 function Footer() {
-  const { data: visitorData } = useQuery<{ count: number }>({
+  const { data: visitorData } = useQuery<{ total: number; today: number }>({
     queryKey: ["/api/visitors"],
   });
 
@@ -1136,11 +1136,19 @@ function Footer() {
               정읍시의 다양한 문화행사, 축제, 소식을 함께 나누는 커뮤니티입니다. 
               누구나 자유롭게 정보를 공유할 수 있어요!
             </p>
-            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span data-testid="text-visitor-count">
-                총 방문자: {visitorData?.count?.toLocaleString() || "..."}명
-              </span>
+            <div className="mt-4 flex flex-col gap-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span data-testid="text-today-visitor-count">
+                  오늘 방문자: {visitorData?.today?.toLocaleString() || "0"}명
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span data-testid="text-total-visitor-count">
+                  전체 방문자: {visitorData?.total?.toLocaleString() || "..."}명
+                </span>
+              </div>
             </div>
           </div>
 
