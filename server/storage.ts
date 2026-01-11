@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import type { User, InsertUser, CulturalEvent, NewsItem, InsertEvent, InsertNews, Product, InsertProduct } from "@shared/schema";
+import type { User, InsertUser, CulturalEvent, NewsItem, InsertEvent, InsertNews, Product, InsertProduct, GuestPost, InsertGuestPost, PostStatus } from "@shared/schema";
 import { 
   scrapeJeongeupNews, 
   scrapeJeongeupCulture, 
@@ -28,6 +28,12 @@ export interface IStorage {
   getProductById(id: string): Promise<Product | undefined>;
   createProduct(product: InsertProduct): Promise<Product>;
 
+  getGuestPosts(status?: PostStatus): Promise<GuestPost[]>;
+  getGuestPostById(id: string): Promise<GuestPost | undefined>;
+  createGuestPost(post: InsertGuestPost): Promise<GuestPost>;
+  updateGuestPostStatus(id: string, status: PostStatus): Promise<GuestPost | undefined>;
+  getApprovedGuestPosts(): Promise<GuestPost[]>;
+
   getSources(): Promise<ExternalSource[]>;
   updateSource(id: string, updates: Partial<ExternalSource>): Promise<ExternalSource | undefined>;
   syncExternalData(): Promise<{ events: number; news: number }>;
@@ -39,6 +45,7 @@ export class MemStorage implements IStorage {
   private events: Map<string, CulturalEvent>;
   private news: Map<string, NewsItem>;
   private products: Map<string, Product>;
+  private guestPosts: Map<string, GuestPost>;
   private sources: Map<string, ExternalSource>;
   private lastSyncTime: string | null = null;
   private publicDataApiKey: string | null = null;
@@ -48,6 +55,7 @@ export class MemStorage implements IStorage {
     this.events = new Map();
     this.news = new Map();
     this.products = new Map();
+    this.guestPosts = new Map();
     this.sources = new Map();
     this.seedData();
     this.initSources();
@@ -132,7 +140,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         title: "정읍시, 2026년 문화예술 지원 사업 공모 시작",
         summary: "지역 예술가와 문화단체를 위한 다양한 지원 프로그램이 올해도 진행됩니다.",
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&h=120&fit=crop",
         publishedAt: "2026-01-15",
       },
@@ -140,7 +148,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         title: "내장산 케이블카 운행 시간 연장 안내",
         summary: "봄철 관광객 증가에 따라 케이블카 운행 시간이 연장됩니다.",
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=120&h=120&fit=crop",
         publishedAt: "2026-01-12",
       },
@@ -148,7 +156,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         title: "정읍시문화회관 리모델링 공사 완료",
         summary: "최신 시설로 새롭게 단장한 문화회관이 시민들에게 다시 문을 엽니다.",
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=120&h=120&fit=crop",
         publishedAt: "2026-01-10",
       },
@@ -156,7 +164,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         title: "설 연휴 문화시설 운영 안내",
         summary: "설 연휴 기간 동안의 주요 문화시설 운영 일정을 안내드립니다.",
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1577563682708-4f022ec774fb?w=120&h=120&fit=crop",
         publishedAt: "2026-01-08",
       },
@@ -303,6 +311,49 @@ export class MemStorage implements IStorage {
     const product: Product = { ...insertProduct, id };
     this.products.set(id, product);
     return product;
+  }
+
+  async getGuestPosts(status?: PostStatus): Promise<GuestPost[]> {
+    const posts = Array.from(this.guestPosts.values());
+    if (status) {
+      return posts.filter(p => p.status === status);
+    }
+    return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getGuestPostById(id: string): Promise<GuestPost | undefined> {
+    return this.guestPosts.get(id);
+  }
+
+  async createGuestPost(insertPost: InsertGuestPost): Promise<GuestPost> {
+    const id = randomUUID();
+    const post: GuestPost = {
+      ...insertPost,
+      id,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    this.guestPosts.set(id, post);
+    return post;
+  }
+
+  async updateGuestPostStatus(id: string, status: PostStatus): Promise<GuestPost | undefined> {
+    const post = this.guestPosts.get(id);
+    if (!post) return undefined;
+    
+    const updatedPost: GuestPost = {
+      ...post,
+      status,
+      approvedAt: status === "approved" ? new Date().toISOString() : post.approvedAt,
+    };
+    this.guestPosts.set(id, updatedPost);
+    return updatedPost;
+  }
+
+  async getApprovedGuestPosts(): Promise<GuestPost[]> {
+    return Array.from(this.guestPosts.values())
+      .filter(p => p.status === "approved")
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async getSources(): Promise<ExternalSource[]> {

@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Link } from "wouter";
@@ -18,6 +20,10 @@ import {
   Phone,
   X,
   Settings,
+  PenLine,
+  Send,
+  Loader2,
+  MessageSquarePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,10 +31,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { CulturalEvent, NewsItem, EventCategory, Product } from "@shared/schema";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { CulturalEvent, NewsItem, EventCategory, Product, GuestPost } from "@shared/schema";
+import { insertGuestPostSchema } from "@shared/schema";
 import { ShoppingBag, Store } from "lucide-react";
 
-const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "시정소식"];
+const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
 const quickLinks = [
   { id: "1", title: "문화시설", icon: Building2, url: "#" },
@@ -65,8 +78,8 @@ function Header({
                 <span className="text-primary-foreground font-bold text-sm">정읍</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="font-bold text-lg leading-tight" data-testid="text-site-title">정읍시 문화정보</h1>
-                <p className="text-xs text-muted-foreground">전북특별자치도</p>
+                <h1 className="font-bold text-lg leading-tight" data-testid="text-site-title">정읍에서뭐하지</h1>
+                <p className="text-xs text-muted-foreground">친절한 세웅씨가 운영하는 정읍 커뮤니티</p>
               </div>
             </div>
           </div>
@@ -504,6 +517,236 @@ function ProductShop({ products, isLoading }: { products: Product[]; isLoading: 
   );
 }
 
+function GuestPostForm({ onSuccess }: { onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(insertGuestPostSchema),
+    defaultValues: {
+      type: "general" as const,
+      title: "",
+      content: "",
+      category: "",
+      authorName: "",
+      authorContact: "",
+      imageUrl: "",
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await apiRequest("POST", "/api/guest-posts", data);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "등록 완료",
+        description: data.message || "게시글이 등록되었습니다. 관리자 승인 후 공개됩니다.",
+      });
+      form.reset();
+      setOpen(false);
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "등록 실패",
+        description: "게시글 등록에 실패했습니다. 다시 시도해주세요.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    submitMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="lg" className="gap-2" data-testid="button-submit-post">
+          <PenLine className="h-5 w-5" />
+          정보 공유하기
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <MessageSquarePlus className="h-5 w-5" />
+            정보 공유하기
+          </DialogTitle>
+          <DialogDescription>
+            정읍 관련 행사, 소식, 상품 등을 자유롭게 공유해주세요. 
+            관리자 승인 후 공개됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>유형</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-post-type">
+                        <SelectValue placeholder="유형을 선택하세요" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="event">행사/축제</SelectItem>
+                      <SelectItem value="news">소식</SelectItem>
+                      <SelectItem value="product">상품</SelectItem>
+                      <SelectItem value="general">일반</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>제목</FormLabel>
+                  <FormControl>
+                    <Input placeholder="제목을 입력하세요" {...field} data-testid="input-post-title" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>내용</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="내용을 입력하세요" 
+                      className="min-h-[100px]"
+                      {...field} 
+                      data-testid="input-post-content"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="authorName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>작성자 이름</FormLabel>
+                    <FormControl>
+                      <Input placeholder="이름" {...field} data-testid="input-author-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="authorContact"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>연락처 (선택)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="연락처" {...field} data-testid="input-author-contact" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <Button 
+              type="submit" 
+              className="w-full gap-2" 
+              disabled={submitMutation.isPending}
+              data-testid="button-submit-form"
+            >
+              {submitMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              등록하기
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CommunityPosts({ posts, isLoading }: { posts: GuestPost[]; isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <MessageSquarePlus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <p className="text-muted-foreground">아직 등록된 게시글이 없습니다.</p>
+        <p className="text-sm text-muted-foreground mt-1">첫 번째로 정보를 공유해보세요!</p>
+      </div>
+    );
+  }
+
+  const typeLabels: Record<string, string> = {
+    event: "행사",
+    news: "소식",
+    product: "상품",
+    general: "일반",
+  };
+
+  return (
+    <div className="space-y-3">
+      {posts.slice(0, 5).map((post) => (
+        <Card key={post.id} className="hover-elevate" data-testid={`card-community-post-${post.id}`}>
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="outline" className="text-xs">
+                    {typeLabels[post.type] || post.type}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    {post.authorName}
+                  </span>
+                </div>
+                <h4 className="font-medium line-clamp-1" data-testid={`text-post-title-${post.id}`}>
+                  {post.title}
+                </h4>
+                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                  {post.content}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 function QuickLinks() {
   return (
     <section className="py-12 bg-muted/50">
@@ -540,37 +783,38 @@ function Footer() {
                 <span className="text-primary-foreground font-bold text-sm">정읍</span>
               </div>
               <div>
-                <h3 className="font-bold">정읍시 문화정보</h3>
-                <p className="text-xs text-muted-foreground">전북특별자치도</p>
+                <h3 className="font-bold">정읍에서뭐하지</h3>
+                <p className="text-xs text-muted-foreground">친절한 세웅씨 운영</p>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              전북특별자치도 정읍시의 다양한 문화행사와 시정소식을 한눈에 확인하세요.
+              정읍시의 다양한 문화행사, 축제, 소식을 함께 나누는 커뮤니티입니다. 
+              누구나 자유롭게 정보를 공유할 수 있어요!
             </p>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">연락처</h4>
+            <h4 className="font-semibold mb-4">운영자 정보</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>주소: 전북특별자치도 정읍시 충정로 234</li>
-              <li>대표전화: 063-539-5114</li>
-              <li>이메일: culture@jeongeup.go.kr</li>
+              <li>운영: 친절한 세웅씨</li>
+              <li>지역: 전북특별자치도 정읍시</li>
+              <li>문의: 카카오톡 또는 댓글</li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">운영시간</h4>
+            <h4 className="font-semibold mb-4">안내</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>평일: 09:00 - 18:00</li>
-              <li>점심시간: 12:00 - 13:00</li>
-              <li>주말 및 공휴일: 휴무</li>
+              <li>이 사이트는 개인이 운영합니다</li>
+              <li>정읍시 공식 사이트가 아닙니다</li>
+              <li>정보 공유는 누구나 환영합니다</li>
             </ul>
           </div>
         </div>
 
         <div className="border-t mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2026 정읍시. All rights reserved.
+            © 2026 친절한 세웅씨. 정읍에서뭐하지
           </p>
           <div className="flex items-center gap-4">
             <Link href="/admin">
@@ -608,11 +852,19 @@ export default function Home() {
     queryKey: ["/api/products"],
   });
 
+  const { data: communityPosts = [], isLoading: postsLoading } = useQuery<GuestPost[]>({
+    queryKey: ["/api/guest-posts/approved"],
+  });
+
   const featuredEvent = events.find((e) => e.isFeatured);
   const filteredEvents =
     selectedCategory === "전체"
       ? events.filter((e) => !e.isFeatured)
       : events.filter((e) => e.category === selectedCategory && !e.isFeatured);
+
+  const handlePostSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -621,6 +873,20 @@ export default function Home() {
 
       <main>
         <HeroSection featuredEvent={featuredEvent} />
+
+        <section className="py-8 bg-primary/5">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-4 px-6 rounded-md bg-background border">
+              <div>
+                <h3 className="font-bold text-lg">정읍 소식을 함께 나눠요!</h3>
+                <p className="text-sm text-muted-foreground">
+                  행사, 맛집, 소식 등 정읍 관련 정보를 자유롭게 공유해주세요.
+                </p>
+              </div>
+              <GuestPostForm onSuccess={handlePostSuccess} />
+            </div>
+          </div>
+        </section>
 
         <section className="py-12">
           <div className="max-w-7xl mx-auto px-4">
@@ -634,10 +900,10 @@ export default function Home() {
 
         <section className="py-12 bg-muted/30">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold">시정소식</h2>
+                  <h2 className="text-2xl font-bold">기타소식</h2>
                   <Button variant="ghost" size="sm" data-testid="button-news-more">
                     더보기
                     <ChevronRight className="ml-1 h-4 w-4" />
@@ -648,6 +914,20 @@ export default function Home() {
                     <NewsFeed news={news} isLoading={newsLoading} />
                   </CardContent>
                 </Card>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <MessageSquarePlus className="h-6 w-6" />
+                    커뮤니티
+                  </h2>
+                  <Button variant="ghost" size="sm" data-testid="button-community-more">
+                    더보기
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                <CommunityPosts posts={communityPosts} isLoading={postsLoading} />
               </div>
 
               <div>

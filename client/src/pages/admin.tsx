@@ -13,6 +13,10 @@ import {
   Check,
   AlertCircle,
   Loader2,
+  MessageSquare,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -22,9 +26,11 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { GuestPost, PostStatus } from "@shared/schema";
 
 interface ExternalSource {
   id: string;
@@ -47,6 +53,222 @@ interface SyncResult {
   events: number;
   news: number;
   lastSync: string;
+}
+
+function GuestPostCard({
+  post,
+  onApprove,
+  onReject,
+  isUpdating,
+}: {
+  post: GuestPost;
+  onApprove: (id: string) => void;
+  onReject: (id: string) => void;
+  isUpdating: boolean;
+}) {
+  const typeLabels: Record<string, string> = {
+    event: "행사",
+    news: "소식",
+    product: "상품",
+    general: "일반",
+  };
+
+  const statusColors: Record<PostStatus, string> = {
+    pending: "bg-yellow-500",
+    approved: "bg-green-500",
+    rejected: "bg-red-500",
+  };
+
+  const statusLabels: Record<PostStatus, string> = {
+    pending: "대기중",
+    approved: "승인됨",
+    rejected: "거절됨",
+  };
+
+  return (
+    <Card data-testid={`card-guest-post-${post.id}`}>
+      <CardContent className="p-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <Badge variant="outline" className="text-xs">
+                  {typeLabels[post.type] || post.type}
+                </Badge>
+                <Badge className={`text-xs ${statusColors[post.status]} text-white`}>
+                  {statusLabels[post.status]}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {post.authorName}
+                  {post.authorContact && ` (${post.authorContact})`}
+                </span>
+              </div>
+              <h4 className="font-medium" data-testid={`text-guest-post-title-${post.id}`}>
+                {post.title}
+              </h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                {post.content}
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                등록일: {format(new Date(post.createdAt), "yyyy.MM.dd HH:mm", { locale: ko })}
+              </p>
+            </div>
+          </div>
+          {post.status === "pending" && (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => onApprove(post.id)}
+                disabled={isUpdating}
+                className="gap-1"
+                data-testid={`button-approve-${post.id}`}
+              >
+                <CheckCircle className="h-4 w-4" />
+                승인
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onReject(post.id)}
+                disabled={isUpdating}
+                className="gap-1"
+                data-testid={`button-reject-${post.id}`}
+              >
+                <XCircle className="h-4 w-4" />
+                거절
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GuestPostsManager() {
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState<string>("pending");
+
+  const { data: posts = [], isLoading } = useQuery<GuestPost[]>({
+    queryKey: ["/api/guest-posts"],
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: PostStatus }) => {
+      const res = await apiRequest("PATCH", `/api/guest-posts/${id}/status`, { status });
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guest-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
+      toast({
+        title: variables.status === "approved" ? "승인 완료" : "거절 완료",
+        description: variables.status === "approved" 
+          ? "게시글이 승인되어 공개됩니다." 
+          : "게시글이 거절되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "오류 발생",
+        description: "상태 변경에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleApprove = (id: string) => {
+    updateStatusMutation.mutate({ id, status: "approved" });
+  };
+
+  const handleReject = (id: string) => {
+    updateStatusMutation.mutate({ id, status: "rejected" });
+  };
+
+  const pendingPosts = posts.filter((p) => p.status === "pending");
+  const approvedPosts = posts.filter((p) => p.status === "approved");
+  const rejectedPosts = posts.filter((p) => p.status === "rejected");
+
+  const renderPosts = (filteredPosts: GuestPost[], emptyMessage: string) => {
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <Skeleton className="h-5 w-40 mb-2" />
+                <Skeleton className="h-4 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (filteredPosts.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <p className="text-muted-foreground">{emptyMessage}</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {filteredPosts.map((post) => (
+          <GuestPostCard
+            key={post.id}
+            post={post}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            isUpdating={updateStatusMutation.isPending}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MessageSquare className="h-5 w-5" />
+          게시글 관리
+        </CardTitle>
+        <CardDescription>
+          방문자가 등록한 게시글을 승인하거나 거절할 수 있습니다.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pending" className="gap-1" data-testid="tab-pending">
+              <Clock className="h-4 w-4" />
+              대기중 ({pendingPosts.length})
+            </TabsTrigger>
+            <TabsTrigger value="approved" className="gap-1" data-testid="tab-approved">
+              <CheckCircle className="h-4 w-4" />
+              승인됨 ({approvedPosts.length})
+            </TabsTrigger>
+            <TabsTrigger value="rejected" className="gap-1" data-testid="tab-rejected">
+              <XCircle className="h-4 w-4" />
+              거절됨 ({rejectedPosts.length})
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="pending" className="mt-4">
+            {renderPosts(pendingPosts, "대기 중인 게시글이 없습니다.")}
+          </TabsContent>
+          <TabsContent value="approved" className="mt-4">
+            {renderPosts(approvedPosts, "승인된 게시글이 없습니다.")}
+          </TabsContent>
+          <TabsContent value="rejected" className="mt-4">
+            {renderPosts(rejectedPosts, "거절된 게시글이 없습니다.")}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
 }
 
 function SourceIcon({ type }: { type: ExternalSource["type"] }) {
@@ -225,7 +447,7 @@ export default function Admin() {
               </Link>
               <div className="flex items-center gap-2">
                 <Settings className="h-5 w-5 text-muted-foreground" />
-                <h1 className="font-bold text-lg">데이터 소스 관리</h1>
+                <h1 className="font-bold text-lg">관리자 페이지</h1>
               </div>
             </div>
             <ThemeToggle />
@@ -234,6 +456,10 @@ export default function Admin() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        <GuestPostsManager />
+        
+        <div className="mt-8" />
+        
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

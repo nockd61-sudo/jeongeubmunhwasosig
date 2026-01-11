@@ -1,6 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { z } from "zod";
 import { storage } from "./storage";
+import { insertGuestPostSchema } from "@shared/schema";
+
+const updateStatusSchema = z.object({
+  status: z.enum(["pending", "approved", "rejected"]),
+});
 
 export async function registerRoutes(
   httpServer: Server,
@@ -132,6 +138,60 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Sync error:", error);
       res.status(500).json({ error: "동기화 중 오류가 발생했습니다" });
+    }
+  });
+
+  app.get("/api/guest-posts", async (req, res) => {
+    try {
+      const statusParam = req.query.status as string | undefined;
+      const validStatuses = ["pending", "approved", "rejected"];
+      const status = statusParam && validStatuses.includes(statusParam) 
+        ? statusParam as "pending" | "approved" | "rejected"
+        : undefined;
+      const posts = status 
+        ? await storage.getGuestPosts(status)
+        : await storage.getGuestPosts();
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch guest posts" });
+    }
+  });
+
+  app.get("/api/guest-posts/approved", async (req, res) => {
+    try {
+      const posts = await storage.getApprovedGuestPosts();
+      res.json(posts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch approved posts" });
+    }
+  });
+
+  app.post("/api/guest-posts", async (req, res) => {
+    try {
+      const parsed = insertGuestPostSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "잘못된 입력입니다", details: parsed.error.errors });
+      }
+      const post = await storage.createGuestPost(parsed.data);
+      res.status(201).json({ success: true, post, message: "게시글이 등록되었습니다. 관리자 승인 후 공개됩니다." });
+    } catch (error) {
+      res.status(500).json({ error: "게시글 등록에 실패했습니다" });
+    }
+  });
+
+  app.patch("/api/guest-posts/:id/status", async (req, res) => {
+    try {
+      const parsed = updateStatusSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "잘못된 상태값입니다" });
+      }
+      const post = await storage.updateGuestPostStatus(req.params.id, parsed.data.status);
+      if (!post) {
+        return res.status(404).json({ error: "게시글을 찾을 수 없습니다" });
+      }
+      res.json({ success: true, post });
+    } catch (error) {
+      res.status(500).json({ error: "상태 변경에 실패했습니다" });
     }
   });
 

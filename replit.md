@@ -1,12 +1,30 @@
-# Jeongeup City Cultural Information App
+# 정읍에서뭐하지 (What to do in Jeongeup)
 
 ## Overview
 
-This is a civic cultural information web application for Jeongeup City (정읍시), South Korea. The app provides residents and visitors with information about cultural events, festivals, exhibitions, performances, and city news. Built as a full-stack TypeScript application with a React frontend and Express backend, it follows Material Design principles optimized for Korean language content and accessibility.
+This is a personal community platform for Jeongeup City (정읍시), South Korea, operated by "친절한 세웅씨" (Kind Sewoong). The platform allows residents and visitors to share and discover information about cultural events, festivals, exhibitions, performances, local products, and community news. This is NOT an official government website.
+
+Built as a full-stack TypeScript application with a React frontend and Express backend, it follows Material Design principles optimized for Korean language content and accessibility.
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- Preferred communication style: Simple, everyday language
+- Site operator: 친절한 세웅씨 (personal, not government)
+- Categories: 문화행사, 축제, 전시, 공연, 기타소식 (changed from 시정소식)
+
+## Key Features
+
+### Content Management
+- **Cultural Events**: Display events with categories, dates, and locations
+- **기타소식 (Other News)**: General news and announcements
+- **정읍상품관 (Product Shop)**: Local products marketplace
+- **Guest Posts**: User-submitted content with admin moderation workflow
+
+### User-Generated Content System
+- Guests can submit posts (events, news, products, general)
+- Posts require admin approval before being published
+- Admin panel for approving/rejecting submissions
+- Three post states: pending, approved, rejected
 
 ## System Architecture
 
@@ -15,7 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Routing**: Wouter (lightweight React router)
 - **State Management**: TanStack React Query for server state
 - **UI Components**: shadcn/ui component library built on Radix UI primitives
-- **Styling**: Tailwind CSS with custom design tokens for Korean civic design
+- **Styling**: Tailwind CSS with custom design tokens
 - **Theme System**: Light/dark mode with CSS variables and localStorage persistence
 - **Typography**: Noto Sans KR (Korean) and Inter (Latin) font families
 
@@ -23,14 +41,25 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript compiled with tsx
 - **API Pattern**: RESTful JSON APIs under `/api/*` prefix
+- **Validation**: Zod schemas for input validation
 - **Build System**: Vite for frontend, esbuild for server bundling
-- **Development**: Hot module replacement via Vite dev server
 
 ### Data Layer
 - **ORM**: Drizzle ORM with PostgreSQL dialect
 - **Schema Definition**: Shared TypeScript types in `shared/schema.ts`
-- **Validation**: Zod schemas generated from Drizzle schemas via drizzle-zod
-- **Storage Pattern**: Interface-based storage abstraction (`IStorage`) with in-memory implementation for development
+- **Validation**: Zod schemas for API input validation
+- **Storage Pattern**: Interface-based storage abstraction (`IStorage`) with in-memory implementation
+
+### API Endpoints
+- `GET /api/events` - List cultural events
+- `GET /api/news` - List news items
+- `GET /api/products` - List products
+- `GET /api/guest-posts` - List all guest posts (admin)
+- `GET /api/guest-posts/approved` - List approved guest posts (public)
+- `POST /api/guest-posts` - Submit new guest post
+- `PATCH /api/guest-posts/:id/status` - Update post status (approve/reject)
+- `GET /api/sources` - List external data sources
+- `POST /api/sync` - Sync external data
 
 ### Project Structure
 ```
@@ -43,7 +72,7 @@ Preferred communication style: Simple, everyday language.
 ├── server/          # Express backend
 │   ├── routes.ts    # API endpoint definitions
 │   ├── storage.ts   # Data access layer
-│   └── static.ts    # Static file serving
+│   └── data-sync.ts # External data integration
 ├── shared/          # Shared types and schemas
 └── migrations/      # Drizzle database migrations
 ```

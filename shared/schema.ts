@@ -17,7 +17,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-export type EventCategory = "문화행사" | "축제" | "전시" | "공연" | "시정소식";
+export type EventCategory = "문화행사" | "축제" | "전시" | "공연" | "기타소식";
 
 export interface CulturalEvent {
   id: string;
@@ -50,7 +50,7 @@ export interface QuickLink {
 export const insertEventSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
-  category: z.enum(["문화행사", "축제", "전시", "공연", "시정소식"]),
+  category: z.enum(["문화행사", "축제", "전시", "공연", "기타소식"]),
   imageUrl: z.string().url(),
   startDate: z.string(),
   endDate: z.string(),
@@ -63,7 +63,7 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export const insertNewsSchema = z.object({
   title: z.string().min(1),
   summary: z.string().min(1),
-  category: z.enum(["문화행사", "축제", "전시", "공연", "시정소식"]),
+  category: z.enum(["문화행사", "축제", "전시", "공연", "기타소식"]),
   imageUrl: z.string().url(),
   publishedAt: z.string(),
 });
@@ -94,3 +94,34 @@ export const insertProductSchema = z.object({
 });
 
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+
+export type PostStatus = "pending" | "approved" | "rejected";
+export type PostType = "event" | "news" | "product" | "general";
+
+export interface GuestPost {
+  id: string;
+  type: PostType;
+  title: string;
+  content: string;
+  category?: string;
+  authorName: string;
+  authorContact?: string;
+  imageUrl?: string;
+  status: PostStatus;
+  createdAt: string;
+  approvedAt?: string;
+}
+
+export const insertGuestPostSchema = z.object({
+  type: z.enum(["event", "news", "product", "general"]),
+  title: z.string().min(1, "제목을 입력해주세요").max(200),
+  content: z.string().min(1, "내용을 입력해주세요").max(5000),
+  category: z.string().max(50).optional(),
+  authorName: z.string().min(1, "이름을 입력해주세요").max(50),
+  authorContact: z.string().max(100).optional(),
+  imageUrl: z.string().url().optional().or(z.literal("")).transform(v => v || undefined),
+});
+
+export type InsertGuestPost = z.infer<typeof insertGuestPostSchema>;
+
+export const postStatusSchema = z.enum(["pending", "approved", "rejected"]);
