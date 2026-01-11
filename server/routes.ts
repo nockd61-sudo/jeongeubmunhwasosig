@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { z } from "zod";
 import { storage } from "./storage";
 import { insertGuestPostSchema } from "@shared/schema";
+import { fetchAndSummarizeNews, testAiConnection, defaultRssSources } from "./ai-news-service";
 
 const updateStatusSchema = z.object({
   status: z.enum(["pending", "approved", "rejected"]),
@@ -171,6 +172,65 @@ export async function registerRoutes(
       res.json({ success: true, post });
     } catch (error) {
       res.status(500).json({ error: "상태 변경에 실패했습니다" });
+    }
+  });
+
+  app.get("/api/ai-news/sources", async (req, res) => {
+    try {
+      res.json({ sources: defaultRssSources });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch AI news sources" });
+    }
+  });
+
+  app.get("/api/ai-news/test", async (req, res) => {
+    try {
+      const isConnected = await testAiConnection();
+      res.json({ connected: isConnected });
+    } catch (error) {
+      res.status(500).json({ connected: false, error: "AI 연결 테스트 실패" });
+    }
+  });
+
+  app.post("/api/ai-news/sync", async (req, res) => {
+    try {
+      console.log("Starting AI news sync...");
+      const result = await fetchAndSummarizeNews();
+      
+      const existingNews = await storage.getNews();
+      const existingTitles = new Set(existingNews.map(n => n.title));
+      
+      let addedCount = 0;
+      for (const newsItem of result.newsItems) {
+        if (!existingTitles.has(newsItem.title)) {
+          try {
+            await storage.createNews({
+              title: newsItem.title,
+              summary: newsItem.summary,
+              category: newsItem.category,
+              imageUrl: newsItem.imageUrl,
+              publishedAt: newsItem.publishedAt,
+            });
+            existingTitles.add(newsItem.title);
+            addedCount++;
+          } catch (createError) {
+            console.error("Error creating news item:", createError);
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `AI 뉴스 수집 완료: ${result.totalFetched}개 수집, ${result.jeongeupRelated}개 정읍 관련, ${addedCount}개 추가됨`,
+        totalFetched: result.totalFetched,
+        jeongeupRelated: result.jeongeupRelated,
+        summarized: result.summarized,
+        added: addedCount,
+        errors: result.errors,
+      });
+    } catch (error) {
+      console.error("AI news sync error:", error);
+      res.status(500).json({ error: "AI 뉴스 수집 중 오류가 발생했습니다" });
     }
   });
 

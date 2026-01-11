@@ -17,6 +17,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Sparkles,
+  Bot,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -53,6 +55,16 @@ interface SyncResult {
   events: number;
   news: number;
   lastSync: string;
+}
+
+interface AiSyncResult {
+  success: boolean;
+  message: string;
+  totalFetched: number;
+  jeongeupRelated: number;
+  summarized: number;
+  added: number;
+  errors: string[];
 }
 
 function GuestPostCard({
@@ -426,6 +438,27 @@ export default function Admin() {
     },
   });
 
+  const aiSyncMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/ai-news/sync");
+      return await response.json() as AiSyncResult;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/news"] });
+      toast({
+        title: "AI 뉴스 수집 완료",
+        description: data.message,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "AI 뉴스 수집 실패",
+        description: "뉴스 수집 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleToggle = (id: string, enabled: boolean) => {
     toggleMutation.mutate({ id, enabled });
   };
@@ -459,6 +492,48 @@ export default function Admin() {
         <GuestPostsManager />
         
         <div className="mt-8" />
+
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              AI 뉴스 자동 수집
+              <Badge variant="secondary" className="ml-2">
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI
+              </Badge>
+            </CardTitle>
+            <CardDescription>
+              RSS 피드에서 정읍 관련 뉴스를 수집하고 AI가 자동으로 요약합니다.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground">
+                <p>전북일보, 정읍신문 등에서 정읍 관련 기사를 자동 수집합니다.</p>
+                <p className="mt-1">수집된 뉴스는 AI가 한국어로 요약하여 표시합니다.</p>
+              </div>
+              <Button
+                onClick={() => aiSyncMutation.mutate()}
+                disabled={aiSyncMutation.isPending}
+                className="gap-2"
+                data-testid="button-ai-sync"
+              >
+                {aiSyncMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    AI 수집 중...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    AI 뉴스 수집
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
         
         <Card className="mb-8">
           <CardHeader>
