@@ -14,6 +14,24 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  app.get("/api/visitors", async (req, res) => {
+    try {
+      const count = await storage.getVisitorCount();
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get visitor count" });
+    }
+  });
+
+  app.post("/api/visitors/increment", async (req, res) => {
+    try {
+      const count = await storage.incrementVisitorCount();
+      res.json({ count });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to increment visitor count" });
+    }
+  });
+
   app.get("/api/events", async (req, res) => {
     try {
       const category = req.query.category as string | undefined;

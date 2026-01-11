@@ -38,6 +38,9 @@ export interface IStorage {
   updateSource(id: string, updates: Partial<ExternalSource>): Promise<ExternalSource | undefined>;
   syncExternalData(): Promise<{ events: number; news: number }>;
   getLastSyncTime(): Promise<string | null>;
+
+  getVisitorCount(): Promise<number>;
+  incrementVisitorCount(): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -49,6 +52,7 @@ export class MemStorage implements IStorage {
   private sources: Map<string, ExternalSource>;
   private lastSyncTime: string | null = null;
   private publicDataApiKey: string | null = null;
+  private visitorCount: number = 1247;
 
   constructor() {
     this.users = new Map();
@@ -427,6 +431,15 @@ export class MemStorage implements IStorage {
 
   async getLastSyncTime(): Promise<string | null> {
     return this.lastSyncTime;
+  }
+
+  async getVisitorCount(): Promise<number> {
+    return this.visitorCount;
+  }
+
+  async incrementVisitorCount(): Promise<number> {
+    this.visitorCount++;
+    return this.visitorCount;
   }
 }
 

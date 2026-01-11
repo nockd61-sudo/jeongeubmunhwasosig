@@ -25,6 +25,7 @@ import {
   Send,
   Loader2,
   MessageSquarePlus,
+  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -783,6 +784,10 @@ function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
 }
 
 function Footer() {
+  const { data: visitorData } = useQuery<{ count: number }>({
+    queryKey: ["/api/visitors"],
+  });
+
   return (
     <footer className="bg-card border-t py-12">
       <div className="max-w-7xl mx-auto px-4">
@@ -801,6 +806,12 @@ function Footer() {
               정읍시의 다양한 문화행사, 축제, 소식을 함께 나누는 커뮤니티입니다. 
               누구나 자유롭게 정보를 공유할 수 있어요!
             </p>
+            <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span data-testid="text-visitor-count">
+                총 방문자: {visitorData?.count?.toLocaleString() || "..."}명
+              </span>
+            </div>
           </div>
 
           <div>
@@ -850,6 +861,14 @@ export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<EventCategory | "전체">("전체");
   const [inquiryOpen, setInquiryOpen] = useState(false);
+
+  useEffect(() => {
+    const hasVisited = sessionStorage.getItem("visited");
+    if (!hasVisited) {
+      apiRequest("POST", "/api/visitors/increment").catch(console.error);
+      sessionStorage.setItem("visited", "true");
+    }
+  }, []);
 
   const { data: events = [], isLoading: eventsLoading } = useQuery<CulturalEvent[]>({
     queryKey: ["/api/events"],
