@@ -61,7 +61,7 @@ export async function scrapeJeongeupNews(): Promise<NewsItem[]> {
         id: randomUUID(),
         title: title.substring(0, 100),
         summary: title.substring(0, 80) + (title.length > 80 ? "..." : ""),
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=120&h=120&fit=crop",
         publishedAt,
       });
@@ -188,7 +188,7 @@ export async function scrapeRssFeed(feedUrl: string): Promise<NewsItem[]> {
         id: randomUUID(),
         title: title.substring(0, 100),
         summary: description.replace(/<[^>]*>/g, "").substring(0, 80),
-        category: "시정소식",
+        category: "기타소식",
         imageUrl: "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=120&h=120&fit=crop",
         publishedAt,
       });
