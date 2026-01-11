@@ -27,6 +27,7 @@ import {
   MessageSquarePlus,
   Users,
   History,
+  ImagePlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -630,6 +631,43 @@ function GuestPostForm({
                 </FormItem>
               )}
             />
+            {watchType !== "inquiry" && initialType !== "inquiry" && (
+              <FormField
+                control={form.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <ImagePlus className="h-4 w-4" />
+                      이미지 URL (선택)
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://example.com/image.jpg" 
+                        {...field} 
+                        data-testid="input-image-url"
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      권장 크기: 800x450px (16:9 비율) / 최대 2MB
+                    </p>
+                    {field.value && (
+                      <div className="mt-2 rounded-md border overflow-hidden">
+                        <img 
+                          src={field.value} 
+                          alt="미리보기" 
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
