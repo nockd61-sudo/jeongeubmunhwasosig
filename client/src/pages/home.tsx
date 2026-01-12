@@ -31,6 +31,7 @@ import {
   Upload,
   Link2,
   ExternalLink,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -398,6 +399,39 @@ function EventCard({ event }: { event: CulturalEvent }) {
                 {event.description}
               </p>
             </div>
+            {event.videoUrl && (
+              <div className="space-y-2">
+                <h4 className="font-semibold flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  행사 스케치 영상
+                </h4>
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                  {event.videoUrl.includes("youtube.com") || event.videoUrl.includes("youtu.be") ? (
+                    <iframe
+                      src={`https://www.youtube.com/embed/${
+                        event.videoUrl.includes("youtu.be")
+                          ? event.videoUrl.split("/").pop()?.split("?")[0]
+                          : new URLSearchParams(new URL(event.videoUrl).search).get("v")
+                      }`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title={`${event.title} 스케치 영상`}
+                    />
+                  ) : (
+                    <a
+                      href={event.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-full flex items-center justify-center text-primary hover:underline"
+                    >
+                      <Video className="h-8 w-8 mr-2" />
+                      영상 보러가기
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-2 pt-4 border-t">
               <Button
                 variant={isLiked ? "default" : "outline"}

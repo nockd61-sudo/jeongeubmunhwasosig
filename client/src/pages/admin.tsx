@@ -30,6 +30,7 @@ import {
   Upload,
   Link2,
   X,
+  Video,
 } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -324,6 +325,7 @@ function EventManager() {
       description: "",
       category: "문화행사" as const,
       imageUrl: "",
+      videoUrl: "",
       startDate: "",
       endDate: "",
       location: "",
@@ -338,6 +340,7 @@ function EventManager() {
       description: event.description,
       category: event.category as any,
       imageUrl: event.imageUrl || "",
+      videoUrl: event.videoUrl || "",
       startDate: event.startDate,
       endDate: event.endDate,
       location: event.location,
@@ -353,6 +356,7 @@ function EventManager() {
       description: "",
       category: "문화행사",
       imageUrl: "",
+      videoUrl: "",
       startDate: "",
       endDate: "",
       location: "",
@@ -538,6 +542,29 @@ function EventManager() {
                     )}
                   />
                   <AdminImageUploadField form={form} />
+                  <FormField
+                    control={form.control}
+                    name="videoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          스케치 영상 URL (선택)
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://youtube.com/watch?v=... 또는 영상 URL"
+                            {...field}
+                            data-testid="input-event-video-url"
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          유튜브, 네이버TV 등 영상 링크를 입력하세요
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <FormField
                     control={form.control}
                     name="isFeatured"
