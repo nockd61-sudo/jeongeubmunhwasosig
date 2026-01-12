@@ -30,6 +30,7 @@ import {
   ImagePlus,
   Upload,
   Link2,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -466,35 +467,94 @@ function EventsGrid({ events, isLoading }: { events: CulturalEvent[]; isLoading:
 }
 
 function NewsCard({ news }: { news: NewsItem }) {
+  const [open, setOpen] = useState(false);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: news.title,
+      text: news.summary,
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.log("Share cancelled");
+      }
+    } else {
+      await navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
   return (
-    <div
-      className="flex gap-4 p-4 rounded-md hover-elevate active-elevate-2 cursor-pointer"
-      data-testid={`card-news-${news.id}`}
-    >
-      <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
-        <img
-          src={news.imageUrl}
-          alt={news.title}
-          className="w-full h-full object-cover"
-        />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge variant="outline" className="text-xs">
-            {news.category}
-          </Badge>
-          <span className="text-xs text-muted-foreground">
-            {format(new Date(news.publishedAt), "yyyy.MM.dd", { locale: ko })}
-          </span>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <div
+          className="flex gap-4 p-4 rounded-md hover-elevate active-elevate-2 cursor-pointer"
+          data-testid={`card-news-${news.id}`}
+        >
+          <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+            <img
+              src={news.imageUrl}
+              alt={news.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="outline" className="text-xs">
+                {news.category}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(news.publishedAt), "yyyy.MM.dd", { locale: ko })}
+              </span>
+            </div>
+            <h4 className="font-medium line-clamp-2 mb-1" data-testid={`text-news-title-${news.id}`}>
+              {news.title}
+            </h4>
+            <p className="text-sm text-muted-foreground line-clamp-1">
+              {news.summary}
+            </p>
+          </div>
         </div>
-        <h4 className="font-medium line-clamp-2 mb-1" data-testid={`text-news-title-${news.id}`}>
-          {news.title}
-        </h4>
-        <p className="text-sm text-muted-foreground line-clamp-1">
-          {news.summary}
-        </p>
-      </div>
-    </div>
+      </DialogTrigger>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline">{news.category}</Badge>
+            <span className="text-sm text-muted-foreground">
+              {format(new Date(news.publishedAt), "yyyy년 M월 d일", { locale: ko })}
+            </span>
+          </div>
+          <DialogTitle className="text-xl">{news.title}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          {news.imageUrl && (
+            <div className="rounded-lg overflow-hidden">
+              <img
+                src={news.imageUrl}
+                alt={news.title}
+                className="w-full h-48 object-cover"
+              />
+            </div>
+          )}
+          <div className="space-y-3">
+            <p className="text-muted-foreground whitespace-pre-wrap">{news.summary}</p>
+          </div>
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              data-testid="button-share-news"
+            >
+              <Share2 className="h-4 w-4 mr-1" />
+              공유하기
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
