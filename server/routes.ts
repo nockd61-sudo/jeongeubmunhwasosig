@@ -246,12 +246,19 @@ export async function registerRoutes(
 
   app.post("/api/guest-posts", async (req, res) => {
     try {
-      const parsed = insertGuestPostSchema.safeParse(req.body);
+      const { autoApprove, ...postData } = req.body;
+      const parsed = insertGuestPostSchema.safeParse(postData);
       if (!parsed.success) {
         return res.status(400).json({ error: "잘못된 입력입니다", details: parsed.error.errors });
       }
       const post = await storage.createGuestPost(parsed.data);
-      res.status(201).json({ success: true, post, message: "게시글이 등록되었습니다. 관리자 승인 후 공개됩니다." });
+      
+      if (autoApprove === true) {
+        const approvedPost = await storage.updateGuestPostStatus(post.id, "approved");
+        res.status(201).json({ success: true, post: approvedPost, message: "게시글이 등록되어 공개되었습니다." });
+      } else {
+        res.status(201).json({ success: true, post, message: "게시글이 등록되었습니다. 관리자 승인 후 공개됩니다." });
+      }
     } catch (error) {
       res.status(500).json({ error: "게시글 등록에 실패했습니다" });
     }

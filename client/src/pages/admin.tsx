@@ -49,7 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { GuestPost, PostStatus, CulturalEvent, NewsItem } from "@shared/schema";
-import { insertEventSchema, insertNewsSchema } from "@shared/schema";
+import { insertEventSchema, insertNewsSchema, insertGuestPostSchema } from "@shared/schema";
 
 interface ExternalSource {
   id: string;
@@ -890,6 +890,153 @@ function NewsManager() {
   );
 }
 
+function AdminPostForm({ onSuccess }: { onSuccess: () => void }) {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const form = useForm({
+    resolver: zodResolver(insertGuestPostSchema),
+    defaultValues: {
+      type: "general" as const,
+      title: "",
+      content: "",
+      category: "",
+      authorName: "관리자",
+      authorContact: "",
+      imageUrl: "",
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: Record<string, unknown>) => {
+      const res = await apiRequest("POST", "/api/guest-posts", {
+        ...data,
+        autoApprove: true,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/guest-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
+      toast({
+        title: "게시글 등록 완료",
+        description: "게시글이 바로 공개되었습니다.",
+      });
+      form.reset();
+      setIsOpen(false);
+      onSuccess();
+    },
+    onError: () => {
+      toast({
+        title: "오류 발생",
+        description: "게시글 등록에 실패했습니다.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: Record<string, unknown>) => {
+    createMutation.mutate(data);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2" data-testid="button-admin-post">
+          <Plus className="h-4 w-4" />
+          관리자 글쓰기
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>관리자 게시글 등록</DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>유형</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-admin-post-type">
+                        <SelectValue placeholder="유형 선택" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="event">행사</SelectItem>
+                      <SelectItem value="news">소식</SelectItem>
+                      <SelectItem value="general">일반</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>제목</FormLabel>
+                  <FormControl>
+                    <Input placeholder="제목을 입력하세요" {...field} data-testid="input-admin-post-title" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>내용</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="내용을 입력하세요" 
+                      className="min-h-[120px]"
+                      {...field} 
+                      data-testid="input-admin-post-content"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="authorName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>작성자</FormLabel>
+                  <FormControl>
+                    <Input placeholder="작성자명" {...field} data-testid="input-admin-post-author" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={createMutation.isPending}
+              data-testid="button-submit-admin-post"
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
+              등록하기 (바로 공개)
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function GuestPostsManager() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("pending");
@@ -974,16 +1121,26 @@ function GuestPostsManager() {
     );
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/guest-posts"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5" />
-          게시글 관리
-        </CardTitle>
-        <CardDescription>
-          방문자가 등록한 게시글을 승인하거나 거절할 수 있습니다.
-        </CardDescription>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              게시글 관리
+            </CardTitle>
+            <CardDescription className="mt-1">
+              방문자가 등록한 게시글을 승인하거나 거절할 수 있습니다.
+            </CardDescription>
+          </div>
+          <AdminPostForm onSuccess={handleRefresh} />
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
