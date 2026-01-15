@@ -95,7 +95,7 @@ export const insertGuestPostSchema = createInsertSchema(guestPosts).omit({
   createdAt: true,
   approvedAt: true,
 }).extend({
-  type: z.enum(["event", "news", "general", "inquiry"]),
+  type: z.enum(["event", "news", "general", "inquiry", "restaurant"]),
   title: z.string().min(1, "제목을 입력해주세요").max(200),
   content: z.string().min(1, "내용을 입력해주세요").max(5000),
   category: z.string().max(50).optional(),
@@ -108,7 +108,7 @@ export type InsertGuestPost = z.infer<typeof insertGuestPostSchema>;
 export type GuestPost = typeof guestPosts.$inferSelect;
 
 export type PostStatus = "pending" | "approved" | "rejected";
-export type PostType = "event" | "news" | "general" | "inquiry";
+export type PostType = "event" | "news" | "general" | "inquiry" | "restaurant";
 
 export const postStatusSchema = z.enum(["pending", "approved", "rejected"]);
 

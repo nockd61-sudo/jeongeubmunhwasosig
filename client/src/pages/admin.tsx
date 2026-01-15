@@ -100,6 +100,7 @@ function GuestPostCard({
     news: "소식",
     general: "일반",
     inquiry: "문의",
+    restaurant: "맛집",
   };
 
   const statusColors: Record<string, string> = {
@@ -968,6 +969,7 @@ function AdminPostForm({ onSuccess }: { onSuccess: () => void }) {
                     <SelectContent>
                       <SelectItem value="event">행사</SelectItem>
                       <SelectItem value="news">소식</SelectItem>
+                      <SelectItem value="restaurant">맛집</SelectItem>
                       <SelectItem value="general">일반</SelectItem>
                     </SelectContent>
                   </Select>

@@ -51,12 +51,6 @@ import { insertGuestPostSchema } from "@shared/schema";
 
 const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
-const restaurants = [
-  { id: "1", title: "맛집 1", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
-  { id: "2", title: "맛집 2", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
-  { id: "3", title: "맛집 3", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
-  { id: "4", title: "맛집 4", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
-];
 
 function Header({
   onMenuToggle,
@@ -883,6 +877,7 @@ function GuestPostForm({
                       <SelectContent>
                         <SelectItem value="event">행사/축제</SelectItem>
                         <SelectItem value="news">소식</SelectItem>
+                        <SelectItem value="restaurant">맛집</SelectItem>
                         <SelectItem value="general">일반</SelectItem>
                         <SelectItem value="inquiry">문의</SelectItem>
                       </SelectContent>
@@ -1005,6 +1000,7 @@ function CommunityPosts({ posts, isLoading }: { posts: GuestPost[]; isLoading: b
     news: "소식",
     product: "상품",
     general: "일반",
+    restaurant: "맛집",
   };
 
   return (
@@ -1037,7 +1033,7 @@ function CommunityPosts({ posts, isLoading }: { posts: GuestPost[]; isLoading: b
   );
 }
 
-function RestaurantSection() {
+function RestaurantSection({ restaurants, isLoading }: { restaurants: GuestPost[]; isLoading: boolean }) {
   return (
     <section className="py-12 bg-muted/50">
       <div className="max-w-7xl mx-auto px-4">
@@ -1046,30 +1042,54 @@ function RestaurantSection() {
             <UtensilsCrossed className="h-5 w-5" />
             정읍 맛집
           </h2>
-          <Badge variant="secondary">추천 맛집</Badge>
+          <Badge variant="secondary">추천 맛집 {restaurants.length}곳</Badge>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {restaurants.map((restaurant) => (
-            <Card 
-              key={restaurant.id} 
-              className="hover-elevate cursor-pointer"
-              data-testid={`card-restaurant-${restaurant.id}`}
-            >
-              <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <restaurant.icon className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{restaurant.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{restaurant.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          맛집 정보는 관리자 페이지에서 등록할 수 있습니다.
-        </p>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                  <Skeleton className="w-16 h-16 rounded-full" />
+                  <Skeleton className="h-5 w-20" />
+                  <Skeleton className="h-4 w-32" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : restaurants.length === 0 ? (
+          <div className="text-center py-12">
+            <UtensilsCrossed className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">아직 등록된 맛집이 없습니다.</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              "정보 공유하기"에서 맛집 정보를 공유해주세요!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {restaurants.slice(0, 4).map((restaurant) => (
+              <Card 
+                key={restaurant.id} 
+                className="hover-elevate cursor-pointer"
+                data-testid={`card-restaurant-${restaurant.id}`}
+              >
+                <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <UtensilsCrossed className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium line-clamp-1">{restaurant.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {restaurant.content}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      by {restaurant.authorName}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1333,6 +1353,9 @@ export default function Home() {
       : sortedUpcomingEvents.filter((e) => e.category === selectedCategory)
   ).slice(0, 6);
 
+  const restaurantPosts = communityPosts.filter((p) => p.type === "restaurant");
+  const nonRestaurantPosts = communityPosts.filter((p) => p.type !== "restaurant");
+
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
   };
@@ -1414,14 +1437,14 @@ export default function Home() {
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 </div>
-                <CommunityPosts posts={communityPosts} isLoading={postsLoading} />
+                <CommunityPosts posts={nonRestaurantPosts} isLoading={postsLoading} />
               </div>
 
             </div>
           </div>
         </section>
 
-        <RestaurantSection />
+        <RestaurantSection restaurants={restaurantPosts} isLoading={postsLoading} />
       </main>
 
       <Footer />
