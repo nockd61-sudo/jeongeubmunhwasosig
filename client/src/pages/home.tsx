@@ -1326,11 +1326,16 @@ export default function Home() {
     queryKey: ["/api/guest-posts/approved"],
   });
 
-  const heroEvents = upcomingEvents.filter((e) => e.isFeatured || upcomingEvents.indexOf(e) < 5);
-  const filteredEvents =
+  const sortedUpcomingEvents = [...upcomingEvents].sort((a, b) => 
+    new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+  );
+  
+  const heroEvents = sortedUpcomingEvents.filter((e) => e.isFeatured || sortedUpcomingEvents.indexOf(e) < 5);
+  const filteredEvents = (
     selectedCategory === "전체"
-      ? upcomingEvents
-      : upcomingEvents.filter((e) => e.category === selectedCategory);
+      ? sortedUpcomingEvents
+      : sortedUpcomingEvents.filter((e) => e.category === selectedCategory)
+  ).slice(0, 6);
 
   const handlePostSuccess = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/guest-posts/approved"] });
