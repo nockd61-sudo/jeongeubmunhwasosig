@@ -32,6 +32,7 @@ import {
   Link2,
   ExternalLink,
   Video,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,11 +51,11 @@ import { insertGuestPostSchema } from "@shared/schema";
 
 const categories: EventCategory[] = ["문화행사", "축제", "전시", "공연", "기타소식"];
 
-const quickLinks = [
-  { id: "1", title: "문화시설", icon: Building2, url: "#", action: null },
-  { id: "2", title: "온라인예약", icon: CalendarCheck, url: "#", action: null },
-  { id: "3", title: "관광정보", icon: Info, url: "#", action: null },
-  { id: "4", title: "문의하기", icon: PenLine, url: "#", action: "inquiry" as const },
+const restaurants = [
+  { id: "1", title: "맛집 1", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
+  { id: "2", title: "맛집 2", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
+  { id: "3", title: "맛집 3", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
+  { id: "4", title: "맛집 4", icon: UtensilsCrossed, description: "맛집을 등록해주세요" },
 ];
 
 function Header({
@@ -1036,44 +1037,39 @@ function CommunityPosts({ posts, isLoading }: { posts: GuestPost[]; isLoading: b
   );
 }
 
-function QuickLinks({ onInquiryClick }: { onInquiryClick: () => void }) {
+function RestaurantSection() {
   return (
     <section className="py-12 bg-muted/50">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-xl font-bold mb-6">바로가기</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {quickLinks.map((link) => {
-            if (link.action === "inquiry") {
-              return (
-                <button
-                  key={link.id}
-                  type="button"
-                  onClick={onInquiryClick}
-                  className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
-                  data-testid={`link-quick-${link.id}`}
-                >
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <link.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <span className="font-medium text-sm">{link.title}</span>
-                </button>
-              );
-            }
-            return (
-              <a
-                key={link.id}
-                href={link.url}
-                className="flex flex-col items-center gap-3 p-6 rounded-md bg-background border hover-elevate active-elevate-2 transition-all"
-                data-testid={`link-quick-${link.id}`}
-              >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <link.icon className="h-6 w-6 text-primary" />
-                </div>
-                <span className="font-medium text-sm">{link.title}</span>
-              </a>
-            );
-          })}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <UtensilsCrossed className="h-5 w-5" />
+            정읍 맛집
+          </h2>
+          <Badge variant="secondary">추천 맛집</Badge>
         </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {restaurants.map((restaurant) => (
+            <Card 
+              key={restaurant.id} 
+              className="hover-elevate cursor-pointer"
+              data-testid={`card-restaurant-${restaurant.id}`}
+            >
+              <CardContent className="p-6 flex flex-col items-center text-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                  <restaurant.icon className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{restaurant.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{restaurant.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <p className="text-center text-sm text-muted-foreground mt-4">
+          맛집 정보는 관리자 페이지에서 등록할 수 있습니다.
+        </p>
       </div>
     </section>
   );
@@ -1425,7 +1421,7 @@ export default function Home() {
           </div>
         </section>
 
-        <QuickLinks onInquiryClick={() => setInquiryOpen(true)} />
+        <RestaurantSection />
       </main>
 
       <Footer />
