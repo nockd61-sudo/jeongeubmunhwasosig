@@ -1,1 +1,60 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>업로드</title>
+<style>
+body {font-family:sans-serif;}
+.container {padding:20px;}
+input {display:block; margin-bottom:10px;}
+button {padding:10px; background:#6d4cff; color:#fff;}
+</style>
+</head>
+<body>
+
+<nav>
+<a href="index.html">홈</a>
+<a href="upload.html">소식올리기</a>
+</nav>
+
+<div class="container">
+<h2>소식 올리기</h2>
+
+<input id="title" placeholder="제목">
+<input id="date" type="date">
+<select id="type">
+<option value="image">이미지</option>
+<option value="video">영상</option>
+</select>
+<input id="file" type="file">
+
+<button onclick="upload()">등록</button>
+</div>
+
+<script>
+function upload(){
+let file = document.getElementById("file").files[0];
+let reader = new FileReader();
+
+reader.onload = ()=>{
+let data = JSON.parse(localStorage.getItem("posts")||"[]");
+
+data.push({
+title:title.value,
+date:date.value,
+type:type.value,
+img:reader.result
+});
+
+localStorage.setItem("posts", JSON.stringify(data));
+
+alert("등록완료");
+}
+
+reader.readAsDataURL(file);
+}
+</script>
+
+</body>
+</html>
