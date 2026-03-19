@@ -476,7 +476,7 @@
         <button type="button">공지사항</button>
         <button type="button">게시판</button>
         <button type="button">영상행사</button>
-        <button type="button">제보공간</button>
+      
         <button class="acttion id="board" class="wrap">
       <h2 class="section-title">e-book처럼 보는 문<div class="quick-menu">
         <button type="button" data-target="notices">공지사항</button>
@@ -779,21 +779,28 @@ searchBtn.addEventListener('click', renderPosts);
         if (filter) {
           filterType.value = filter;
           renderPosts();
-          document.getElementById('board').scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('board').scrollIntoView({ behavior: 'smooth', block: 'start' });
           return;
         }
 
         if (target) {
-          document.getElementById(target).scrollIntoView({ behavior: 'smooth' });
+         document.getElementById(target).scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       });
     });
 
-    topMenuLinks.forEach((link) => {
-      link.addEventListener('click', () => {
-        topMenuLinks.forEach((item) => item.classList.remove('active'));
-        link.classList.add('active');
-      });
-    });
+   topMenuLinks.forEach((link) => {
+  link.addEventListener('click', (event) => {
+    event.preventDefault();
+    topMenuLinks.forEach((item) => item.classList.remove('active'));
+    link.classList.add('active');
 
-    renderPosts();
+    const href = link.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+});
