@@ -12,12 +12,14 @@
       --muted: #6b7280;
       --line: #dddddd;
       --brand: #6d4cff;
+      --brand-2: #8c73ff;
+      --soft: #f7f7fb;
       --max: 1180px;
       --shadow: 0 8px 24px rgba(0,0,0,0.06);
+      --radius: 18px;
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
@@ -140,6 +142,7 @@
       border: 1px solid var(--line);
       background: #fff;
       padding: 14px 10px;
+      border-radius: 0;
       font-size: 0.95rem;
       cursor: pointer;
     }
@@ -422,13 +425,16 @@
       .cards { grid-template-columns: repeat(3, 1fr); }
       .quick-menu { grid-template-columns: repeat(4, 1fr); }
     }
+      .quick-menu { grid-template-columns: repeat(3, 1fr); }
+    }
 
     @media (max-width: 820px) {
       .topbar,
       .footer-inner,
       .form-grid,
       .toolbar,
-      .quick-menu {
+      .quick-menu,
+      .hero-box {
         grid-template-columns: 1fr;
         display: grid;
       }
@@ -439,10 +445,19 @@
       .menu { width: 100%; }
     }
 
+      .topbar { display: flex; flex-direction: column; align-items: start; }
+      .hero-box { height: 280px; }
+      .menu { width: 100%; }
+    }
+
     @media (max-width: 560px) {
       .wrap { width: min(var(--max), calc(100% - 18px)); }
       .cards { grid-template-columns: 1fr; }
       .quick-menu { grid-template-columns: repeat(2, 1fr); }
+      .hero-box { height: 230px; }
+      .hero-overlay h1 { font-size: 1.8rem; }
+    }
+      .cards { grid-template-columns: repeat(2, 1fr); }
       .hero-box { height: 230px; }
       .hero-overlay h1 { font-size: 1.8rem; }
     }
@@ -503,11 +518,29 @@
 
     <section id="notices" class="wrap panel">
       <h3>관리자공지사항</h3>
-      <div class="notice-list">
+      <button onclick="toggleNoticeForm()" style="margin-bottom:12px; background:#6d4cff; color:#fff; border:none; padding:8px 14px; cursor:pointer;">글쓰기</button>
+      <div class="notice-list" id="noticeList">
         <div class="notice-item"><strong>정읍문화소식 오픈 안내</strong><span>2026.03.19</span></div>
-        <div class="notice-item"><strong>시민이 직접 이미지와 영상을 등록할 수 있습니다</strong><span>2026.03.19</span></div>
-        <div class="notice-item"><strong>가까운 날짜순으로 첫 화면 6개가 자동 노출됩니다</strong><span>2026.03.19</span></div>
       </div>
+    </section>
+
+    <section id="adminWrite" class="wrap upload-box" style="display:none;">
+      <h3>관리자 공지 작성</h3>
+      <form id="noticeForm">
+        <div class="form-grid">
+          <div class="field full">
+            <label>제목</label>
+            <input id="noticeTitle" type="text" required>
+          </div>
+          <div class="field full">
+            <label>내용</label>
+            <textarea id="noticeContent" required></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="submit" type="submit">공지 등록</button>
+        </div>
+      </form>
     </section>
 
     <section id="upload" class="wrap upload-box">
@@ -797,6 +830,24 @@
         uploadForm.reset();
         renderPreview(null, 'image');
         renderPosts();
+
+    function toggleNoticeForm(){
+      const el = document.getElementById('adminWrite');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const noticeForm = document.getElementById('noticeForm');
+    if(noticeForm){
+      noticeForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('noticeTitle').value;
+        const today = new Date().toISOString().slice(0,10);
+        const html = `<div class="notice-item"><strong>${title}</strong><span>${today}</span></div>`;
+        document.getElementById('noticeList').insertAdjacentHTML('afterbegin', html);
+        this.reset();
+        alert('공지 등록 완료');
+      });
+    }
         alert('등록되었습니다. 가까운 날짜순 6개에 자동 반영됩니다.');
       };
       reader.readAsDataURL(file);
@@ -808,6 +859,24 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         renderPosts();
+
+    function toggleNoticeForm(){
+      const el = document.getElementById('adminWrite');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const noticeForm = document.getElementById('noticeForm');
+    if(noticeForm){
+      noticeForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('noticeTitle').value;
+        const today = new Date().toISOString().slice(0,10);
+        const html = `<div class="notice-item"><strong>${title}</strong><span>${today}</span></div>`;
+        document.getElementById('noticeList').insertAdjacentHTML('afterbegin', html);
+        this.reset();
+        alert('공지 등록 완료');
+      });
+    }
       }
     });
 
@@ -822,33 +891,82 @@
         if (filter) {
           filterType.value = filter;
           renderPosts();
-          document.getElementById('board').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    function toggleNoticeForm(){
+      const el = document.getElementById('adminWrite');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const noticeForm = document.getElementById('noticeForm');
+    if(noticeForm){
+      noticeForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('noticeTitle').value;
+        const today = new Date().toISOString().slice(0,10);
+        const html = `<div class="notice-item"><strong>${title}</strong><span>${today}</span></div>`;
+        document.getElementById('noticeList').insertAdjacentHTML('afterbegin', html);
+        this.reset();
+        alert('공지 등록 완료');
+      });
+    }
+          document.getElementById('board').scrollIntoView({ behavior: 'smooth' });
           return;
         }
 
         if (target) {
-          document.getElementById(target).scrollIntoView({ behavior: 'smooth', block: 'start' });
+          document.getElementById(target).scrollIntoView({ behavior: 'smooth' });
         }
       });
     });
 
     topMenuLinks.forEach((link) => {
-      link.addEventListener('click', (event) => {
-        event.preventDefault();
+      link.addEventListener('click', () => {
         topMenuLinks.forEach((item) => item.classList.remove('active'));
         link.classList.add('active');
-
-        const href = link.getAttribute('href');
-        if (href && href.startsWith('#')) {
-          const target = document.querySelector(href);
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }
       });
     });
 
     renderPosts();
+
+    function toggleNoticeForm(){
+      const el = document.getElementById('adminWrite');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const noticeForm = document.getElementById('noticeForm');
+    if(noticeForm){
+      noticeForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('noticeTitle').value;
+        const today = new Date().toISOString().slice(0,10);
+        const html = `<div class="notice-item"><strong>${title}</strong><span>${today}</span></div>`;
+        document.getElementById('noticeList').insertAdjacentHTML('afterbegin', html);
+        this.reset();
+        alert('공지 등록 완료');
+      });
+    }
+      }
+    });
+
+    renderPosts();
+
+    function toggleNoticeForm(){
+      const el = document.getElementById('adminWrite');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    const noticeForm = document.getElementById('noticeForm');
+    if(noticeForm){
+      noticeForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('noticeTitle').value;
+        const today = new Date().toISOString().slice(0,10);
+        const html = `<div class="notice-item"><strong>${title}</strong><span>${today}</span></div>`;
+        document.getElementById('noticeList').insertAdjacentHTML('afterbegin', html);
+        this.reset();
+        alert('공지 등록 완료');
+      });
+    }
   </script>
 </body>
 </html>
