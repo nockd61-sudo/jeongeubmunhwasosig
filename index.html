@@ -133,7 +133,7 @@
 
     .quick-menu {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin: 18px 0 26px;
     }
@@ -193,7 +193,7 @@
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 18px;
     }
 
@@ -417,8 +417,14 @@
       align-items: start;
     }
 
+    @media (min-width: 1280px) {
+      .cards { grid-template-columns: repeat(4, 1fr); }
+    }
+
     @media (max-width: 1100px) {
       .cards { grid-template-columns: repeat(3, 1fr); }
+      .quick-menu { grid-template-columns: repeat(4, 1fr); }
+    }
       .quick-menu { grid-template-columns: repeat(3, 1fr); }
     }
 
@@ -428,42 +434,32 @@
       .form-grid,
       .toolbar,
       .quick-menu,
-      .cards,
       .hero-box {
         grid-template-columns: 1fr;
         display: grid;
       }
 
+      .cards { grid-template-columns: repeat(2, 1fr); }
       .topbar { display: flex; flex-direction: column; align-items: start; }
       .hero-box { height: 280px; }
       .menu { width: 100%; }
-    }
-
-    @media (max-width: 560px) {
-      .wrap { width: min(var(--max), calc(100% - 18px)); }
+    }x), calc(100% - 18px)); }
       .cards { grid-template-columns: repeat(2, 1fr); }
       .hero-box { height: 230px; }
+      .hero-overlay h1 { font-size: 1@media (max-width: 560px) {
+      .wrap { width: min(var(--max), calc(100% - 18px)); }
+      .cards { grid-template-columns: 1fr; }
+      .quick-menu { grid-template-columns: repeat(2, 1fr); }
+      .hero-box { height: 230px; }
       .hero-overlay h1 { font-size: 1.8rem; }
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="wrap topbar">
-      <a href="#top" class="brand">
+    }  <a href="#top" class="brand">
         <strong>정읍문화소식</strong>
         <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
       </a>
       <nav class="menu">
         <a class="active" href="#board">게시판</a>
         <a href="#notices">공지사항</a>
-        <a href="#upload">직접올리기</a>
-      </nav>
-    </div>
-  </header>
-
-  <main id="top">
-    <section class="hero wrap">
+        <a href="#upload">직접올 wrap">
       <div class="hero-box">
         <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80" alt="메인 비주얼">
         <div class="hero-overlay">
@@ -481,32 +477,18 @@
         <button type="button">게시판</button>
         <button type="button">영상행사</button>
         <button type="button">제보공간</button>
-        <button class="active" type="button" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">소식올리기</button>
+        <button class="acttion id="board" class="wrap">
+      <h2 class="section-title">e-book처럼 보는 문<div class="quick-menu">
+        <button type="button" data-target="notices">공지사항</button>
+        <button type="button" data-target="board">게시판</button>
+        <button type="button" data-filter="video">영상행사</button>
+        <button type="button" data-target="upload" class="active">소식올리기</button>
       </div>
-    </section>
-
-    <section id="board" class="wrap">
-      <h2 class="section-title">e-book처럼 보는 문화소식</h2>
-      <div class="toolbar">
-        <select id="filterType">
-          <option value="all">전체</option>
-          <option value="image">이미지</option>
-          <option value="video">영상</option>
-        </select>
-        <input id="searchInput" type="text" placeholder="제목 또는 장소 검색">
-        <button id="searchBtn" type="button">검색</button>
-      </div>
-
-      <div class="cards" id="eventGrid"></div>
+    </section><div class="cards" id="eventGrid"></div>
       <div class="pagination">&laquo; &lt; <strong>1</strong> 2 3 4 5 6 &gt; &raquo;</div>
     </section>
 
-    <section id="notices" class="wrap panel">
-      <h3>관리자공지사항</h3>
-      <div class="notice-list">
-        <div class="notice-item"><strong>정읍문화소식 오픈 안내</strong><span>2026.03.19</span></div>
-        <div class="notice-item"><strong>시민이 직접 이미지와 영상을 등록할 수 있습니다</strong><span>2026.03.19</span></div>
-        <div class="notice-item"><strong>가까운 날짜순으로 첫 화면 6개가 자동 노출됩니다</strong><span>2026.03.19</span></div>
+    <section id="notices" class></div>
       </div>
     </section>
 
@@ -517,8 +499,7 @@
         <div class="form-grid">
           <div class="field">
             <label for="title">행사 제목</label>
-            <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
-          </div>
+      <div class="pagination" id="paginationInfo">가까운 날짜순 6개 노출</div>div>
           <div class="field">
             <label for="date">행사 날짜</label>
             <input id="date" type="date" required>
@@ -529,9 +510,7 @@
           </div>
           <div class="field">
             <label for="author">작성자</label>
-            <input id="author" type="text" placeholder="예: 시민 제보자" required>
-          </div>
-          <div class="field">
+            <input id="author" type=d">
             <label for="mediaType">올릴 파일 종류</label>
             <select id="mediaType">
               <option value="image">이미지</option>
@@ -688,10 +667,10 @@
     }
 
     function sortPosts(posts) {
-      return [...posts].sort((a, b) => new Date(a.date) - new Date(b.date));
-    }
-
-    function buildMedia(post) {
+      return [...posts].sort((a, b) => new Datconst searchBtn = document.getElementById('searchBtn');
+    const quickMenuButtons = document.querySelectorAll('.quick-menu button');
+    const topMenuLinks = document.querySelectorAll('.menu a');
+    const paginationInfo = document.getElementById('paginationInfo');dMedia(post) {
       if (post.mediaType === 'video') {
         return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
       }
@@ -703,8 +682,7 @@
       const keyword = searchInput.value.trim().toLowerCase();
       let posts = sortPosts(getPosts());
 
-      if (typeValue !== 'all') {
-        posts = posts.filter((post) => post.mediaType === typeValue);
+      if (typeValue !== 'aaType === typeValue);
       }
 
       if (keyword) {
@@ -743,62 +721,34 @@
       `).join('');
     }
 
-    function renderPreview(file, mediaType) {
-      if (!file) {
-        uploadPreview.className = 'upload-preview';
-        uploadPreview.innerHTML = '';
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      uploadPreview.innerHTML = mediaType === 'video'
-        ? `<video src="${url}" controls muted playsinline></video>`
-        : `<img src="${url}" alt="업로드 미리보기">`;
-      uploadPreview.className = 'upload-preview show';
-    }
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    mediaTypeSelect.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    uploadForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const file = fileInput.files?.[0];
-      if (!file) {
-        alert('이미지 또는 영상을 선택해 주세요.');
+    function renderPreview(filefunction renderPosts() {
+      const posts = currentFilteredPosts();
+      if (posts.length === 0) {
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
+        paginationInfo.textContent = '표시할 문화소식이 없습니다.';
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const posts = getPosts();
-        posts.push({
-          id: String(Date.now()),
-          title: document.getElementById('title').value,
-          date: document.getElementById('date').value,
-          place: document.getElementById('place').value,
-          author: document.getElementById('author').value,
-          description: document.getElementById('description').value,
-          mediaType: mediaTypeSelect.value,
-          mediaUrl: reader.result
-        });
-        savePosts(posts);
-        uploadForm.reset();
-        renderPreview(null, 'image');
-        renderPosts();
-        alert('등록되었습니다. 가까운 날짜순 6개에 자동 반영됩니다.');
-      };
-      reader.readAsDataURL(file);
-    });
+      paginationInfo.textContent = `가까운 날짜순 ${posts.length}개 노출`;
 
-    searchBtn.addEventListener('click', renderPosts);
-    filterType.addEventListener('change', renderPosts);
-    searchInput.addEventListener('keydown', (e) => {
+      eventGrid.innerHTML = posts.map((post) => `
+        <article class="card">
+          <div class="thumb">
+            <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
+            ${buildMedia(post)}
+          </div>
+          <div class="meta">
+            <div class="date">${formatDate(post.date)}</div>
+            <div class="title">${post.title}</div>
+            <div class="place">${post.place}</div>
+          </div>
+          <div class="actions">
+            <button type="button" onclick="alert('${post.description.replace(/'/g, "&#39;")}')">자세히</button>
+            <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('${post.title} | ${post.place} | ${formatDate(post.date)}')">공유</button>
+          </div>
+        </article>
+      `).join('');
+    }{
       if (e.key === 'Enter') {
         e.preventDefault();
         renderPosts();
@@ -809,3 +759,41 @@
   </script>
 </body>
 </html>
+searchBtn.addEventListener('click', renderPosts);
+    filterType.addEventListener('change', renderPosts);
+    searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        renderPosts();
+      }
+    });
+
+    quickMenuButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        quickMenuButtons.forEach((btn) => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        const target = button.dataset.target;
+        const filter = button.dataset.filter;
+
+        if (filter) {
+          filterType.value = filter;
+          renderPosts();
+          document.getElementById('board').scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+
+        if (target) {
+          document.getElementById(target).scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+
+    topMenuLinks.forEach((link) => {
+      link.addEventListener('click', () => {
+        topMenuLinks.forEach((item) => item.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
+
+    renderPosts();
