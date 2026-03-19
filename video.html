@@ -1,1 +1,33 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>영상행사</title>
+<style>
+.grid {display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:20px;}
+</style>
+</head>
+<body>
+
+<nav>
+<a href="index.html">홈</a>
+<a href="video.html">영상행사</a>
+</nav>
+
+<h2 style="padding:20px;">영상행사</h2>
+
+<div class="grid" id="list"></div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("posts")||"[]");
+
+list.innerHTML = data
+.filter(p=>p.type==="video")
+.map(p=>`
+<video src="${p.img}" controls style="width:100%"></video>
+`).join('');
+</script>
+
+</body>
+</html>
