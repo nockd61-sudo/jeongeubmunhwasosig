@@ -901,104 +901,38 @@
     </div>
   </footer>
 
-  <script>
-    const POSTS_KEY = 'jeongeup-culture-posts-v5';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      getDocs,
+      deleteDoc,
+      doc,
+      updateDoc,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Firebase 설정
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSWQzk1aNH0DJu8bYZV0K9Co9CzXmZ9T4",
+      authDomain: "jeongeup-culture.firebaseapp.com",
+      projectId: "jeongeup-culture",
+      storageBucket: "jeongeup-culture.firebasestorage.app",
+      messagingSenderId: "795525453236",
+      appId: "1:795525453236:web:a401047800386b3bcf0ee1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const ADMIN_PASSWORD = '1234';
-
-    const demoPosts = [
-      {
-        id: '1',
-        title: '정읍 봄 전시회',
-        date: '2026-03-20',
-        place: '정읍문화원',
-        author: '정읍문화원',
-        description: '정읍의 봄 풍경과 작가들의 전시를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '2',
-        title: '생활문화 공연마당',
-        date: '2026-03-21',
-        place: '정읍예술회관',
-        author: '생활문화동아리',
-        description: '시민과 함께하는 열린 공연입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '3',
-        title: '가족 체험 프로그램',
-        date: '2026-03-22',
-        place: '문화창작소',
-        author: '시민기획팀',
-        description: '아이와 함께 만드는 즐거운 체험 시간입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '4',
-        title: '청년 문화 토크',
-        date: '2026-03-23',
-        place: '공유문화라운지',
-        author: '청년기획단',
-        description: '청년 문화기획자가 함께 이야기합니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '5',
-        title: '갤러리 오픈데이',
-        date: '2026-03-24',
-        place: '정읍 시내 갤러리',
-        author: '지역 작가회',
-        description: '지역 갤러리와 작가를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '6',
-        title: '야외 음악회',
-        date: '2026-03-25',
-        place: '정읍천 광장',
-        author: '정읍음악협회',
-        description: '야외에서 즐기는 시민 음악회입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '7',
-        title: '문화 영상 아카이브',
-        date: '2026-03-29',
-        place: '온라인 공유',
-        author: '시민제보',
-        description: '정읍 문화행사 현장을 담은 짧은 기록 영상입니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-        likes: 0,
-        views: 0,
-        comments: []
-      }
-    ];
+    const MAX_IMAGE_BYTES = 700 * 1024; // Firestore 문서 한도 고려
+    const MAX_IMAGE_WIDTH = 1400;
+    const JPEG_QUALITY = 0.78;
 
     const demoNotices = [
       {
@@ -1043,7 +977,13 @@
     const boardList = document.getElementById('boardList');
     const videoList = document.getElementById('videoList');
     const commentForm = document.getElementById('commentForm');
+
     let isAdminLoggedIn = false;
+    let allPosts = [];
+
+    function structuredCloneSafe(data) {
+      return JSON.parse(JSON.stringify(data));
+    }
 
     function getStored(key, fallback) {
       const raw = localStorage.getItem(key);
@@ -1059,25 +999,8 @@
       }
     }
 
-    function structuredCloneSafe(data) {
-      return JSON.parse(JSON.stringify(data));
-    }
-
     function saveStored(key, value) {
       localStorage.setItem(key, JSON.stringify(value));
-    }
-
-    function getPosts() {
-      return getStored(POSTS_KEY, demoPosts).map(post => ({
-        likes: 0,
-        views: 0,
-        comments: [],
-        ...post
-      }));
-    }
-
-    function savePosts(posts) {
-      saveStored(POSTS_KEY, posts);
     }
 
     function getNotices() {
@@ -1088,8 +1011,31 @@
       saveStored(NOTICES_KEY, notices);
     }
 
+    function getPosts() {
+      return allPosts.map(post => ({
+        likes: 0,
+        views: 0,
+        comments: [],
+        ...post
+      }));
+    }
+
+    function findPostById(id) {
+      return getPosts().find((post) => String(post.id) === String(id));
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function formatDate(dateString) {
-      const d = new Date(dateString + 'T00:00:00');
+      if (!dateString) return '';
+      const d = new Date(String(dateString).slice(0, 10) + 'T00:00:00');
       if (Number.isNaN(d.getTime())) return dateString;
       return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
     }
@@ -1104,20 +1050,15 @@
 
     function sortPosts(posts) {
       const today = getTodayString();
-
       return [...posts].sort((a, b) => {
         const aFuture = a.date >= today ? 0 : 1;
         const bFuture = b.date >= today ? 0 : 1;
-
         if (aFuture !== bFuture) return aFuture - bFuture;
         return new Date(a.date) - new Date(b.date);
       });
     }
 
     function buildMedia(post) {
-      if (post.mediaType === 'video') {
-        return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
-      }
       return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
     }
 
@@ -1129,20 +1070,17 @@
       if (typeValue !== 'all') {
         posts = posts.filter((post) => post.mediaType === typeValue);
       }
-
       if (keyword) {
         posts = posts.filter((post) =>
           (post.title || '').toLowerCase().includes(keyword) ||
           (post.place || '').toLowerCase().includes(keyword)
         );
       }
-
       return posts.slice(0, 6);
     }
 
     function renderPosts() {
       const posts = currentFilteredPosts();
-
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
@@ -1180,7 +1118,6 @@
 
     function renderNotices() {
       const notices = [...getNotices()].sort((a, b) => new Date(b.date) - new Date(a.date));
-
       const makeNoticeHtml = (notice) => `
         <div class="notice-item">
           <div class="notice-main">
@@ -1208,12 +1145,10 @@
 
     function renderBoardList() {
       const posts = sortPosts(getPosts());
-
       if (!posts.length) {
         boardList.innerHTML = '<div class="board-item"><div><strong>등록된 게시글이 없습니다.</strong></div></div>';
         return;
       }
-
       boardList.innerHTML = posts.map((post) => `
         <div class="board-item">
           <div>
@@ -1227,12 +1162,10 @@
 
     function renderVideoList() {
       const videos = sortPosts(getPosts()).filter((post) => post.mediaType === 'video');
-
       if (videos.length === 0) {
-        videoList.innerHTML = '<div class="video-item"><div><strong>등록된 영상이 없습니다.</strong><span>영상행사 등록 후 이곳에 표시됩니다.</span></div></div>';
+        videoList.innerHTML = '<div class="video-item"><div><strong>영상 업로드는 Blaze 요금제 + Firebase Storage 연결 후 사용 가능합니다.</strong><span>현재 Spark 요금제에서는 이미지 게시글만 권장합니다.</span></div></div>';
         return;
       }
-
       videoList.innerHTML = videos.map((post) => `
         <div class="video-item">
           <div>
@@ -1257,7 +1190,6 @@
         uploadPreview.innerHTML = '';
         return;
       }
-
       const url = URL.createObjectURL(file);
       uploadPreview.innerHTML = mediaType === 'video'
         ? `<video src="${url}" controls muted playsinline></video>`
@@ -1268,10 +1200,7 @@
     function openModal(id) {
       document.getElementById(id)?.classList.add('show');
       document.body.style.overflow = 'hidden';
-
-      if (id === 'noticeModal') {
-        showNoticeList();
-      }
+      if (id === 'noticeModal') showNoticeList();
     }
 
     function closeModal(id) {
@@ -1299,7 +1228,6 @@
         }
         setAdminMode(true);
       }
-
       noticeListPanel.style.display = 'none';
       noticeWritePanel.style.display = 'block';
       noticeViewTab.className = 'reset';
@@ -1318,11 +1246,9 @@
         alert('관리자만 수정 가능합니다');
         return;
       }
-
       const notices = getNotices();
       const target = notices.find((item) => item.id === id);
       if (!target) return;
-
       openModal('noticeModal');
       showNoticeWrite();
       document.getElementById('noticeTitle').value = target.title;
@@ -1335,61 +1261,62 @@
         alert('관리자만 삭제 가능합니다');
         return;
       }
-
       if (!confirm('이 공지를 삭제하시겠습니까?')) return;
-
       const notices = getNotices().filter((item) => item.id !== id);
       saveNotices(notices);
       renderNotices();
     }
 
-    function findPostById(id) {
-      return getPosts().find((post) => String(post.id) === String(id));
+    async function addView(id) {
+      const post = findPostById(id);
+      if (!post) return null;
+      try {
+        await updateDoc(doc(db, 'posts', String(id)), {
+          views: (post.views || 0) + 1,
+          updatedAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+      return { ...post, views: (post.views || 0) + 1 };
     }
 
-    function addView(id) {
-      const posts = getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      target.views = (target.views || 0) + 1;
-      savePosts(posts);
-      return target;
+    async function likePost(id) {
+      const post = findPostById(id);
+      if (!post) return null;
+      try {
+        await updateDoc(doc(db, 'posts', String(id)), {
+          likes: (post.likes || 0) + 1,
+          updatedAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error(e);
+      }
+      return { ...post, likes: (post.likes || 0) + 1 };
     }
 
-    function likePost(id) {
-      const posts = getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      target.likes = (target.likes || 0) + 1;
-      savePosts(posts);
-      return target;
-    }
-
-    function deletePost(id) {
+    async function deletePost(id) {
       if (!isAdminLoggedIn) {
         alert('관리자만 삭제 가능합니다');
         return;
       }
-
       if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
-
-      const posts = getPosts().filter(p => String(p.id) !== String(id));
-      savePosts(posts);
-      renderAll();
-      closeModal('detailModal');
-      alert('삭제되었습니다.');
+      try {
+        await deleteDoc(doc(db, 'posts', String(id)));
+        closeModal('detailModal');
+        alert('삭제되었습니다.');
+      } catch (e) {
+        console.error(e);
+        alert('삭제 중 오류가 발생했습니다.');
+      }
     }
 
     function renderComments(post) {
       const list = document.getElementById('commentList');
-
       if (!post.comments || post.comments.length === 0) {
         list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
         return;
       }
-
       list.innerHTML = post.comments.map(c => `
         <div class="comment-item">
           <strong>${escapeHtml(c.author)}</strong>
@@ -1399,8 +1326,8 @@
       `).join('');
     }
 
-    function openDetail(id) {
-      const post = addView(id);
+    async function openDetail(id) {
+      const post = await addView(id);
       if (!post) return;
 
       detailTitle.textContent = post.title;
@@ -1411,24 +1338,18 @@
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
         <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
-
-      detailMedia.innerHTML = post.mediaType === 'video'
-        ? `<video src="${post.mediaUrl}" controls playsinline></video>`
-        : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
-
+      detailMedia.innerHTML = `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
       detailDescription.textContent = post.description || '';
+
       detailShareBtn.onclick = () => sharePost(id);
-      detailLikeBtn.onclick = () => {
-        const updated = likePost(id);
-        if (!updated) return;
-        openDetail(id);
-        renderAll();
+      detailLikeBtn.onclick = async () => {
+        await likePost(id);
+        await openDetail(id);
       };
 
       commentForm.dataset.postId = String(id);
       renderComments(post);
       openModal('detailModal');
-      renderAll();
     }
 
     function sharePost(id) {
@@ -1437,46 +1358,87 @@
         alert('공유할 글을 찾지 못했습니다.');
         return;
       }
-
       const shareText = `[정읍문화소식] ${post.title} | ${post.place} | ${formatDate(post.date)}`;
       const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-      const fullText = `${shareText}\n${shareUrl}`;
+      const fullText = `${shareText}
+${shareUrl}`;
 
       if (navigator.share) {
-        navigator.share({
-          title: post.title,
-          text: shareText,
-          url: shareUrl
-        }).then(() => {
-          alert('공유창을 열었습니다.');
-        }).catch(() => {
-          fallbackShare(fullText);
-        });
+        navigator.share({ title: post.title, text: shareText, url: shareUrl })
+          .catch(() => fallbackShare(fullText));
         return;
       }
-
       fallbackShare(fullText);
     }
 
     function fallbackShare(fullText) {
       if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(fullText).then(() => {
-          alert('공유용 링크를 복사했습니다.');
-        }).catch(() => {
-          window.prompt('아래 내용을 복사해 공유하세요.', fullText);
-        });
+        navigator.clipboard.writeText(fullText)
+          .then(() => alert('공유용 링크를 복사했습니다.'))
+          .catch(() => window.prompt('아래 내용을 복사해 공유하세요.', fullText));
       } else {
         window.prompt('아래 내용을 복사해 공유하세요.', fullText);
       }
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function openPostFromHash() {
+      const hash = window.location.hash || '';
+      if (!hash.startsWith('#post-')) return;
+      const id = hash.replace('#post-', '');
+      const post = findPostById(id);
+      if (post) openDetail(id);
+    }
+
+    function blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function compressImageToDataUrl(file) {
+      const imageBitmap = await createImageBitmap(file);
+      let width = imageBitmap.width;
+      let height = imageBitmap.height;
+      if (width > MAX_IMAGE_WIDTH) {
+        const ratio = MAX_IMAGE_WIDTH / width;
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imageBitmap, 0, 0, width, height);
+
+      let quality = JPEG_QUALITY;
+      let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+
+      while (blob && blob.size > MAX_IMAGE_BYTES && quality > 0.35) {
+        quality -= 0.08;
+        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+      }
+
+      if (!blob) {
+        throw new Error('이미지 변환 실패');
+      }
+      if (blob.size > MAX_IMAGE_BYTES) {
+        throw new Error('이미지가 너무 큽니다. 더 작은 이미지를 선택해 주세요.');
+      }
+
+      return await blobToDataURL(blob);
+    }
+
+    function validateSparkUpload(file, mediaType) {
+      if (mediaType === 'video') {
+        throw new Error('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다. Blaze + Firebase Storage 연결 후 사용해 주세요.');
+      }
+      if (!file.type.startsWith('image/')) {
+        throw new Error('이미지 파일만 업로드 가능합니다.');
+      }
     }
 
     adminLoginBtn.addEventListener('click', () => {
@@ -1485,7 +1447,6 @@
         alert('관리자 로그아웃 되었습니다.');
         return;
       }
-
       const password = prompt('관리자 비밀번호를 입력하세요');
       if (password === ADMIN_PASSWORD) {
         setAdminMode(true);
@@ -1507,6 +1468,7 @@
       closeModal('videoModal');
       openModal('uploadModal');
       mediaTypeSelect.value = 'video';
+      alert('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다.');
     });
 
     document.querySelectorAll('[data-open]').forEach((button) => {
@@ -1561,6 +1523,9 @@
     mediaTypeSelect.addEventListener('change', () => {
       const file = fileInput.files?.[0];
       renderPreview(file, mediaTypeSelect.value);
+      if (mediaTypeSelect.value === 'video') {
+        alert('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다.');
+      }
     });
 
     searchBtn.addEventListener('click', renderPosts);
@@ -1572,43 +1537,50 @@
     });
     filterType.addEventListener('change', renderPosts);
 
-    uploadForm.addEventListener('submit', (e) => {
+    uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const file = fileInput.files?.[0];
+      const submitBtn = uploadForm.querySelector('.submit');
       if (!file) {
-        alert('이미지 또는 영상을 선택해 주세요.');
+        alert('이미지를 선택해 주세요.');
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const posts = getPosts();
+      try {
+        validateSparkUpload(file, mediaTypeSelect.value);
+        submitBtn.disabled = true;
+        submitBtn.textContent = '등록 중...';
 
-        posts.push({
-          id: String(Date.now()),
+        const mediaUrl = await compressImageToDataUrl(file);
+
+        await addDoc(collection(db, 'posts'), {
           title: document.getElementById('title').value.trim(),
           date: document.getElementById('date').value,
           place: document.getElementById('place').value.trim(),
           author: document.getElementById('author').value.trim(),
           description: document.getElementById('description').value.trim(),
-          mediaType: mediaTypeSelect.value,
-          mediaUrl: reader.result,
+          mediaType: 'image',
+          mediaUrl,
           likes: 0,
           views: 0,
-          comments: []
+          comments: [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
 
-        savePosts(posts);
         uploadForm.reset();
         renderPreview(null, 'image');
         mediaTypeSelect.value = 'image';
-        renderAll();
-        alert('등록되었습니다. 가까운 날짜순 6개에 자동 반영됩니다.');
+        alert('등록되었습니다. 이제 다른 사람에게도 보입니다.');
         closeModal('uploadModal');
-      };
-
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error(error);
+        alert(error.message || '등록 중 오류가 발생했습니다.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '게시글 등록';
+      }
     });
 
     uploadForm.addEventListener('reset', () => {
@@ -1655,48 +1627,63 @@
       alert(editId ? '공지 수정 완료' : '공지 등록 완료');
     });
 
-    commentForm.addEventListener('submit', (e) => {
+    commentForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const id = commentForm.dataset.postId;
-      const posts = getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
+      const target = findPostById(id);
       if (!target) return;
 
-      if (!target.comments) target.comments = [];
-
-      target.comments.unshift({
+      const comments = Array.isArray(target.comments) ? [...target.comments] : [];
+      comments.unshift({
         author: document.getElementById('commentAuthor').value.trim(),
         text: document.getElementById('commentText').value.trim(),
         date: new Date().toISOString().slice(0, 10)
       });
 
-      savePosts(posts);
-      commentForm.reset();
-      renderComments(target);
-      renderAll();
-      openDetail(id);
+      try {
+        await updateDoc(doc(db, 'posts', String(id)), {
+          comments,
+          updatedAt: serverTimestamp()
+        });
+        commentForm.reset();
+      } catch (error) {
+        console.error(error);
+        alert('댓글 저장 중 오류가 발생했습니다.');
+      }
     });
 
-    function openPostFromHash() {
-      const hash = window.location.hash || '';
-      if (!hash.startsWith('#post-')) return;
-
-      const id = hash.replace('#post-', '');
-      const post = findPostById(id);
-      if (post) {
-        openDetail(id);
-      }
-    }
+    onSnapshot(collection(db, 'posts'), (snapshot) => {
+      allPosts = snapshot.docs.map((d) => {
+        const data = d.data();
+        return {
+          id: d.id,
+          title: data.title || '',
+          date: data.date || '',
+          place: data.place || '',
+          author: data.author || '',
+          description: data.description || '',
+          mediaType: data.mediaType || 'image',
+          mediaUrl: data.mediaUrl || '',
+          likes: data.likes || 0,
+          views: data.views || 0,
+          comments: Array.isArray(data.comments) ? data.comments : []
+        };
+      });
+      renderAll();
+      openPostFromHash();
+    }, (error) => {
+      console.error(error);
+      alert('Firestore 연결 오류가 발생했습니다. Firestore를 테스트 모드로 생성했는지 확인해 주세요.');
+    });
 
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    renderAll();
-    openPostFromHash();
-
+    renderNotices();
     window.addEventListener('hashchange', openPostFromHash);
   </script>
+
 </body>
 </html>
 
