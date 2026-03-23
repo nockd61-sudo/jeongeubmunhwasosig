@@ -1,5 +1,3 @@
-<!DOCTYPE html>
-<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -657,7 +655,10 @@
       .hero-overlay h1 { font-size: 1.8rem; }
       .modal-body, .modal-head { padding: 16px; }
     }
-  </style>
+  
+    .board-tab-content { display: none; }
+    .board-tab-content.active { display: block; }
+</style>
 </head>
 <body>
   <header>
@@ -667,7 +668,7 @@
         <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
       </a>
       <nav class="menu">
-        <button class="active" type="button" data-open="boardModal">게시판</button>
+        <button class="active" type="button" data-open="boardModal">문화이야기</button>
         <button type="button" data-open="noticeModal">공지사항</button>
         <button type="button" data-open="videoModal">영상행사</button>
         <button type="button" data-open="uploadModal">소식올리기</button>
@@ -683,7 +684,8 @@
         <div class="hero-overlay">
           <div>
             <h1>정읍문화소식</h1>
-            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화 게시판</p>
+            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기
+            </p>
           </div>
         </div>
       </div>
@@ -692,7 +694,7 @@
     <section class="wrap">
       <div class="quick-row">
         <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="boardModal">게시판</button>
+        <button type="button" data-open="boardModal">문화이야기</button>
         <button type="button" data-open="videoModal">영상행사</button>
         <button type="button" data-open="uploadModal" class="active">소식올리기</button>
       </div>
@@ -759,26 +761,53 @@
     </div>
   </div>
 
+ 
+
+  
   <div class="modal-backdrop" id="boardModal">
     <div class="modal">
       <div class="modal-head">
-        <h3>게시판</h3>
+        <h3>문화이야기</h3>
         <button class="close-btn" type="button" data-close="boardModal">✕</button>
       </div>
       <div class="modal-body">
         <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="boardViewTab">게시글 보기</button>
-          <button class="reset" type="button" id="boardWriteTab">글 쓰러 가기</button>
+          <button type="button" class="submit active" data-board-tab="list">게시글 보기</button>
+          <button type="button" class="reset" data-board-tab="write">글 쓰기</button>
         </div>
-        <div class="panel" style="margin-top:0;">
-          <h3>전체 게시글 목록</h3>
-          <div class="board-list" id="boardList"></div>
+
+        <div class="board-tab-content active" id="boardListTab">
+          <div class="panel" style="margin-top:0;">
+            <h3>전체 게시글 목록</h3>
+            <ul class="board-post-list" id="boardPostList" style="list-style:none; padding:0; margin:0;"></ul>
+          </div>
+        </div>
+
+        <div class="board-tab-content" id="boardWriteTab">
+          <div class="panel" style="margin-top:0;">
+            <h3>문화이야기 글쓰기</h3>
+            <form id="boardWriteForm">
+              <div class="form-grid">
+                <div class="field full">
+                  <label for="boardTitle">제목</label>
+                  <input id="boardTitle" type="text" placeholder="제목을 입력하세요" required>
+                </div>
+                <div class="field full">
+                  <label for="boardContent">내용</label>
+                  <textarea id="boardContent" placeholder="정읍문화소식 관련 이야기를 자유롭게 적어주세요" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="submit" type="submit">등록하기</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="videoModal">
+<div class="modal-backdrop" id="videoModal">
     <div class="modal">
       <div class="modal-head">
         <h3>영상행사</h3>
@@ -1035,12 +1064,12 @@
     const noticeWriteTab = document.getElementById('noticeWriteTab');
     const noticeListPanel = document.getElementById('noticeListPanel');
     const noticeWritePanel = document.getElementById('noticeWritePanel');
-    const boardWriteTab = document.getElementById('boardWriteTab');
+    const boardWriteTabBtn = document.querySelector('[data-board-tab="write"]');
     const videoWriteTab = document.getElementById('videoWriteTab');
     const noticeList = document.getElementById('noticeList');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const noticePreviewList = document.getElementById('noticePreviewList');
-    const boardList = document.getElementById('boardList');
+    const boardPostList = document.getElementById('boardPostList');
     const videoList = document.getElementById('videoList');
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
@@ -1210,18 +1239,15 @@
       const posts = sortPosts(getPosts());
 
       if (!posts.length) {
-        boardList.innerHTML = '<div class="board-item"><div><strong>등록된 게시글이 없습니다.</strong></div></div>';
+        boardPostList.innerHTML = '<li style="padding:14px 0; border-bottom:1px solid #e5e7eb;"><strong>등록된 게시글이 없습니다.</strong></li>';
         return;
       }
 
-      boardList.innerHTML = posts.map((post) => `
-        <div class="board-item">
-          <div>
-            <strong>${escapeHtml(post.title)}</strong>
-            <span>${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-          </div>
-          <span>${formatDate(post.date)}</span>
-        </div>
+      boardPostList.innerHTML = posts.map((post) => `
+        <li style="display:flex; justify-content:space-between; gap:20px; padding:14px 0; border-bottom:1px solid #e5e7eb;">
+          <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
+          <em style="font-style:normal; color:#6b7280;">${formatDate(post.date)}</em>
+        </li>
       `).join('');
     }
 
@@ -1272,6 +1298,9 @@
       if (id === 'noticeModal') {
         showNoticeList();
       }
+      if (id === 'boardModal') {
+        showBoardList();
+      }
     }
 
     function closeModal(id) {
@@ -1304,6 +1333,21 @@
       noticeWritePanel.style.display = 'block';
       noticeViewTab.className = 'reset';
       noticeWriteTab.className = 'submit';
+    }
+
+    function showBoardList() {
+      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('[data-board-tab="list"]')?.classList.add('active');
+      document.getElementById('boardListTab')?.classList.add('active');
+      document.getElementById('boardWriteTab')?.classList.remove('active');
+      document.getElementById('boardWriteForm')?.reset();
+    }
+
+    function showBoardWrite() {
+      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('[data-board-tab="write"]')?.classList.add('active');
+      document.getElementById('boardWriteTab')?.classList.add('active');
+      document.getElementById('boardListTab')?.classList.remove('active');
     }
 
     function setAdminMode(enabled) {
@@ -1498,9 +1542,38 @@
     noticeViewTab.addEventListener('click', showNoticeList);
     noticeWriteTab.addEventListener('click', showNoticeWrite);
 
-    boardWriteTab.addEventListener('click', () => {
-      closeModal('boardModal');
-      openModal('uploadModal');
+    document.getElementById('boardWriteForm')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const title = document.getElementById('boardTitle').value.trim();
+      const content = document.getElementById('boardContent').value.trim();
+
+      if (!title || !content) {
+        alert('제목과 내용을 입력해주세요.');
+        return;
+      }
+
+      const posts = getPosts();
+
+      posts.unshift({
+        id: String(Date.now()),
+        title,
+        date: new Date().toISOString().slice(0, 10),
+        place: '시민 문화이야기',
+        author: '시민',
+        description: content,
+        mediaType: 'image',
+        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+        likes: 0,
+        views: 0,
+        comments: []
+      });
+
+      savePosts(posts);
+      this.reset();
+      renderAll();
+      showBoardList();
+      alert('문화이야기가 등록되었습니다.');
     });
 
     videoWriteTab.addEventListener('click', () => {
@@ -1520,6 +1593,14 @@
     });
 
     document.addEventListener('click', (event) => {
+      const tabBtn = event.target.closest('[data-board-tab]');
+      if (tabBtn) {
+        const tab = tabBtn.getAttribute('data-board-tab');
+        if (tab === 'list') showBoardList();
+        if (tab === 'write') showBoardWrite();
+        return;
+      }
+
       const detailBtn = event.target.closest('.detail-btn');
       if (detailBtn) {
         openDetail(detailBtn.dataset.postId);
