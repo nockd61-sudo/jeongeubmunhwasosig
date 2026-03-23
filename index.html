@@ -737,7 +737,7 @@
         </div>
 
         <div class="panel" id="noticeWritePanel" style="margin-top:0; padding:0; border:0; box-shadow:none; display:none;">
-          <h3>관리자 글쓰기</h3>
+          <h3> 글쓰기</h3>
           <form id="noticeForm">
             <div class="form-grid">
               <div class="field full">
@@ -745,12 +745,14 @@
                 <input id="noticeTitle" type="text" required>
               </div>
               <div class="field full">
-                <label for="noticeContent">내용</label>
-                <textarea id="noticeContent" required></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="submit" type="submit">공지 등록</button>
+             <label for="noticeTitle">제목</label>
+<input type="text" id="noticeTitle" placeholder="제목을 입력하세요" />
+
+<label for="noticeContent">내용</label>
+<textarea id="noticeContent" placeholder="정읍문화이야기 관련 내용을 올려주세요."></textarea>
+
+<!-- 등록 버튼 -->
+<button onclick="addNotice()">이야기 등록</button>
             </div>
           </form>
         </div>
@@ -766,7 +768,7 @@
   <div class="modal-backdrop" id="boardModal">
     <div class="modal">
       <div class="modal-head">
-        <h3>게시판</h3>
+        <h3>글쓰기</h3>
         <button class="close-btn" type="button" data-close="boardModal">✕</button>
       </div>
       <div class="modal-body">
