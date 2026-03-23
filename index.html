@@ -2,1696 +2,687 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
- <meta name="naver-site-verification" content="47dc441ad0a75c49e1ad9a666960954d19831740" />
- <title>정읍문화소식 | 정읍 문화 플랫폼</title>
- <meta name="description" content="정읍 문화 행사, 축제, 전시, 맛집 정보를 한눈에 보는 정읍문화소식 플랫폼" />
- <meta name="keywords" content="정읍문화소식, 정읍문화, 정읍축제, 정읍전시, 정읍맛집" />
-</head>
-  <title>정읍문화소식</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="naver-site-verification" content="47dc441ad0a75c49e1ad9a666960954d19831740" />
+  <title>정읍문화이야기 | 정읍 문화 플랫폼</title>
+  <meta name="description" content="정읍의 문화 행사, 이야기, 영상, 소식을 한눈에 보는 정읍문화이야기 플랫폼" />
+  <meta name="keywords" content="정읍문화이야기, 정읍문화, 정읍행사, 정읍영상, 정읍소식, 정읍플랫폼" />
   <style>
-    :root {
-      --bg: #f4f4f4;
-      --paper: #ffffff;
-      --text: #1f1f1f;
-      --muted: #6b7280;
-      --line: #dddddd;
-      --brand: #6d4cff;
-      --brand-dark: #5337d6;
-      --shadow: 0 10px 28px rgba(0,0,0,0.08);
-      --max: 1180px;
-    }
-
     * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
     body {
-      font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin: 0;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
     }
-
-    a { color: inherit; text-decoration: none; }
-    img, video { display: block; width: 100%; }
-    button, input, textarea, select { font: inherit; }
-
-    .wrap {
-      width: min(var(--max), calc(100% - 28px));
-      margin: 0 auto;
-    }
+    a { text-decoration: none; color: inherit; }
 
     header {
-      background: var(--paper);
-      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #5b6cff, #8b5cf6);
+      color: white;
+      padding: 28px 20px 20px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    header p {
+      margin: 8px 0 0;
+      font-size: 15px;
+      opacity: 0.95;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: #ffffff;
+      padding: 14px;
+      border-bottom: 1px solid #e5e7eb;
       position: sticky;
       top: 0;
       z-index: 20;
     }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 18px 0;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .brand strong {
-      font-size: 1.32rem;
-      letter-spacing: -0.04em;
-      color: #222;
-    }
-
-    .brand span {
-      font-size: 0.88rem;
-      color: var(--muted);
-    }
-
-    .menu {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .menu button {
-      padding: 10px 14px;
-      border: 1px solid var(--line);
-      background: #fff;
-      font-size: 0.92rem;
+    nav button {
+      border: none;
+      background: #eef2ff;
+      color: #374151;
+      padding: 10px 18px;
       border-radius: 999px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
+      transition: 0.2s;
+    }
+    nav button:hover {
+      background: #dfe7ff;
+    }
+    nav button.active {
+      background: #5b6cff;
+      color: white;
     }
 
-    .menu button:hover,
-    .menu button.active {
-      background: var(--brand);
-      border-color: var(--brand);
-      color: #fff;
+    .container {
+      max-width: 1100px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
     }
 
     .hero {
-      padding: 22px 0 12px;
+      background: white;
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+      margin-bottom: 24px;
     }
-
-    .hero-box {
-      position: relative;
-      height: 360px;
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      background: #ddd;
-    }
-
-    .hero-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.5));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 24px;
-      color: #fff;
-    }
-
-    .hero-overlay h1 {
+    .hero h2 {
       margin: 0 0 10px;
-      font-size: clamp(2rem, 4vw, 3.5rem);
-      line-height: 1.08;
-      letter-spacing: -0.05em;
+      font-size: 28px;
+      color: #111827;
     }
-
-    .hero-overlay p {
+    .hero p {
       margin: 0;
-      font-size: 1rem;
-      opacity: 0.96;
+      color: #6b7280;
+      line-height: 1.7;
+      font-size: 15px;
     }
 
-    .quick-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin: 18px 0 26px;
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
     }
 
-    .quick-row button {
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 14px 10px;
-      font-size: 0.95rem;
-      cursor: pointer;
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
-
-    .quick-row button:hover,
-    .quick-row button.active {
-      background: var(--brand);
-      color: #fff;
-      border-color: var(--brand);
+    .section-head h3 {
+      margin: 0;
+      font-size: 24px;
     }
-
-    section {
-      padding: 12px 0 24px;
-    }
-
-    .section-title {
-      margin: 0 0 18px;
-      text-align: center;
-      font-size: 1.8rem;
-      letter-spacing: -0.04em;
+    .section-head p {
+      margin: 0;
+      color: #6b7280;
+      font-size: 14px;
     }
 
     .toolbar {
-      background: #fff;
-      border: 1px solid var(--line);
-      padding: 14px;
-      display: grid;
-      grid-template-columns: 160px 1fr 110px;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .toolbar input,
-    .toolbar select {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 10px 12px;
-      color: #222;
-    }
-
-    .toolbar button {
-      background: #111;
-      color: #fff;
-      border: 0;
-      cursor: pointer;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-    }
-
-    .card {
-      background: #fff;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      padding: 12px;
-      position: relative;
-    }
-
-    .post-admin-actions {
-      display: none;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    body.admin-mode .post-admin-actions {
-      display: flex;
-    }
-
-    .stat-row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 0.82rem;
-      margin-top: 2px;
     }
 
-    .thumb {
-      aspect-ratio: 3 / 4;
-      background: #ececec;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .thumb img,
-    .thumb video {
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .type-badge {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 2;
-      background: rgba(0,0,0,0.72);
-      color: #fff;
-      padding: 6px 9px;
-      font-size: 0.78rem;
-      border-radius: 999px;
-    }
-
-    .meta {
-      margin-top: 10px;
-      display: grid;
-      gap: 7px;
-    }
-
-    .meta .date {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .meta .title {
-      font-size: 1rem;
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-size: 14px;
       font-weight: 700;
-      line-height: 1.4;
-      min-height: 2.8em;
-    }
-
-    .meta .place {
-      font-size: 0.86rem;
-      color: var(--muted);
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-
-    .actions button {
-      flex: 1;
-      border: 0;
-      background: #8b8b8b;
-      color: #fff;
-      padding: 8px 10px;
-      font-size: 0.8rem;
       cursor: pointer;
-      border-radius: 6px;
+      transition: 0.2s;
     }
-
-    .actions button:last-child {
-      background: var(--brand);
+    .btn-primary {
+      background: #5b6cff;
+      color: white;
     }
-
-    .panel {
-      background: #fff;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-top: 24px;
+    .btn-primary:hover {
+      background: #4759f0;
     }
-
-    .panel h3 {
-      margin: 0 0 14px;
-      font-size: 1.25rem;
-      letter-spacing: -0.03em;
+    .btn-gray {
+      background: #e5e7eb;
+      color: #111827;
     }
-
-    .notice-list,
-    .board-list,
-    .video-list {
-      display: grid;
-      gap: 12px;
+    .btn-gray:hover {
+      background: #d1d5db;
     }
-
-    .notice-item,
-    .board-item,
-    .video-item {
-      padding: 12px 0;
-      border-bottom: 1px dashed var(--line);
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .notice-main {
-      flex: 1;
-      display: grid;
-      gap: 6px;
-    }
-
-    .notice-meta {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .notice-admin-actions {
-      display: none;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    body.admin-mode .notice-admin-actions {
-      display: flex;
-    }
-
-    .mini-btn {
-      border: 1px solid var(--line);
-      background: #f3f4f6;
-      color: #222;
-      padding: 6px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .mini-btn.danger {
+    .btn-danger {
       background: #ef4444;
-      border-color: #ef4444;
-      color: #fff;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
     }
 
-    .notice-item:last-child,
-    .board-item:last-child,
-    .video-item:last-child { border-bottom: 0; }
-
-    .notice-item span,
-    .board-item span,
-    .video-item span { color: var(--muted); font-size: 0.9rem; }
-
-    .upload-box {
-      background: #fff;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-top: 24px;
-    }
-
-    .upload-box h3 {
-      margin: 0 0 8px;
-      font-size: 1.4rem;
-      letter-spacing: -0.03em;
-    }
-
-    .upload-box p {
-      margin: 0 0 18px;
-      color: var(--muted);
-    }
-
-    .form-grid {
+    .card-list {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       gap: 14px;
     }
 
-    .field {
-      display: grid;
-      gap: 8px;
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      border: 1px solid #edf0f5;
     }
-
-    .field.full { grid-column: 1 / -1; }
-
-    label {
-      font-size: 0.92rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    input, textarea, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: #fff;
-      padding: 12px 14px;
-      color: #222;
-      border-radius: 8px;
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    .upload-preview {
-      display: none;
-      margin-top: 8px;
-      max-width: 360px;
-      border: 1px solid var(--line);
-      overflow: hidden;
-      border-radius: 10px;
-    }
-
-    .upload-preview.show { display: block; }
-
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-      flex-wrap: wrap;
-    }
-
-    .form-actions button,
-    .submit,
-    .reset {
-      border: 0;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-weight: 700;
-      border-radius: 8px;
-    }
-
-    .submit {
-      background: var(--brand);
-      color: #fff;
-    }
-
-    .reset {
-      background: #e5e7eb;
-      color: #222;
-    }
-
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 24px;
-      color: #555;
-      font-size: 0.92rem;
-    }
-
-    .detail-meta {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 18px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .detail-media {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      overflow: hidden;
-      background: #f1f3f5;
-      margin-bottom: 18px;
-    }
-
-    .detail-media img,
-    .detail-media video {
-      max-height: 460px;
-      object-fit: cover;
-    }
-
-    .detail-description {
-      line-height: 1.7;
-      font-size: 1rem;
-      color: #333;
-      white-space: pre-wrap;
-    }
-
-    .detail-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .detail-actions button {
-      border: 0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      background: var(--brand);
-      color: #fff;
-    }
-
-    .comment-box {
-      margin-top: 24px;
-      border-top: 1px solid var(--line);
-      padding-top: 20px;
-    }
-
-    .comment-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .comment-item {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: #fafafa;
-    }
-
-    .comment-item strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .comment-empty {
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.48);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 100;
-    }
-
-    .modal-backdrop.show {
-      display: flex;
-    }
-
-    .modal {
-      width: min(920px, 100%);
-      max-height: 88vh;
-      overflow: auto;
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.18);
-      border: 1px solid var(--line);
-    }
-
-    .modal-head {
+    .card-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       gap: 12px;
-      padding: 20px 22px;
-      border-bottom: 1px solid var(--line);
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 2;
+      align-items: flex-start;
     }
-
-    .modal-head h3 {
-      margin: 0;
-      font-size: 1.2rem;
+    .card-title {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      color: #111827;
     }
-
-    .close-btn {
-      border: 0;
-      background: #efefef;
-      color: #222;
-      width: 38px;
-      height: 38px;
-      border-radius: 999px;
+    .card-meta {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .card-text {
+      margin-top: 14px;
+      color: #374151;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      display: none;
+      border-top: 1px solid #eef2f7;
+      padding-top: 14px;
+    }
+    .card-text.open {
+      display: block;
+    }
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .mini-btn {
+      border: none;
+      background: #eef2ff;
+      color: #374151;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 1.1rem;
+    }
+    .mini-btn:hover {
+      background: #dfe7ff;
     }
 
-    .modal-body {
+    .form-wrap {
+      display: none;
+      background: white;
+      border-radius: 20px;
       padding: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+      margin-bottom: 18px;
+    }
+    .form-wrap.active {
+      display: block;
+    }
+    .form-wrap h4 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+    .form-wrap .desc {
+      margin: 0 0 18px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+    }
+    .form-group textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      background: white;
+      border-radius: 18px;
+      padding: 24px;
+      text-align: center;
+      color: #6b7280;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+    }
+
+    .admin-box {
+      background: #fff8e7;
+      border: 1px solid #f3d48b;
+      color: #7c5a08;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+      font-size: 14px;
+      line-height: 1.6;
     }
 
     footer {
-      margin-top: 34px;
-      background: #ececec;
-      border-top: 1px solid var(--line);
-      padding: 26px 0 40px;
-      color: #666;
-      font-size: 0.92rem;
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+      padding: 30px 16px 40px;
     }
 
-    .footer-inner {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    @media (min-width: 1280px) {
-      .cards { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    @media (max-width: 1100px) {
-      .cards { grid-template-columns: repeat(3, 1fr); }
-      .quick-row { grid-template-columns: repeat(4, 1fr); }
-    }
-
-    @media (max-width: 820px) {
-      .topbar,
-      .footer-inner,
-      .form-grid,
-      .toolbar,
-      .quick-row {
-        grid-template-columns: 1fr;
-        display: grid;
-      }
-
-      .cards { grid-template-columns: repeat(2, 1fr); }
-      .topbar { display: flex; flex-direction: column; align-items: start; }
-      .hero-box { height: 280px; }
-      .menu { width: 100%; }
-    }
-
-    @media (max-width: 560px) {
-      .wrap { width: min(var(--max), calc(100% - 18px)); }
-      .cards { grid-template-columns: 1fr; }
-      .quick-row { grid-template-columns: repeat(2, 1fr); }
-      .hero-box { height: 230px; }
-      .hero-overlay h1 { font-size: 1.8rem; }
-      .modal-body, .modal-head { padding: 16px; }
+    @media (max-width: 768px) {
+      header h1 { font-size: 26px; }
+      .hero h2 { font-size: 24px; }
+      .section-head h3 { font-size: 21px; }
+      .card-title { font-size: 17px; }
     }
   </style>
 </head>
 <body>
+
   <header>
-    <div class="wrap topbar">
-      <a href="#top" class="brand">
-        <strong>정읍문화소식</strong>
-        <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
-      </a>
-      <nav class="menu">
-        <button class="active" type="button" data-open="boardModal">문화이야기</button>
-        <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="videoModal">영상행사</button>
-        <button type="button" data-open="uploadModal">소식올리기</button>
-        <button type="button" id="adminLoginBtn">관리자 로그인</button>
-      </nav>
-    </div>
+    <h1>정읍문화이야기</h1>
+    <p>정읍의 문화, 이야기, 영상, 행사를 함께 나누는 공간</p>
   </header>
 
-  <main id="top">
-    <section class="hero wrap">
-      <div class="hero-box">
-        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80" alt="메인 비주얼">
-        <div class="hero-overlay">
-          <div>
-            <h1>정읍문화소식</h1>
-            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화 게시판</p>
-          </div>
+  <nav>
+    <button class="tab-btn active" data-tab="notice">공지사항</button>
+    <button class="tab-btn" data-tab="story">문화이야기</button>
+    <button class="tab-btn" data-tab="video">영상행사</button>
+    <button class="tab-btn" data-tab="write">소식올리기</button>
+  </nav>
+
+  <div class="container">
+    <div class="hero">
+      <h2>정읍의 문화와 소식을 한눈에</h2>
+      <p>
+        정읍문화이야기는 정읍의 문화 행사, 지역 이야기, 영상, 소식을 함께 나누는 플랫폼입니다.
+        시민 누구나 소식을 올릴 수 있으며, 공지사항은 관리자만 작성할 수 있습니다.
+      </p>
+    </div>
+
+    <!-- 공지사항 -->
+    <section id="notice" class="section active">
+      <div class="section-head">
+        <div>
+          <h3>공지사항</h3>
+          <p>중요한 안내를 확인하는 공간입니다.</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-gray" onclick="toggleAdminLogin()">관리자모드</button>
+          <button class="btn btn-primary" id="noticeWriteBtn" style="display:none;" onclick="openForm('noticeForm')">글쓰기</button>
+        </div>
+      </div>
+
+      <div class="admin-box">
+        공지사항은 관리자만 작성할 수 있습니다.  
+        관리자모드를 누른 뒤 비밀번호를 입력하면 공지 작성 버튼이 나타납니다.
+      </div>
+
+      <div id="noticeForm" class="form-wrap">
+        <h4>공지사항 글쓰기</h4>
+        <p class="desc">정읍문화이야기의 중요한 소식을 등록하세요.</p>
+        <div class="form-group">
+          <label for="noticeTitle">제목</label>
+          <input type="text" id="noticeTitle" placeholder="공지 제목을 입력하세요" />
+        </div>
+        <div class="form-group">
+          <label for="noticeContent">내용</label>
+          <textarea id="noticeContent" placeholder="공지 내용을 입력하세요"></textarea>
+        </div>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="savePost('notice')">등록하기</button>
+          <button class="btn btn-gray" onclick="closeForm('noticeForm')">닫기</button>
+        </div>
+      </div>
+
+      <div id="noticeList" class="card-list"></div>
+    </section>
+
+    <!-- 문화이야기 -->
+    <section id="story" class="section">
+      <div class="section-head">
+        <div>
+          <h3>문화이야기</h3>
+          <p>정읍의 문화, 사람, 공간, 기억을 나누는 공간입니다.</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openForm('storyForm')">글쓰기</button>
+        </div>
+      </div>
+
+      <div id="storyForm" class="form-wrap">
+        <h4>문화이야기 글쓰기</h4>
+        <p class="desc">정읍문화와 관련된 이야기를 자유롭게 남겨주세요.</p>
+        <div class="form-group">
+          <label for="storyTitle">제목</label>
+          <input type="text" id="storyTitle" placeholder="제목을 입력하세요" />
+        </div>
+        <div class="form-group">
+          <label for="storyContent">내용</label>
+          <textarea id="storyContent" placeholder="정읍문화이야기 관련 내용을 올려주세요."></textarea>
+        </div>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="savePost('story')">등록하기</button>
+          <button class="btn btn-gray" onclick="closeForm('storyForm')">닫기</button>
+        </div>
+      </div>
+
+      <div id="storyList" class="card-list"></div>
+    </section>
+
+    <!-- 영상행사 -->
+    <section id="video" class="section">
+      <div class="section-head">
+        <div>
+          <h3>영상행사</h3>
+          <p>문화 행사, 공연, 영상 소식을 공유하는 공간입니다.</p>
+        </div>
+        <div class="toolbar">
+          <button class="btn btn-primary" onclick="openForm('videoForm')">글쓰기</button>
+        </div>
+      </div>
+
+      <div id="videoForm" class="form-wrap">
+        <h4>영상행사 글쓰기</h4>
+        <p class="desc">영상행사 또는 문화행사 내용을 올려주세요.</p>
+        <div class="form-group">
+          <label for="videoTitle">제목</label>
+          <input type="text" id="videoTitle" placeholder="제목을 입력하세요" />
+        </div>
+        <div class="form-group">
+          <label for="videoContent">내용</label>
+          <textarea id="videoContent" placeholder="행사 안내, 영상 소개, 일정 등을 작성해주세요."></textarea>
+        </div>
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="savePost('video')">등록하기</button>
+          <button class="btn btn-gray" onclick="closeForm('videoForm')">닫기</button>
+        </div>
+      </div>
+
+      <div id="videoList" class="card-list"></div>
+    </section>
+
+    <!-- 소식올리기 -->
+    <section id="write" class="section">
+      <div class="section-head">
+        <div>
+          <h3>소식올리기</h3>
+          <p>누구나 제목과 내용을 간단히 작성해 소식을 공유할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div id="writeForm" class="form-wrap active">
+        <h4>소식 올리기</h4>
+        <p class="desc">정읍문화소식 관련 등을 올려주세요.</p>
+
+        <div class="form-group">
+          <label for="writeCategory">분류</label>
+          <select id="writeCategory">
+            <option value="story">문화이야기</option>
+            <option value="video">영상행사</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="writeTitle">제목</label>
+          <input type="text" id="writeTitle" placeholder="제목을 입력하세요" />
+        </div>
+
+        <div class="form-group">
+          <label for="writeContent">내용</label>
+          <textarea id="writeContent" placeholder="정읍문화소식 관련 등을 올려주세요."></textarea>
+        </div>
+
+        <div class="form-row">
+          <button class="btn btn-primary" onclick="saveQuickPost()">등록하기</button>
+          <button class="btn btn-gray" onclick="resetQuickForm()">초기화</button>
         </div>
       </div>
     </section>
-
-    <section class="wrap">
-      <div class="quick-row">
-        <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="boardModal">문화이야기</button>
-        <button type="button" data-open="videoModal">영상행사</button>
-        <button type="button" data-open="uploadModal" class="active">소식올리기</button>
-      </div>
-    </section>
-
-    <section id="board" class="wrap">
-      <h2 class="section-title">가까운 날짜순 문화소식</h2>
-      <div class="toolbar">
-        <select id="filterType">
-          <option value="all">전체</option>
-          <option value="image">이미지</option>
-          <option value="video">영상</option>
-        </select>
-        <input id="searchInput" type="text" placeholder="제목 또는 장소 검색">
-        <button id="searchBtn" type="button">검색</button>
-      </div>
-
-      <div class="cards" id="eventGrid"></div>
-      <div class="pagination" id="paginationInfo">가까운 날짜순 6개 노출</div>
-    </section>
-
-    <section id="noticePreview" class="wrap panel">
-      <h3>관리자공지사항 미리보기</h3>
-      <div class="notice-list" id="noticePreviewList"></div>
-    </section>
-  </main>
-
-  <div class="modal-backdrop" id="noticeModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>공지사항</h3>
-        <button class="close-btn" type="button" data-close="noticeModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="noticeViewTab">공지 보기</button>
-          <button class="reset" type="button" id="noticeWriteTab">공지 쓰기</button>
-        </div>
-
-        <div class="panel" id="noticeWritePanel" style="margin-top:0; padding:0; border:0; box-shadow:none; display:none;">
-          <h3> 글쓰기</h3>
-          <form id="noticeForm">
-            <div class="form-grid">
-              <div class="field full">
-                <label for="noticeTitle">제목</label>
-                <input id="noticeTitle" type="text" required>
-              </div>
-              <div class="field full">
-             <label for="noticeTitle">제목</label>
-<input type="text" id="noticeTitle" placeholder="제목을 입력하세요" />
-
-<label for="noticeContent">내용</label>
-<textarea id="noticeContent" placeholder="정읍문화이야기 관련 내용을 올려주세요."></textarea>
-
-<!-- 등록 버튼 -->
-<button onclick="addNotice()">이야기 등록</button>
-            </div>
-          </form>
-        </div>
-
-        <div class="panel" id="noticeListPanel">
-          <h3>등록된 공지</h3>
-          <div class="notice-list" id="noticeList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="boardModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>글쓰기</h3>
-        <button class="close-btn" type="button" data-close="boardModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="boardViewTab">게시글 보기</button>
-          <button class="reset" type="button" id="boardWriteTab">글 쓰러 가기</button>
-        </div>
-        <div class="panel" style="margin-top:0;">
-          <h3>전체 게시글 목록</h3>
-          <div class="board-list" id="boardList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="videoModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>영상행사</h3>
-        <button class="close-btn" type="button" data-close="videoModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="videoViewTab">영상 보기</button>
-          <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
-        </div>
-        <div class="panel" style="margin-top:0;">
-          <h3>등록된 영상 목록</h3>
-          <div class="video-list" id="videoList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="detailModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3 id="detailTitle">상세보기</h3>
-        <button class="close-btn" type="button" data-close="detailModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-meta" id="detailMeta"></div>
-        <div class="detail-media" id="detailMedia"></div>
-        <div class="detail-description" id="detailDescription"></div>
-        <div class="detail-actions">
-          <button type="button" id="detailLikeBtn">좋아요</button>
-          <button type="button" id="detailShareBtn">공유하기</button>
-        </div>
-        <div class="comment-box">
-          <h4>댓글</h4>
-          <form id="commentForm">
-            <div class="form-grid">
-              <div class="field">
-                <label for="commentAuthor">작성자</label>
-                <input id="commentAuthor" type="text" placeholder="이름" required>
-              </div>
-              <div class="field full">
-                <label for="commentText">댓글 내용</label>
-                <textarea id="commentText" placeholder="댓글을 남겨주세요" required></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="submit" type="submit">댓글 등록</button>
-            </div>
-          </form>
-          <div class="comment-list" id="commentList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="uploadModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>소식올리기</h3>
-        <button class="close-btn" type="button" data-close="uploadModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="upload-box" style="margin-top:0;">
-          <h3>시민이 직접 문화소식 올리기</h3>
-          <p>이미지 또는 영상을 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다.</p>
-          <form id="uploadForm">
-            <div class="form-grid">
-              <div class="field">
-                <label for="title">행사 제목</label>
-                <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
-              </div>
-              <div class="field">
-                <label for="date">행사 날짜</label>
-                <input id="date" type="date" required>
-              </div>
-              <div class="field">
-                <label for="place">장소</label>
-                <input id="place" type="text" placeholder="예: 정읍문화원" required>
-              </div>
-              <div class="field">
-                <label for="author">작성자</label>
-                <input id="author" type="text" placeholder="예: 시민 제보자" required>
-              </div>
-              <div class="field">
-                <label for="mediaType">올릴 파일 종류</label>
-                <select id="mediaType">
-                  <option value="image">이미지</option>
-                  <option value="video">영상</option>
-                </select>
-              </div>
-              <div class="field">
-                <label for="fileInput">파일 업로드</label>
-                <input id="fileInput" type="file" accept="image/*,video/*" required>
-                <div class="upload-preview" id="uploadPreview"></div>
-              </div>
-              <div class="field full">
-                <label for="description">설명</label>
-                <textarea id="description" placeholder="행사 설명, 시간, 참가 방법 등을 적어주세요." required></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="submit" type="submit">게시글 등록</button>
-              <button class="reset" type="reset">다시쓰기</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
   </div>
 
   <footer>
-    <div class="wrap footer-inner">
-      <div>
-        <strong>정읍문화소식</strong><br>
-        정읍의 문화행사, 전시, 공연, 체험, 기록을 시민이 함께 올리고 공유하는 공간
-      </div>
-      <div>
-        메인은 그대로 유지하고, 메뉴를 누르면 기능별 창이 열리는 통합형 구조입니다.
-      </div>
-    </div>
+    © 2026 정읍문화이야기. 정읍의 문화와 이야기를 함께 나눕니다.
   </footer>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getFirestore,
-      collection,
-      addDoc,
-      getDocs,
-      deleteDoc,
-      doc,
-      updateDoc,
-      onSnapshot,
-      serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <script>
+    const ADMIN_PASSWORD = "1234";
+    let isAdmin = false;
 
-    // Firebase 설정
-    const firebaseConfig = {
-      apiKey: "AIzaSyCSWQzk1aNH0DJu8bYZV0K9Co9CzXmZ9T4",
-      authDomain: "jeongeup-culture.firebaseapp.com",
-      projectId: "jeongeup-culture",
-      storageBucket: "jeongeup-culture.firebasestorage.app",
-      messagingSenderId: "795525453236",
-      appId: "1:795525453236:web:a401047800386b3bcf0ee1"
+    const defaultData = {
+      notice: [
+        {
+          id: Date.now() + 1,
+          title: "정읍문화이야기 플랫폼 오픈 안내",
+          content: "정읍문화이야기 플랫폼이 새롭게 시작되었습니다.\n정읍의 문화와 행사, 다양한 소식을 함께 나눠주세요.",
+          date: new Date().toLocaleDateString("ko-KR")
+        }
+      ],
+      story: [
+        {
+          id: Date.now() + 2,
+          title: "정읍의 문화 이야기를 들려주세요",
+          content: "정읍의 골목, 역사, 예술, 사람에 대한 이야기를 자유롭게 남길 수 있습니다.",
+          date: new Date().toLocaleDateString("ko-KR")
+        }
+      ],
+      video: [
+        {
+          id: Date.now() + 3,
+          title: "영상행사 게시판 안내",
+          content: "행사 영상, 공연 소식, 전시 홍보 등 다양한 문화행사 관련 내용을 등록해보세요.",
+          date: new Date().toLocaleDateString("ko-KR")
+        }
+      ]
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const NOTICES_KEY = 'jeongeup-culture-notices-v1';
-    const ADMIN_PASSWORD = '1234';
-    const MAX_IMAGE_BYTES = 700 * 1024; // Firestore 문서 한도 고려
-    const MAX_IMAGE_WIDTH = 1400;
-    const JPEG_QUALITY = 0.78;
-
-    const demoNotices = [
-      {
-        id: 'n1',
-        title: '정읍문화소식 오픈 안내',
-        content: '정읍문화소식이 새롭게 열렸습니다. 시민 누구나 문화행사 정보를 올릴 수 있습니다.',
-        date: '2026-03-19'
-      },
-      {
-        id: 'n2',
-        title: '가까운 날짜순 자동 노출',
-        content: '첫 화면에는 가까운 날짜 행사 6개가 자동 정렬되어 표시됩니다.',
-        date: '2026-03-19'
-      }
-    ];
-
-    const eventGrid = document.getElementById('eventGrid');
-    const uploadForm = document.getElementById('uploadForm');
-    const uploadPreview = document.getElementById('uploadPreview');
-    const fileInput = document.getElementById('fileInput');
-    const mediaTypeSelect = document.getElementById('mediaType');
-    const filterType = document.getElementById('filterType');
-    const searchInput = document.getElementById('searchInput');
-    const searchBtn = document.getElementById('searchBtn');
-    const paginationInfo = document.getElementById('paginationInfo');
-    const detailTitle = document.getElementById('detailTitle');
-    const detailMeta = document.getElementById('detailMeta');
-    const detailMedia = document.getElementById('detailMedia');
-    const detailDescription = document.getElementById('detailDescription');
-    const detailShareBtn = document.getElementById('detailShareBtn');
-    const detailLikeBtn = document.getElementById('detailLikeBtn');
-    const noticeForm = document.getElementById('noticeForm');
-    const noticeViewTab = document.getElementById('noticeViewTab');
-    const noticeWriteTab = document.getElementById('noticeWriteTab');
-    const noticeListPanel = document.getElementById('noticeListPanel');
-    const noticeWritePanel = document.getElementById('noticeWritePanel');
-    const boardWriteTab = document.getElementById('boardWriteTab');
-    const videoWriteTab = document.getElementById('videoWriteTab');
-    const noticeList = document.getElementById('noticeList');
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
-    const noticePreviewList = document.getElementById('noticePreviewList');
-    const boardList = document.getElementById('boardList');
-    const videoList = document.getElementById('videoList');
-    const commentForm = document.getElementById('commentForm');
-
-    let isAdminLoggedIn = false;
-    let allPosts = [];
-
-    function structuredCloneSafe(data) {
-      return JSON.parse(JSON.stringify(data));
+    function getData() {
+      const saved = localStorage.getItem("jeongeupCultureData");
+      if (saved) return JSON.parse(saved);
+      localStorage.setItem("jeongeupCultureData", JSON.stringify(defaultData));
+      return defaultData;
     }
 
-    function getStored(key, fallback) {
-      const raw = localStorage.getItem(key);
-      if (!raw) {
-        localStorage.setItem(key, JSON.stringify(fallback));
-        return structuredCloneSafe(fallback);
+    function setData(data) {
+      localStorage.setItem("jeongeupCultureData", JSON.stringify(data));
+    }
+
+    function openForm(formId) {
+      document.getElementById(formId).classList.add("active");
+      document.getElementById(formId).scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function closeForm(formId) {
+      document.getElementById(formId).classList.remove("active");
+    }
+
+    function toggleAdminLogin() {
+      if (isAdmin) {
+        isAdmin = false;
+        document.getElementById("noticeWriteBtn").style.display = "none";
+        alert("관리자모드가 해제되었습니다.");
+        return;
       }
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        localStorage.setItem(key, JSON.stringify(fallback));
-        return structuredCloneSafe(fallback);
+      const pw = prompt("관리자 비밀번호를 입력하세요");
+      if (pw === ADMIN_PASSWORD) {
+        isAdmin = true;
+        document.getElementById("noticeWriteBtn").style.display = "inline-block";
+        alert("관리자모드가 활성화되었습니다.");
+      } else if (pw !== null) {
+        alert("비밀번호가 올바르지 않습니다.");
       }
     }
 
-    function saveStored(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+    function savePost(type) {
+      const titleEl = document.getElementById(type + "Title");
+      const contentEl = document.getElementById(type + "Content");
 
-    function getNotices() {
-      return getStored(NOTICES_KEY, demoNotices);
-    }
+      const title = titleEl.value.trim();
+      const content = contentEl.value.trim();
 
-    function saveNotices(notices) {
-      saveStored(NOTICES_KEY, notices);
-    }
+      if (!title || !content) {
+        alert("제목과 내용을 모두 입력해주세요.");
+        return;
+      }
 
-    function getPosts() {
-      return allPosts.map(post => ({
-        likes: 0,
-        views: 0,
-        comments: [],
-        ...post
-      }));
-    }
-
-    function findPostById(id) {
-      return getPosts().find((post) => String(post.id) === String(id));
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function formatDate(dateString) {
-      if (!dateString) return '';
-      const d = new Date(String(dateString).slice(0, 10) + 'T00:00:00');
-      if (Number.isNaN(d.getTime())) return dateString;
-      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-    }
-
-    function getTodayString() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-
-    function sortPosts(posts) {
-      const today = getTodayString();
-      return [...posts].sort((a, b) => {
-        const aFuture = a.date >= today ? 0 : 1;
-        const bFuture = b.date >= today ? 0 : 1;
-        if (aFuture !== bFuture) return aFuture - bFuture;
-        return new Date(a.date) - new Date(b.date);
+      const data = getData();
+      data[type].unshift({
+        id: Date.now(),
+        title,
+        content,
+        date: new Date().toLocaleDateString("ko-KR")
       });
+
+      setData(data);
+      titleEl.value = "";
+      contentEl.value = "";
+      closeForm(type + "Form");
+      renderPosts();
+      alert("등록되었습니다.");
     }
 
-    function buildMedia(post) {
-      return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
+    function saveQuickPost() {
+      const category = document.getElementById("writeCategory").value;
+      const title = document.getElementById("writeTitle").value.trim();
+      const content = document.getElementById("writeContent").value.trim();
+
+      if (!title || !content) {
+        alert("제목과 내용을 입력해주세요.");
+        return;
+      }
+
+      const data = getData();
+      data[category].unshift({
+        id: Date.now(),
+        title,
+        content,
+        date: new Date().toLocaleDateString("ko-KR")
+      });
+
+      setData(data);
+      resetQuickForm();
+      renderPosts();
+
+      alert("소식이 등록되었습니다.");
+
+      if (category === "story") {
+        switchTab("story");
+      } else {
+        switchTab("video");
+      }
     }
 
-    function currentFilteredPosts() {
-      const typeValue = filterType.value;
-      const keyword = searchInput.value.trim().toLowerCase();
-      let posts = sortPosts(getPosts());
+    function resetQuickForm() {
+      document.getElementById("writeCategory").value = "story";
+      document.getElementById("writeTitle").value = "";
+      document.getElementById("writeContent").value = "";
+    }
 
-      if (typeValue !== 'all') {
-        posts = posts.filter((post) => post.mediaType === typeValue);
+    function deletePost(type, id) {
+      if (!isAdmin) {
+        alert("삭제는 관리자만 가능합니다.");
+        return;
       }
-      if (keyword) {
-        posts = posts.filter((post) =>
-          (post.title || '').toLowerCase().includes(keyword) ||
-          (post.place || '').toLowerCase().includes(keyword)
-        );
+      if (!confirm("정말 삭제하시겠습니까?")) return;
+
+      const data = getData();
+      data[type] = data[type].filter(item => item.id !== id);
+      setData(data);
+      renderPosts();
+    }
+
+    function toggleContent(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle("open");
+    }
+
+    function renderSection(type, containerId) {
+      const data = getData()[type];
+      const container = document.getElementById(containerId);
+
+      if (!data || data.length === 0) {
+        container.innerHTML = `<div class="empty">등록된 글이 없습니다.</div>`;
+        return;
       }
-      return posts.slice(0, 6);
+
+      container.innerHTML = data.map((item, index) => `
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <h4 class="card-title">${escapeHtml(item.title)}</h4>
+              <div class="card-meta">작성일: ${item.date}</div>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="mini-btn" onclick="toggleContent('content-${type}-${item.id}')">내용보기</button>
+            ${isAdmin ? `<button class="mini-btn" style="background:#fee2e2;color:#991b1b;" onclick="deletePost('${type}', ${item.id})">삭제</button>` : ""}
+          </div>
+
+          <div class="card-text" id="content-${type}-${item.id}">
+            ${escapeHtml(item.content).replace(/\n/g, "<br>")}
+          </div>
+        </div>
+      `).join("");
     }
 
     function renderPosts() {
-      const posts = currentFilteredPosts();
-      if (posts.length === 0) {
-        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
-        paginationInfo.textContent = '표시할 문화소식이 없습니다.';
-        return;
-      }
-
-      paginationInfo.textContent = `가까운 날짜순 ${posts.length}개 노출`;
-
-      eventGrid.innerHTML = posts.map((post) => `
-        <article class="card" id="post-${post.id}">
-          <div class="thumb">
-            <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
-            ${buildMedia(post)}
-          </div>
-          <div class="meta">
-            <div class="date">${formatDate(post.date)}</div>
-            <div class="title">${escapeHtml(post.title)}</div>
-            <div class="place">${escapeHtml(post.place)}</div>
-            <div class="stat-row">
-              <span>조회 ${(post.views || 0)}</span>
-              <span>좋아요 ${(post.likes || 0)}</span>
-              <span>댓글 ${post.comments?.length || 0}</span>
-            </div>
-          </div>
-          <div class="actions">
-            <button type="button" class="detail-btn" data-post-id="${post.id}">자세히</button>
-            <button type="button" class="share-btn" data-post-id="${post.id}">공유</button>
-          </div>
-          <div class="post-admin-actions">
-            <button class="mini-btn danger delete-post-btn" type="button" data-post-id="${post.id}">삭제</button>
-          </div>
-        </article>
-      `).join('');
+      renderSection("notice", "noticeList");
+      renderSection("story", "storyList");
+      renderSection("video", "videoList");
+      document.getElementById("noticeWriteBtn").style.display = isAdmin ? "inline-block" : "none";
     }
 
-    function renderNotices() {
-      const notices = [...getNotices()].sort((a, b) => new Date(b.date) - new Date(a.date));
-      const makeNoticeHtml = (notice) => `
-        <div class="notice-item">
-          <div class="notice-main">
-            <strong>${escapeHtml(notice.title)}</strong>
-            <span>${escapeHtml(notice.content)}</span>
-            <div class="notice-meta">
-              <span>${formatDate(notice.date)}</span>
-            </div>
-            <div class="notice-admin-actions">
-              <button class="mini-btn" type="button" onclick="editNotice('${notice.id}')">수정</button>
-              <button class="mini-btn danger" type="button" onclick="deleteNotice('${notice.id}')">삭제</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      noticeList.innerHTML = notices.length
-        ? notices.map(makeNoticeHtml).join('')
-        : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
-
-      noticePreviewList.innerHTML = notices.length
-        ? notices.slice(0, 3).map(makeNoticeHtml).join('')
-        : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
-    }
-
-    function renderBoardList() {
-      const posts = sortPosts(getPosts());
-      if (!posts.length) {
-        boardList.innerHTML = '<div class="board-item"><div><strong>등록된 게시글이 없습니다.</strong></div></div>';
-        return;
-      }
-      boardList.innerHTML = posts.map((post) => `
-        <div class="board-item">
-          <div>
-            <strong>${escapeHtml(post.title)}</strong>
-            <span>${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-          </div>
-          <span>${formatDate(post.date)}</span>
-        </div>
-      `).join('');
-    }
-
-    function renderVideoList() {
-      const videos = sortPosts(getPosts()).filter((post) => post.mediaType === 'video');
-      if (videos.length === 0) {
-        videoList.innerHTML = '<div class="video-item"><div><strong>영상 업로드는 Blaze 요금제 + Firebase Storage 연결 후 사용 가능합니다.</strong><span>현재 Spark 요금제에서는 이미지 게시글만 권장합니다.</span></div></div>';
-        return;
-      }
-      videoList.innerHTML = videos.map((post) => `
-        <div class="video-item">
-          <div>
-            <strong>${escapeHtml(post.title)}</strong>
-            <span>${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-          </div>
-          <span>${formatDate(post.date)}</span>
-        </div>
-      `).join('');
-    }
-
-    function renderAll() {
-      renderPosts();
-      renderNotices();
-      renderBoardList();
-      renderVideoList();
-    }
-
-    function renderPreview(file, mediaType) {
-      if (!file) {
-        uploadPreview.className = 'upload-preview';
-        uploadPreview.innerHTML = '';
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      uploadPreview.innerHTML = mediaType === 'video'
-        ? `<video src="${url}" controls muted playsinline></video>`
-        : `<img src="${url}" alt="업로드 미리보기">`;
-      uploadPreview.className = 'upload-preview show';
-    }
-
-    function openModal(id) {
-      document.getElementById(id)?.classList.add('show');
-      document.body.style.overflow = 'hidden';
-      if (id === 'noticeModal') showNoticeList();
-    }
-
-    function closeModal(id) {
-      document.getElementById(id)?.classList.remove('show');
-      if (!document.querySelector('.modal-backdrop.show')) {
-        document.body.style.overflow = '';
-      }
-    }
-
-    function showNoticeList() {
-      noticeListPanel.style.display = 'block';
-      noticeWritePanel.style.display = 'none';
-      noticeViewTab.className = 'submit';
-      noticeWriteTab.className = 'reset';
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-    }
-
-    function showNoticeWrite() {
-      if (!isAdminLoggedIn) {
-        const password = prompt('관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 접근 가능합니다');
-          return;
-        }
-        setAdminMode(true);
-      }
-      noticeListPanel.style.display = 'none';
-      noticeWritePanel.style.display = 'block';
-      noticeViewTab.className = 'reset';
-      noticeWriteTab.className = 'submit';
-    }
-
-    function setAdminMode(enabled) {
-      isAdminLoggedIn = enabled;
-      document.body.classList.toggle('admin-mode', enabled);
-      adminLoginBtn.textContent = enabled ? '관리자 로그아웃' : '관리자 로그인';
-      renderAll();
-    }
-
-    function editNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 수정 가능합니다');
-        return;
-      }
-      const notices = getNotices();
-      const target = notices.find((item) => item.id === id);
-      if (!target) return;
-      openModal('noticeModal');
-      showNoticeWrite();
-      document.getElementById('noticeTitle').value = target.title;
-      document.getElementById('noticeContent').value = target.content;
-      noticeForm.dataset.editId = id;
-    }
-
-    function deleteNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-      if (!confirm('이 공지를 삭제하시겠습니까?')) return;
-      const notices = getNotices().filter((item) => item.id !== id);
-      saveNotices(notices);
-      renderNotices();
-    }
-
-    async function addView(id) {
-      const post = findPostById(id);
-      if (!post) return null;
-      try {
-        await updateDoc(doc(db, 'posts', String(id)), {
-          views: (post.views || 0) + 1,
-          updatedAt: serverTimestamp()
-        });
-      } catch (e) {
-        console.error(e);
-      }
-      return { ...post, views: (post.views || 0) + 1 };
-    }
-
-    async function likePost(id) {
-      const post = findPostById(id);
-      if (!post) return null;
-      try {
-        await updateDoc(doc(db, 'posts', String(id)), {
-          likes: (post.likes || 0) + 1,
-          updatedAt: serverTimestamp()
-        });
-      } catch (e) {
-        console.error(e);
-      }
-      return { ...post, likes: (post.likes || 0) + 1 };
-    }
-
-    async function deletePost(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-      if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
-      try {
-        await deleteDoc(doc(db, 'posts', String(id)));
-        closeModal('detailModal');
-        alert('삭제되었습니다.');
-      } catch (e) {
-        console.error(e);
-        alert('삭제 중 오류가 발생했습니다.');
-      }
-    }
-
-    function renderComments(post) {
-      const list = document.getElementById('commentList');
-      if (!post.comments || post.comments.length === 0) {
-        list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
-        return;
-      }
-      list.innerHTML = post.comments.map(c => `
-        <div class="comment-item">
-          <strong>${escapeHtml(c.author)}</strong>
-          <div>${escapeHtml(c.text)}</div>
-          <span>${formatDate(c.date)}</span>
-        </div>
-      `).join('');
-    }
-
-    async function openDetail(id) {
-      const post = await addView(id);
-      if (!post) return;
-
-      detailTitle.textContent = post.title;
-      detailMeta.innerHTML = `
-        <div>행사일: ${formatDate(post.date)}</div>
-        <div>장소: ${escapeHtml(post.place)}</div>
-        <div>작성자: ${escapeHtml(post.author)}</div>
-        <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
-      `;
-      detailMedia.innerHTML = `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
-      detailDescription.textContent = post.description || '';
-
-      detailShareBtn.onclick = () => sharePost(id);
-      detailLikeBtn.onclick = async () => {
-        await likePost(id);
-        await openDetail(id);
-      };
-
-      commentForm.dataset.postId = String(id);
-      renderComments(post);
-      openModal('detailModal');
-    }
-
-    function sharePost(id) {
-      const post = findPostById(id);
-      if (!post) {
-        alert('공유할 글을 찾지 못했습니다.');
-        return;
-      }
-      const shareText = `[정읍문화소식] ${post.title} | ${post.place} | ${formatDate(post.date)}`;
-      const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-      const fullText = `${shareText}
-${shareUrl}`;
-
-      if (navigator.share) {
-        navigator.share({ title: post.title, text: shareText, url: shareUrl })
-          .catch(() => fallbackShare(fullText));
-        return;
-      }
-      fallbackShare(fullText);
-    }
-
-    function fallbackShare(fullText) {
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(fullText)
-          .then(() => alert('공유용 링크를 복사했습니다.'))
-          .catch(() => window.prompt('아래 내용을 복사해 공유하세요.', fullText));
-      } else {
-        window.prompt('아래 내용을 복사해 공유하세요.', fullText);
-      }
-    }
-
-    function openPostFromHash() {
-      const hash = window.location.hash || '';
-      if (!hash.startsWith('#post-')) return;
-      const id = hash.replace('#post-', '');
-      const post = findPostById(id);
-      if (post) openDetail(id);
-    }
-
-    function blobToDataURL(blob) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    }
-
-    async function compressImageToDataUrl(file) {
-      const imageBitmap = await createImageBitmap(file);
-      let width = imageBitmap.width;
-      let height = imageBitmap.height;
-      if (width > MAX_IMAGE_WIDTH) {
-        const ratio = MAX_IMAGE_WIDTH / width;
-        width = Math.round(width * ratio);
-        height = Math.round(height * ratio);
-      }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(imageBitmap, 0, 0, width, height);
-
-      let quality = JPEG_QUALITY;
-      let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-
-      while (blob && blob.size > MAX_IMAGE_BYTES && quality > 0.35) {
-        quality -= 0.08;
-        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
-      }
-
-      if (!blob) {
-        throw new Error('이미지 변환 실패');
-      }
-      if (blob.size > MAX_IMAGE_BYTES) {
-        throw new Error('이미지가 너무 큽니다. 더 작은 이미지를 선택해 주세요.');
-      }
-
-      return await blobToDataURL(blob);
-    }
-
-    function validateSparkUpload(file, mediaType) {
-      if (mediaType === 'video') {
-        throw new Error('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다. Blaze + Firebase Storage 연결 후 사용해 주세요.');
-      }
-      if (!file.type.startsWith('image/')) {
-        throw new Error('이미지 파일만 업로드 가능합니다.');
-      }
-    }
-
-    adminLoginBtn.addEventListener('click', () => {
-      if (isAdminLoggedIn) {
-        setAdminMode(false);
-        alert('관리자 로그아웃 되었습니다.');
-        return;
-      }
-      const password = prompt('관리자 비밀번호를 입력하세요');
-      if (password === ADMIN_PASSWORD) {
-        setAdminMode(true);
-        alert('관리자 로그인 완료');
-      } else {
-        alert('비밀번호가 올바르지 않습니다');
-      }
-    });
-
-    noticeViewTab.addEventListener('click', showNoticeList);
-    noticeWriteTab.addEventListener('click', showNoticeWrite);
-
-    boardWriteTab.addEventListener('click', () => {
-      closeModal('boardModal');
-      openModal('uploadModal');
-    });
-
-    videoWriteTab.addEventListener('click', () => {
-      closeModal('videoModal');
-      openModal('uploadModal');
-      mediaTypeSelect.value = 'video';
-      alert('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다.');
-    });
-
-    document.querySelectorAll('[data-open]').forEach((button) => {
-      button.addEventListener('click', () => {
-        document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
-        const openId = button.dataset.open;
-        const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
-        if (linkedTop) linkedTop.classList.add('active');
-        openModal(openId);
-      });
-    });
-
-    document.addEventListener('click', (event) => {
-      const detailBtn = event.target.closest('.detail-btn');
-      if (detailBtn) {
-        openDetail(detailBtn.dataset.postId);
-        return;
-      }
-
-      const shareBtn = event.target.closest('.share-btn');
-      if (shareBtn) {
-        sharePost(shareBtn.dataset.postId);
-        return;
-      }
-
-      const deletePostBtn = event.target.closest('.delete-post-btn');
-      if (deletePostBtn) {
-        deletePost(deletePostBtn.dataset.postId);
-      }
-    });
-
-    document.querySelectorAll('[data-close]').forEach((button) => {
-      button.addEventListener('click', () => closeModal(button.dataset.close));
-    });
-
-    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-      backdrop.addEventListener('click', (event) => {
-        if (event.target === backdrop) {
-          backdrop.classList.remove('show');
-          if (!document.querySelector('.modal-backdrop.show')) {
-            document.body.style.overflow = '';
-          }
-        }
-      });
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    mediaTypeSelect.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-      if (mediaTypeSelect.value === 'video') {
-        alert('현재 Spark 요금제에서는 영상 업로드를 막아두었습니다.');
-      }
-    });
-
-    searchBtn.addEventListener('click', renderPosts);
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        renderPosts();
-      }
-    });
-    filterType.addEventListener('change', renderPosts);
-
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const file = fileInput.files?.[0];
-      const submitBtn = uploadForm.querySelector('.submit');
-      if (!file) {
-        alert('이미지를 선택해 주세요.');
-        return;
-      }
-
-      try {
-        validateSparkUpload(file, mediaTypeSelect.value);
-        submitBtn.disabled = true;
-        submitBtn.textContent = '등록 중...';
-
-        const mediaUrl = await compressImageToDataUrl(file);
-
-        await addDoc(collection(db, 'posts'), {
-          title: document.getElementById('title').value.trim(),
-          date: document.getElementById('date').value,
-          place: document.getElementById('place').value.trim(),
-          author: document.getElementById('author').value.trim(),
-          description: document.getElementById('description').value.trim(),
-          mediaType: 'image',
-          mediaUrl,
-          likes: 0,
-          views: 0,
-          comments: [],
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-
-        uploadForm.reset();
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-        alert('등록되었습니다. 이제 다른 사람에게도 보입니다.');
-        closeModal('uploadModal');
-      } catch (error) {
-        console.error(error);
-        alert(error.message || '등록 중 오류가 발생했습니다.');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '게시글 등록';
-      }
-    });
-
-    uploadForm.addEventListener('reset', () => {
-      setTimeout(() => {
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-      }, 0);
-    });
-
-    noticeForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      if (!isAdminLoggedIn) {
-        const password = prompt('공지 등록을 위해 관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 등록 가능합니다');
-          return;
-        }
-        setAdminMode(true);
-      }
-
-      const notices = getNotices();
-      const editId = noticeForm.dataset.editId;
-
-      const payload = {
-        id: editId || String(Date.now()),
-        title: document.getElementById('noticeTitle').value.trim(),
-        content: document.getElementById('noticeContent').value.trim(),
-        date: new Date().toISOString().slice(0, 10)
-      };
-
-      let next;
-      if (editId) {
-        next = notices.map((item) => item.id === editId ? payload : item);
-      } else {
-        next = [payload, ...notices];
-      }
-
-      saveNotices(next);
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-      renderNotices();
-      showNoticeList();
-      alert(editId ? '공지 수정 완료' : '공지 등록 완료');
-    });
-
-    commentForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const id = commentForm.dataset.postId;
-      const target = findPostById(id);
-      if (!target) return;
-
-      const comments = Array.isArray(target.comments) ? [...target.comments] : [];
-      comments.unshift({
-        author: document.getElementById('commentAuthor').value.trim(),
-        text: document.getElementById('commentText').value.trim(),
-        date: new Date().toISOString().slice(0, 10)
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tabId);
       });
 
-      try {
-        await updateDoc(doc(db, 'posts', String(id)), {
-          comments,
-          updatedAt: serverTimestamp()
-        });
-        commentForm.reset();
-      } catch (error) {
-        console.error(error);
-        alert('댓글 저장 중 오류가 발생했습니다.');
-      }
-    });
-
-    onSnapshot(collection(db, 'posts'), (snapshot) => {
-      allPosts = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          title: data.title || '',
-          date: data.date || '',
-          place: data.place || '',
-          author: data.author || '',
-          description: data.description || '',
-          mediaType: data.mediaType || 'image',
-          mediaUrl: data.mediaUrl || '',
-          likes: data.likes || 0,
-          views: data.views || 0,
-          comments: Array.isArray(data.comments) ? data.comments : []
-        };
+      document.querySelectorAll(".section").forEach(sec => {
+        sec.classList.toggle("active", sec.id === tabId);
       });
-      renderAll();
-      openPostFromHash();
-    }, (error) => {
-      console.error(error);
-      alert('Firestore 연결 오류가 발생했습니다. Firestore를 테스트 모드로 생성했는지 확인해 주세요.');
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
 
-    window.editNotice = editNotice;
-    window.deleteNotice = deleteNotice;
+    function escapeHtml(text) {
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
-    renderNotices();
-    window.addEventListener('hashchange', openPostFromHash);
+    renderPosts();
   </script>
-
 </body>
 </html>
-
-
-  
+    
