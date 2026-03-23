@@ -667,7 +667,7 @@
         <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
       </a>
       <nav class="menu">
-        <button class="active" type="button" data-open="boardModal">문화이야기</button>
+        <button class="active" type="button" data-open="boardModal">게시판</button>
         <button type="button" data-open="noticeModal">공지사항</button>
         <button type="button" data-open="videoModal">영상행사</button>
         <button type="button" data-open="uploadModal">소식올리기</button>
@@ -683,8 +683,7 @@
         <div class="hero-overlay">
           <div>
             <h1>정읍문화소식</h1>
-            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기
-            </p>
+            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화 게시판</p>
           </div>
         </div>
       </div>
@@ -693,7 +692,7 @@
     <section class="wrap">
       <div class="quick-row">
         <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="boardModal">문화이야기</button>
+        <button type="button" data-open="boardModal">게시판</button>
         <button type="button" data-open="videoModal">영상행사</button>
         <button type="button" data-open="uploadModal" class="active">소식올리기</button>
       </div>
@@ -760,70 +759,24 @@
     </div>
   </div>
 
- <script>
-
-  const boardTabButtons = document.querySelectorAll('[data-board-tab]');
-  const boardListTab = document.getElementById('boardListTab');
-  const boardWriteTab = document.getElementById('boardWriteTab');
-
-  boardTabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      boardTabButtons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-
-      const tab = button.getAttribute('data-board-tab');
-
-      if (tab === 'list') {
-        boardListTab.classList.add('active');
-        boardWriteTab.classList.remove('active');
-      } else if (tab === 'write') {
-        boardWriteTab.classList.add('active');
-        boardListTab.classList.remove('active');
-      }
-    });
-  });
-
-
-  const boardWriteForm = document.getElementById('boardWriteForm');
-  const boardPostList = document.getElementById('boardPostList');
-
-  boardWriteForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const title = document.getElementById('boardTitle').value.trim();
-    const content = document.getElementById('boardContent').value.trim();
-
-    if (!title || !content) {
-      alert('제목과 내용을 입력해주세요.');
-      return;
-    }
-
-    const today = new Date();
-    const yy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const dateText = `${yy}.${mm}.${dd}`;
-
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <span><strong>${title}</strong> 시민 등록 글</span>
-      <em>${dateText}</em>
-    `;
-
-    boardPostList.prepend(li);
-
-    document.getElementById('boardTitle').value = '';
-    document.getElementById('boardContent').value = '';
-
- 
-    boardTabButtons.forEach(btn => btn.classList.remove('active'));
-    document.querySelector('[data-board-tab="list"]').classList.add('active');
-    boardListTab.classList.add('active');
-    boardWriteTab.classList.remove('active');
-
-    alert('문화이야기가 등록되었습니다.');
-  });
-</script>
+  <div class="modal-backdrop" id="boardModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>게시판</h3>
+        <button class="close-btn" type="button" data-close="boardModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="submit" type="button" id="boardViewTab">게시글 보기</button>
+          <button class="reset" type="button" id="boardWriteTab">글 쓰러 가기</button>
+        </div>
+        <div class="panel" style="margin-top:0;">
+          <h3>전체 게시글 목록</h3>
+          <div class="board-list" id="boardList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="videoModal">
     <div class="modal">
