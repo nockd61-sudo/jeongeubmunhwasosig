@@ -760,24 +760,70 @@
     </div>
   </div>
 
-  <div class="modal-backdrop" id="boardModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>문화이야기</h3>
-        <button class="close-btn" type="button" data-close="boardModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="boardViewTab">게시글 보기</button>
-          <button class="reset" type="button" id="boardWriteTab">글 쓰러 가기</button>
-        </div>
-        <div class="panel" style="margin-top:0;">
-          <h3>전체 게시글 목록</h3>
-          <div class="board-list" id="boardList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <script>
+  // 문화이야기 탭 전환
+  const boardTabButtons = document.querySelectorAll('[data-board-tab]');
+  const boardListTab = document.getElementById('boardListTab');
+  const boardWriteTab = document.getElementById('boardWriteTab');
+
+  boardTabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      boardTabButtons.forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      const tab = button.getAttribute('data-board-tab');
+
+      if (tab === 'list') {
+        boardListTab.classList.add('active');
+        boardWriteTab.classList.remove('active');
+      } else if (tab === 'write') {
+        boardWriteTab.classList.add('active');
+        boardListTab.classList.remove('active');
+      }
+    });
+  });
+
+  // 문화이야기 글 등록 예시
+  const boardWriteForm = document.getElementById('boardWriteForm');
+  const boardPostList = document.getElementById('boardPostList');
+
+  boardWriteForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const title = document.getElementById('boardTitle').value.trim();
+    const content = document.getElementById('boardContent').value.trim();
+
+    if (!title || !content) {
+      alert('제목과 내용을 입력해주세요.');
+      return;
+    }
+
+    const today = new Date();
+    const yy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateText = `${yy}.${mm}.${dd}`;
+
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span><strong>${title}</strong> 시민 등록 글</span>
+      <em>${dateText}</em>
+    `;
+
+    boardPostList.prepend(li);
+
+    document.getElementById('boardTitle').value = '';
+    document.getElementById('boardContent').value = '';
+
+    // 등록 후 목록으로 이동
+    boardTabButtons.forEach(btn => btn.classList.remove('active'));
+    document.querySelector('[data-board-tab="list"]').classList.add('active');
+    boardListTab.classList.add('active');
+    boardWriteTab.classList.remove('active');
+
+    alert('문화이야기가 등록되었습니다.');
+  });
+</script>
 
   <div class="modal-backdrop" id="videoModal">
     <div class="modal">
