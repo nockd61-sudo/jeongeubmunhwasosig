@@ -761,7 +761,7 @@
   </div>
 
  <script>
-  // 문화이야기 탭 전환
+
   const boardTabButtons = document.querySelectorAll('[data-board-tab]');
   const boardListTab = document.getElementById('boardListTab');
   const boardWriteTab = document.getElementById('boardWriteTab');
@@ -783,7 +783,7 @@
     });
   });
 
-  // 문화이야기 글 등록 예시
+
   const boardWriteForm = document.getElementById('boardWriteForm');
   const boardPostList = document.getElementById('boardPostList');
 
@@ -815,7 +815,7 @@
     document.getElementById('boardTitle').value = '';
     document.getElementById('boardContent').value = '';
 
-    // 등록 후 목록으로 이동
+ 
     boardTabButtons.forEach(btn => btn.classList.remove('active'));
     document.querySelector('[data-board-tab="list"]').classList.add('active');
     boardListTab.classList.add('active');
