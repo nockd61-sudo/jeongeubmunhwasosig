@@ -1598,12 +1598,7 @@
       alert('문화이야기가 등록되었습니다.');
     });
 
-    videoWriteTab.addEventListener('click', () => {
-      closeModal('videoModal');
-      openModal('uploadModal');
-      mediaTypeSelect.value = 'video';
-    });
-
+   
     document.querySelectorAll('[data-open]').forEach((button) => {
       button.addEventListener('click', () => {
         document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
@@ -1802,94 +1797,3 @@
   </script>
   <script>
 <script>
-function addVideo() {
-  const titleEl = document.getElementById('videoTitle');
-  const urlEl = document.getElementById('youtubeUrl');
-  const descEl = document.getElementById('videoDesc');
-  const videoPlayer = document.getElementById('videoPlayer');
-  const videoList = document.getElementById('videoList');
-  const videoViewPanel = document.getElementById('videoViewPanel');
-  const videoWritePanel = document.getElementById('videoWritePanel');
-
-  const title = titleEl ? titleEl.value.trim() : "";
-  const url = urlEl ? urlEl.value.trim() : "";
-  const desc = descEl ? descEl.value.trim() : "";
-
-  let videoId = "";
-
-  if (url.includes("watch?v=")) {
-    videoId = url.split("watch?v=")[1];
-  } else if (url.includes("shorts/")) {
-    videoId = url.split("shorts/")[1];
-  } else if (url.includes("youtu.be/")) {
-    videoId = url.split("youtu.be/")[1];
-  }
-
-  if (videoId.includes("&")) {
-    videoId = videoId.split("&")[0];
-  }
-
-  if (!videoId || videoId.length < 5) {
-    alert("유튜브 링크를 다시 확인해주세요.");
-    return;
-  }
-
-  const iframe = `
-    <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
-      <iframe
-        src="https://www.youtube.com/embed/${videoId}"
-        style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-        allowfullscreen>
-      </iframe>
-    </div>
-  `;
-
-  videoPlayer.innerHTML = iframe;
-
-  const item = document.createElement("div");
-  item.style.cursor = "pointer";
-  item.style.marginBottom = "10px";
-  item.style.padding = "10px";
-  item.style.border = "1px solid #ddd";
-  item.style.borderRadius = "8px";
-  item.style.background = "#fff";
-  item.innerHTML = `
-    <strong>${title || "제목 없음"}</strong>
-    <div style="font-size:13px;color:#666;margin-top:4px;">${desc || "설명 없음"}</div>
-  `;
-
-  item.onclick = () => {
-    videoPlayer.innerHTML = iframe;
-    videoViewPanel.style.display = "block";
-    videoWritePanel.style.display = "none";
-  };
-
-  videoList.prepend(item);
-
-  if (titleEl) titleEl.value = "";
-  if (urlEl) urlEl.value = "";
-  if (descEl) descEl.value = "";
-
-  videoViewPanel.style.display = "block";
-  videoWritePanel.style.display = "none";
-}
-</script>
-
-<script>
-const videoViewTab = document.getElementById('videoViewTab');
-const videoWriteTab = document.getElementById('videoWriteTab');
-const videoViewPanel = document.getElementById('videoViewPanel');
-const videoWritePanel = document.getElementById('videoWritePanel');
-
-videoViewTab.addEventListener('click', () => {
-  videoViewPanel.style.display = 'block';
-  videoWritePanel.style.display = 'none';
-});
-
-videoWriteTab.addEventListener('click', () => {
-  videoViewPanel.style.display = 'none';
-  videoWritePanel.style.display = 'block';
-});
-</script>
-</body>
-</html>
