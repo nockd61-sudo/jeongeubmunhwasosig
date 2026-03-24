@@ -819,11 +819,30 @@
           <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
         </div>
         <div class="panel" style="margin-top:0;">
-          <h3>등록된 영상 목록</h3>
-          <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력">
-          <button onclick="addVideo()">영상 추가</button>
-         <div id="videoPlayer" style="margin-bottom:20px;"></div>
-          <div class="video-list" id="videoList"></div>
+  <div id="videoViewPanel">
+    <h3>등록된 영상 목록</h3>
+    <div id="videoPlayer" style="margin-bottom:20px;"></div>
+    <div class="video-list" id="videoList"></div>
+  </div>
+
+  <div id="videoWritePanel" style="display:none;">
+    <h3>유튜브 영상 등록</h3>
+
+    <input type="text" id="videoTitle" placeholder="영상 제목"
+      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+
+    <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
+      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+
+    <textarea id="videoDesc" placeholder="영상 설명"
+      style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
+
+    <button type="button" onclick="addVideo()"
+      style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
+      영상 등록
+    </button>
+  </div>
+</div>
         </div>
       </div>
     </div>
@@ -1782,8 +1801,20 @@
     window.addEventListener('hashchange', openPostFromHash);
   </script>
   <script>
+<script>
 function addVideo() {
-  const url = document.getElementById('youtubeUrl').value.trim();
+  const titleEl = document.getElementById('videoTitle');
+  const urlEl = document.getElementById('youtubeUrl');
+  const descEl = document.getElementById('videoDesc');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const videoList = document.getElementById('videoList');
+  const videoViewPanel = document.getElementById('videoViewPanel');
+  const videoWritePanel = document.getElementById('videoWritePanel');
+
+  const title = titleEl ? titleEl.value.trim() : "";
+  const url = urlEl ? urlEl.value.trim() : "";
+  const desc = descEl ? descEl.value.trim() : "";
+
   let videoId = "";
 
   if (url.includes("watch?v=")) {
@@ -1794,28 +1825,71 @@ function addVideo() {
     videoId = url.split("youtu.be/")[1];
   }
 
- if (videoId.includes("&")) {
-  videoId = videoId.split("&")[0];
-}
+  if (videoId.includes("&")) {
+    videoId = videoId.split("&")[0];
+  }
 
-if (!videoId || videoId.length < 5) {
-  alert("유튜브 링크를 다시 확인해주세요.");
-  return;
-}
+  if (!videoId || videoId.length < 5) {
+    alert("유튜브 링크를 다시 확인해주세요.");
+    return;
+  }
 
   const iframe = `
-    <iframe width="100%" height="400"
-      src="https://www.youtube.com/embed/${videoId}"
-      frameborder="0"
-      allowfullscreen>
-    </iframe>
+    <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+      <iframe
+        src="https://www.youtube.com/embed/${videoId}"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+        allowfullscreen>
+      </iframe>
+    </div>
   `;
 
-  document.getElementById('videoPlayer').innerHTML = iframe;
+  videoPlayer.innerHTML = iframe;
+
+  const item = document.createElement("div");
+  item.style.cursor = "pointer";
+  item.style.marginBottom = "10px";
+  item.style.padding = "10px";
+  item.style.border = "1px solid #ddd";
+  item.style.borderRadius = "8px";
+  item.style.background = "#fff";
+  item.innerHTML = `
+    <strong>${title || "제목 없음"}</strong>
+    <div style="font-size:13px;color:#666;margin-top:4px;">${desc || "설명 없음"}</div>
+  `;
+
+  item.onclick = () => {
+    videoPlayer.innerHTML = iframe;
+    videoViewPanel.style.display = "block";
+    videoWritePanel.style.display = "none";
+  };
+
+  videoList.prepend(item);
+
+  if (titleEl) titleEl.value = "";
+  if (urlEl) urlEl.value = "";
+  if (descEl) descEl.value = "";
+
+  videoViewPanel.style.display = "block";
+  videoWritePanel.style.display = "none";
 }
+</script>
+
+<script>
+const videoViewTab = document.getElementById('videoViewTab');
+const videoWriteTab = document.getElementById('videoWriteTab');
+const videoViewPanel = document.getElementById('videoViewPanel');
+const videoWritePanel = document.getElementById('videoWritePanel');
+
+videoViewTab.addEventListener('click', () => {
+  videoViewPanel.style.display = 'block';
+  videoWritePanel.style.display = 'none';
+});
+
+videoWriteTab.addEventListener('click', () => {
+  videoViewPanel.style.display = 'none';
+  videoWritePanel.style.display = 'block';
+});
 </script>
 </body>
 </html>
-
-
-  
