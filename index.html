@@ -906,9 +906,11 @@
               <div class="field">
               <label>행사 기간</label>
               <div class="date-range">
-              <input id="startDate" type="date" required>
-              <span>~</span>
-              <input id="endDate" type="date" required>
+             function getDayName(dateStr) {
+             const date = new Date(dateStr);
+             const days = ["일", "월", "화", "수", "목", "금", "토"];
+             return days[date.getDay()];
+             }
              </div>
 
               </div>
