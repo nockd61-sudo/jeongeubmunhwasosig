@@ -17,7 +17,7 @@
 
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
-    body {
+    body {ㄹ
       font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
       background: var(--bg);
       color: var(--text);
@@ -715,7 +715,7 @@
       </div>
 
       <div class="cards" id="eventGrid"></div>
-      <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
+      <div class="pagination" id="paginationInfo">가까운 날짜순 6개 노출</div>
     </section>
 
     <section id="noticePreview" class="wrap panel">
@@ -904,12 +904,16 @@
                 <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
               </div>
               <div class="field">
-                <label>행사 기간</label>
-                <div class="date-range" style="display:flex; gap:8px; align-items:center;">
-                  <input id="startDate" type="date" required>
-                  <span>~</span>
-                  <input id="endDate" type="date" required>
-                </div>
+              <label>행사 기간</label>
+               <div class="date-range">
+             <input id="startDate" type="date" required>
+             <span>~</span>
+             <input id="endDate" type="date" required>
+             </div>
+             </div>
+             
+             </div>
+
               </div>
               <div class="field">
                 <label for="place">장소</label>
@@ -1067,7 +1071,7 @@
       {
         id: 'n2',
         title: '가까운 날짜순 자동 노출',
-        content: '첫 화면에는 가까운 날짜 행사 8개가 자동 정렬되어 표시됩니다.',
+        content: '첫 화면에는 가까운 날짜 행사 6개가 자동 정렬되어 표시됩니다.',
         date: '2026-03-19'
       }
     ];
@@ -1081,7 +1085,6 @@
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
     const paginationInfo = document.getElementById('paginationInfo');
-    const allPostsList = document.getElementById('allPostsList');
     const detailTitle = document.getElementById('detailTitle');
     const detailMeta = document.getElementById('detailMeta');
     const detailMedia = document.getElementById('detailMedia');
@@ -1195,7 +1198,7 @@
         );
       }
 
-      return posts.slice(0, 8);
+      return posts.slice(0, 6);
     }
 
     function renderPosts() {
@@ -1233,29 +1236,6 @@
             <button class="mini-btn danger delete-post-btn" type="button" data-post-id="${post.id}">삭제</button>
           </div>
         </article>
-      `).join('');
-    }
-
-    function renderAllPostsList() {
-      if (!allPostsList) return;
-
-      const posts = sortPosts(getPosts());
-
-      if (posts.length === 0) {
-        allPostsList.innerHTML = '<div style="background:#fff; border:1px solid #ddd; padding:20px; text-align:center;">등록된 문화소식이 없습니다.</div>';
-        return;
-      }
-
-      allPostsList.innerHTML = posts.map((post) => `
-        <div class="board-item" style="cursor:pointer;" onclick="openDetail('${post.id}')">
-          <div>
-            <strong>${escapeHtml(post.title)}</strong>
-            <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">
-              ${formatDate(post.date)} · ${escapeHtml(post.place)} · ${post.mediaType === 'video' ? '영상' : '이미지'}
-            </div>
-          </div>
-          <span>자세히 보기</span>
-        </div>
       `).join('');
     }
 
@@ -1328,7 +1308,6 @@
 
     function renderAll() {
       renderPosts();
-      renderAllPostsList();
       renderNotices();
       renderBoardList();
       renderVideoList();
@@ -1727,8 +1706,7 @@
         posts.push({
           id: String(Date.now()),
           title: document.getElementById('title').value.trim(),
-          date: document.getElementById('startDate').value,
-          endDate: document.getElementById('endDate').value,
+          date: document.getElementById('date').value,
           place: document.getElementById('place').value.trim(),
           author: document.getElementById('author').value.trim(),
           description: document.getElementById('description').value.trim(),
@@ -1744,7 +1722,7 @@
         renderPreview(null, 'image');
         mediaTypeSelect.value = 'image';
         renderAll();
-        alert('등록되었습니다. 가까운 날짜순 8개에 자동 반영됩니다.');
+        alert('등록되었습니다. 가까운 날짜순 6개에 자동 반영됩니다.');
         closeModal('uploadModal');
       };
 
