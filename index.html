@@ -1943,6 +1943,28 @@
     }
 
     window.addVideo = addVideo;
+    
+    async function uploadFileToR2(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('https://jeongeup-upload.nockd61.workers.dev', {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error('업로드 서버 응답 오류');
+  }
+
+  const result = await response.json();
+
+  if (!result.ok || !result.url) {
+    throw new Error(result.error || '업로드 실패');
+  }
+
+  return result.url;
+}
 
     const videoViewTab = document.getElementById('videoViewTab');
     const videoWriteTabOnly = document.getElementById('videoWriteTab');
