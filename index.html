@@ -1866,8 +1866,10 @@
 
         const uploadedUrl = await uploadFileToR2(file);
         if (!uploadedUrl) {
-          throw new Error('업로드된 파일 주소를 받지 못했습니다.');
+        alert('이미지 업로드 실패 - 저장 중단');
+       return;
         }
+      
         const posts = getPosts();
 
         posts.push({
