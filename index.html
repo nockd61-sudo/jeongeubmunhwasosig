@@ -1274,8 +1274,16 @@
     function currentFilteredPosts() {
       const typeValue = filterType.value;
       const keyword = searchInput.value.trim().toLowerCase();
-      let posts = sortPosts(getPosts()).filter((post) => String(post.mediaUrl || '').trim() !== '');
+  let posts = sortPosts(getPosts()).filter(post => {
+  if (!post || !post.mediaUrl) return false;
 
+  const url = String(post.mediaUrl).trim();
+
+  // URL 형태 아니면 제거
+  if (!/^https?:\/\//.test(url)) return false;
+
+  return true;
+});
       if (typeValue !== 'all') {
         posts = posts.filter((post) => post.mediaType === typeValue);
       }
