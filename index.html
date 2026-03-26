@@ -3,600 +3,589 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>정읍문화소식 | 정읍 문화 플랫폼</title>
-  <meta name="description" content="정읍 문화 행사, 전시, 축제, 영상행사, 문화이야기를 한눈에 볼 수 있는 정읍문화소식 플랫폼" />
-  <meta name="keywords" content="정읍문화소식, 정읍문화, 정읍행사, 정읍축제, 정읍전시, 문화이야기, 영상행사" />
-  <meta name="theme-color" content="#7c3aed" />
+  <meta name="description" content="정읍 문화 행사, 전시, 축제, 문화이야기, 영상행사를 한눈에 보는 정읍문화소식 플랫폼" />
+  <meta name="keywords" content="정읍문화소식, 정읍문화, 정읍행사, 정읍축제, 문화이야기, 영상행사" />
+  <meta name="theme-color" content="#6d4cff" />
 
   <style>
-    :root{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#e5e7eb;
-      --brand:#7c3aed;
-      --brand-dark:#6d28d9;
-      --brand-soft:#f3e8ff;
-      --danger:#dc2626;
-      --shadow:0 10px 30px rgba(0,0,0,0.08);
-      --radius:18px;
-      --max:1200px;
+    :root {
+      --bg: #f3f4f8;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --brand: #6d4cff;
+      --brand-dark: #5337d6;
+      --soft: #f5f3ff;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      --radius: 20px;
+      --max: 1180px;
+      --danger: #dc2626;
     }
 
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      font-family:"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    .container {
+      width: min(calc(100% - 32px), var(--max));
+      margin: 0 auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(229, 231, 235, 0.9);
+    }
+
+    .nav {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      font-size: 18px;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      background: linear-gradient(135deg, #7c3aed, #3b82f6);
+      box-shadow: var(--shadow);
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: 0.2s ease;
+    }
+
+    .nav-btn.active,
+    .nav-btn:hover {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
+    .page {
+      padding-bottom: 40px;
+    }
+
+    .hero-wrap {
+      padding: 36px 0 24px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 30px;
+      min-height: 290px;
+      box-shadow: var(--shadow);
       background:
-        radial-gradient(circle at top right, rgba(124,58,237,0.10), transparent 24%),
-        radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 20%),
-        var(--bg);
-      color:var(--text);
+        linear-gradient(135deg, rgba(109,76,255,0.84), rgba(59,130,246,0.66)),
+        url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop") center/cover no-repeat;
+      display: flex;
+      align-items: center;
     }
 
-    a{text-decoration:none;color:inherit}
-    img{max-width:100%;display:block}
-
-    .container{
-      width:min(calc(100% - 32px), var(--max));
-      margin:0 auto;
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      padding: 34px 28px;
+      color: #fff;
     }
 
-    header{
-      position:sticky;
-      top:0;
-      z-index:50;
-      backdrop-filter:blur(12px);
-      background:rgba(255,255,255,0.86);
-      border-bottom:1px solid rgba(229,231,235,0.8);
+    .hero-title {
+      margin: 0 0 14px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -0.02em;
     }
 
-    .nav{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      padding:14px 0;
+    .hero-desc {
+      margin: 0 0 24px;
+      color: rgba(255,255,255,0.95);
+      font-size: 18px;
+      line-height: 1.7;
     }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      font-weight:800;
-      font-size:20px;
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .brand-badge{
-      width:42px;
-      height:42px;
-      border-radius:14px;
-      background:linear-gradient(135deg, var(--brand), #3b82f6);
-      display:grid;
-      place-items:center;
-      color:#fff;
-      font-weight:900;
-      box-shadow:var(--shadow);
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 800;
+      transition: 0.2s ease;
     }
 
-    .nav-menu{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
+    .btn-primary {
+      background: #fff;
+      color: var(--brand-dark);
     }
 
-    .nav-btn{
-      border:1px solid var(--line);
-      background:#fff;
-      padding:10px 14px;
-      border-radius:999px;
-      cursor:pointer;
-      color:var(--text);
-      font-weight:600;
-      transition:0.2s ease;
+    .btn-primary:hover {
+      transform: translateY(-1px);
     }
 
-    .nav-btn:hover,
-    .nav-btn.active{
-      background:var(--brand);
-      border-color:var(--brand);
-      color:#fff;
+    .btn-ghost {
+      color: #fff;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.24);
     }
 
-    .hero{
-      padding:38px 0 20px;
+    .section {
+      padding: 14px 0 10px;
     }
 
-    .hero-card{
-      overflow:hidden;
-      position:relative;
-      border-radius:28px;
-      background:
-        linear-gradient(135deg, rgba(124,58,237,0.90), rgba(59,130,246,0.82)),
-        url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
-      color:#fff;
-      padding:42px 28px;
-      box-shadow:var(--shadow);
-      min-height:260px;
-      display:flex;
-      align-items:center;
+    .section-header {
+      margin-bottom: 14px;
     }
 
-    .hero::after{
-      content:"";
-      display:block;
-      height:8px;
+    .section-title {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
     }
 
-    .hero-content{
-      max-width:760px;
-      position:relative;
-      z-index:1;
+    .section-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
     }
 
-    .hero-title{
-      margin:0 0 12px;
-      font-size:clamp(30px, 5vw, 54px);
-      line-height:1.12;
-      font-weight:900;
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
     }
 
-    .hero-desc{
-      margin:0 0 20px;
-      font-size:17px;
-      line-height:1.7;
-      color:rgba(255,255,255,0.94);
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
     }
 
-    .hero-actions{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
+    .stat-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 94px;
     }
 
-    .btn{
-      border:none;
-      border-radius:14px;
-      padding:12px 16px;
-      font-weight:700;
-      cursor:pointer;
-      transition:0.2s ease;
+    .stat-label {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 10px;
     }
 
-    .btn-primary{
-      background:#fff;
-      color:var(--brand-dark);
+    .stat-value {
+      font-size: 22px;
+      font-weight: 900;
     }
 
-    .btn-primary:hover{
-      transform:translateY(-1px);
+    .sub-block-title {
+      font-size: 16px;
+      font-weight: 900;
+      margin: 8px 0 12px;
     }
 
-    .btn-ghost{
-      background:rgba(255,255,255,0.14);
-      color:#fff;
-      border:1px solid rgba(255,255,255,0.25);
+    .post-list {
+      display: grid;
+      gap: 14px;
     }
 
-    .section{
-      padding:18px 0 26px;
+    .post-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 16px;
+      cursor: pointer;
+      transition: 0.2s ease;
     }
 
-    .section-header{
-      display:flex;
-      align-items:end;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:18px;
-      flex-wrap:wrap;
+    .post-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.06);
     }
 
-    .section-title{
-      margin:0;
-      font-size:28px;
-      font-weight:900;
+    .post-main {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
     }
 
-    .section-sub{
-      margin:6px 0 0;
-      color:var(--muted);
-      font-size:15px;
+    .post-content {
+      flex: 1;
+      min-width: 0;
     }
 
-    .panel{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:20px;
+    .post-thumb {
+      width: 132px;
+      min-width: 132px;
+      height: 100px;
+      overflow: hidden;
+      border-radius: 14px;
+      background: #f3f4f6;
+      border: 1px solid var(--line);
     }
 
-    .hidden{
-      display:none !important;
+    .post-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
-    .grid{
-      display:grid;
-      gap:18px;
+    .post-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--brand-dark);
+      background: var(--soft);
+      padding: 7px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
     }
 
-    .grid-3{
-      grid-template-columns:repeat(3, minmax(0, 1fr));
+    .post-title {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.35;
+      font-weight: 900;
+      word-break: break-word;
     }
 
-    .grid-2{
-      grid-template-columns:repeat(2, minmax(0, 1fr));
+    .post-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
     }
 
-    .stats-card{
-      background:linear-gradient(180deg, #fff, #faf7ff);
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:20px;
+    .post-excerpt {
+      color: #374151;
+      line-height: 1.7;
+      font-size: 15px;
+      word-break: break-word;
     }
 
-    .stats-label{
-      color:var(--muted);
-      font-size:14px;
-      margin-bottom:8px;
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      background: #fafafa;
+      text-align: center;
+      color: var(--muted);
+      padding: 26px 14px;
     }
 
-    .stats-value{
-      font-size:30px;
-      font-weight:900;
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
 
-    .tab-bar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:18px;
-    }
-
-    .tab-btn{
-      border:none;
-      background:#f3f4f6;
-      color:#374151;
-      border-radius:999px;
-      padding:10px 14px;
-      cursor:pointer;
-      font-weight:700;
-    }
-
-    .tab-btn.active{
-      background:var(--brand);
-      color:#fff;
-    }
-
-    .toolbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-bottom:16px;
-    }
-
-    .search-input{
-      flex:1;
-      min-width:240px;
-      padding:12px 14px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      font-size:15px;
-      outline:none;
-      background:#fff;
-    }
-
-    .search-input:focus{
-      border-color:var(--brand);
-    }
-
-    .select{
-      padding:12px 14px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      font-size:15px;
-      outline:none;
-    }
-
-    .post-list{
-      display:grid;
-      gap:14px;
-    }
-
-    .post-card{
-      border:1px solid var(--line);
-      border-radius:18px;
-      padding:16px;
-      background:#fff;
-      transition:0.2s ease;
-      cursor:pointer;
-    }
-
-    .post-card:hover{
-      transform:translateY(-2px);
-      box-shadow:0 12px 24px rgba(0,0,0,0.06);
-    }
-
-    .post-top{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-    }
-
-    .post-category{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      font-size:12px;
-      font-weight:800;
-      color:var(--brand-dark);
-      background:var(--brand-soft);
-      border-radius:999px;
-      padding:7px 10px;
-    }
-
-    .post-title{
-      font-size:20px;
-      margin:6px 0 8px;
-      font-weight:900;
-      line-height:1.35;
-    }
-
-    .post-meta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      color:var(--muted);
-      font-size:13px;
-      margin-bottom:12px;
-    }
-
-    .post-excerpt{
-      color:#374151;
-      line-height:1.7;
-      font-size:15px;
-      word-break:break-word;
-    }
-
-    .thumb{
-      width:122px;
-      min-width:122px;
-      height:92px;
-      border-radius:14px;
-      overflow:hidden;
-      background:#f3f4f6;
-      border:1px solid var(--line);
-    }
-
-    .thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-    }
-
-    .empty{
-      padding:40px 18px;
-      text-align:center;
-      color:var(--muted);
-      border:1px dashed var(--line);
-      border-radius:18px;
-      background:#fafafa;
-    }
-
-    .form-grid{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0, 1fr));
-      gap:16px;
-    }
-
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    .field.full{
-      grid-column:1 / -1;
-    }
-
-    label{
-      font-size:14px;
-      font-weight:800;
-      color:#374151;
-    }
-
+    .search-input,
+    .select,
     input[type="text"],
     input[type="date"],
     input[type="file"],
-    textarea,
-    select{
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:13px 14px;
-      font-size:15px;
-      background:#fff;
-      outline:none;
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      outline: none;
+      background: #fff;
     }
 
-    textarea{
-      min-height:220px;
-      resize:vertical;
-      line-height:1.7;
-    }
-
+    .search-input:focus,
+    .select:focus,
     input:focus,
-    textarea:focus,
-    select:focus{
-      border-color:var(--brand);
+    textarea:focus {
+      border-color: var(--brand);
     }
 
-    .helper{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.5;
+    .toolbar .search-input {
+      flex: 1;
+      min-width: 240px;
     }
 
-    .date-preview{
-      font-size:14px;
-      color:var(--brand-dark);
-      font-weight:700;
-      background:#faf5ff;
-      border:1px dashed #d8b4fe;
-      padding:10px 12px;
-      border-radius:12px;
+    .toolbar .select {
+      width: 160px;
     }
 
-    .preview-image{
-      margin-top:10px;
-      max-width:280px;
-      border-radius:16px;
-      border:1px solid var(--line);
-      overflow:hidden;
-      background:#f8fafc;
+    .tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
     }
 
-    .detail-wrap{
-      display:grid;
-      gap:18px;
+    .tab-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      background: #f3f4f6;
+      color: #374151;
     }
 
-    .detail-back{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      font-size:14px;
-      font-weight:800;
-      color:var(--brand-dark);
-      cursor:pointer;
-      border:none;
-      background:none;
-      padding:0;
+    .tab-btn.active {
+      background: var(--brand);
+      color: #fff;
     }
 
-    .detail-card{
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:22px;
-      box-shadow:var(--shadow);
-      padding:26px;
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
     }
 
-    .detail-title{
-      font-size:32px;
-      line-height:1.25;
-      font-weight:900;
-      margin:10px 0 12px;
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .detail-meta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      color:var(--muted);
-      margin-bottom:18px;
-      font-size:14px;
+    .field.full {
+      grid-column: 1 / -1;
     }
 
-    .detail-image{
-      border-radius:18px;
-      overflow:hidden;
-      margin:18px 0;
-      border:1px solid var(--line);
-      background:#f3f4f6;
+    label {
+      font-size: 14px;
+      font-weight: 800;
     }
 
-    .detail-body{
-      font-size:16px;
-      line-height:1.95;
-      color:#1f2937;
-      white-space:pre-wrap;
-      word-break:break-word;
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      line-height: 1.7;
     }
 
-    .detail-actions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:24px;
+    .helper {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
     }
 
-    .btn-danger{
-      background:var(--danger);
-      color:#fff;
+    .date-preview {
+      background: #faf5ff;
+      border: 1px dashed #d8b4fe;
+      color: var(--brand-dark);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
     }
 
-    .btn-secondary{
-      background:#f3f4f6;
-      color:#111827;
+    .image-preview {
+      margin-top: 10px;
+      max-width: 280px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #f8fafc;
     }
 
-    .footer{
-      padding:28px 0 50px;
-      color:var(--muted);
-      text-align:center;
-      font-size:14px;
+    .detail-back {
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--brand-dark);
+      padding: 0;
+      margin-bottom: 14px;
     }
 
-    @media (max-width: 960px){
-      .grid-3,
-      .grid-2,
-      .form-grid{
-        grid-template-columns:1fr;
+    .detail-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+
+    .detail-title {
+      margin: 10px 0 12px;
+      font-size: 32px;
+      line-height: 1.2;
+      font-weight: 900;
+      word-break: break-word;
+    }
+
+    .detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .detail-image {
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #f3f4f6;
+      margin-bottom: 18px;
+    }
+
+    .detail-image img {
+      width: 100%;
+      max-height: 520px;
+      object-fit: cover;
+    }
+
+    .detail-body {
+      font-size: 16px;
+      line-height: 1.95;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    .footer {
+      padding: 30px 0 60px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    @media (max-width: 920px) {
+      .stats-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
       }
 
-      .post-top{
-        flex-direction:column;
+      .post-main {
+        flex-direction: column;
       }
 
-      .thumb{
-        width:100%;
-        min-width:0;
-        height:220px;
+      .post-thumb {
+        width: 100%;
+        min-width: 0;
+        height: 220px;
       }
 
-      .hero-card{
-        padding:34px 20px;
-      }
-
-      .detail-title{
-        font-size:26px;
+      .detail-title {
+        font-size: 26px;
       }
     }
 
-    @media (max-width: 640px){
-      .container{
-        width:min(calc(100% - 20px), var(--max));
+    @media (max-width: 640px) {
+      .container {
+        width: min(calc(100% - 20px), var(--max));
       }
 
-      .nav{
-        flex-direction:column;
-        align-items:flex-start;
+      .nav {
+        flex-direction: column;
+        align-items: flex-start;
       }
 
-      .hero-title{
-        font-size:32px;
+      .hero {
+        min-height: 260px;
       }
 
-      .section-title{
-        font-size:24px;
+      .hero-content {
+        padding: 28px 20px;
       }
 
-      .detail-card{
-        padding:18px;
+      .hero-title {
+        font-size: 40px;
       }
     }
   </style>
 </head>
 <body>
-
   <header>
     <div class="container nav">
       <div class="brand">
@@ -604,24 +593,24 @@
         <div>정읍문화소식</div>
       </div>
 
-      <nav class="nav-menu">
+      <div class="nav-menu">
         <button class="nav-btn active" data-page="home">홈</button>
         <button class="nav-btn" data-page="board">게시판</button>
         <button class="nav-btn" data-page="write">소식올리기</button>
-      </nav>
+      </div>
     </div>
   </header>
 
   <main>
     <!-- HOME -->
     <section id="page-home" class="page">
-      <div class="container hero">
-        <div class="hero-card">
+      <div class="container hero-wrap">
+        <div class="hero">
           <div class="hero-content">
-            <h1 class="hero-title">정읍의 문화와 소식을<br />한곳에서 만나는 공간</h1>
+            <h1 class="hero-title">정읍의 문화와 소식을<br>한곳에서 만나는 공간</h1>
             <p class="hero-desc">
-              공지사항, 문화이야기, 영상행사, 자유로운 소식까지
-              누구나 쉽게 보고 올릴 수 있는 정읍 문화 플랫폼입니다.
+              공지사항, 문화이야기, 영상행사, 자유로운 소식까지 누구나 쉽게 보고
+              올릴 수 있는 정읍 문화 플랫폼입니다.
             </p>
             <div class="hero-actions">
               <button class="btn btn-primary" data-go="board">게시판 보기</button>
@@ -631,58 +620,54 @@
         </div>
       </div>
 
-      <section class="section">
-        <div class="container">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">한눈에 보기</h2>
-              <p class="section-sub">등록된 콘텐츠 수와 최근 흐름을 빠르게 볼 수 있습니다.</p>
-            </div>
+      <div class="container section">
+        <div class="section-header">
+          <h2 class="section-title">한눈에 보기</h2>
+          <p class="section-sub">등록된 콘텐츠 수와 최근 흐름을 빠르게 볼 수 있습니다.</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">전체 게시글</div>
+            <div class="stat-value" id="statTotal">0</div>
           </div>
-
-          <div class="grid grid-3">
-            <div class="stats-card">
-              <div class="stats-label">전체 게시글</div>
-              <div class="stats-value" id="statTotal">0</div>
-            </div>
-            <div class="stats-card">
-              <div class="stats-label">문화이야기</div>
-              <div class="stats-value" id="statCulture">0</div>
-            </div>
-            <div class="stats-card">
-              <div class="stats-label">영상행사</div>
-              <div class="stats-value" id="statVideo">0</div>
-            </div>
+          <div class="stat-card">
+            <div class="stat-label">문화이야기</div>
+            <div class="stat-value" id="statCulture">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">영상행사</div>
+            <div class="stat-value" id="statVideo">0</div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section class="section">
-        <div class="container">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">최근 올라온 소식</h2>
-              <p class="section-sub">최신 등록 순으로 표시됩니다.</p>
-            </div>
-          </div>
-
-          <div class="panel">
-            <div id="recentPosts" class="post-list"></div>
-            <h2 class="section-title">가까운 날짜순 문화소식</h2>
-           <div id="upcomingList" class="post-list"></div>
-          </div>
+      <div class="container section">
+        <div class="section-header">
+          <h2 class="section-title">가까운 날짜순 문화소식</h2>
+          <p class="section-sub">행사 시작일 기준으로 가까운 일정부터 보여드립니다.</p>
         </div>
-      </section>
+        <div class="panel">
+          <div id="upcomingList" class="post-list"></div>
+        </div>
+      </div>
+
+      <div class="container section">
+        <div class="section-header">
+          <h2 class="section-title">최근 올라온 소식</h2>
+          <p class="section-sub">최신 등록 순으로 표시됩니다.</p>
+        </div>
+        <div class="panel">
+          <div id="recentPosts" class="post-list"></div>
+        </div>
+      </div>
     </section>
 
     <!-- BOARD -->
     <section id="page-board" class="page hidden">
       <div class="container section">
         <div class="section-header">
-          <div>
-            <h2 class="section-title">게시판</h2>
-            <p class="section-sub">공지사항 / 문화이야기 / 영상행사 / 소식올리기</p>
-          </div>
+          <h2 class="section-title">게시판</h2>
+          <p class="section-sub">공지사항 / 문화이야기 / 영상행사 / 소식올리기</p>
         </div>
 
         <div class="panel">
@@ -695,7 +680,7 @@
           </div>
 
           <div class="toolbar">
-            <input id="searchInput" class="search-input" type="text" placeholder="제목, 내용, 작성자를 검색하세요" />
+            <input id="searchInput" class="search-input" type="text" placeholder="제목, 내용, 작성자를 검색하세요">
             <select id="sortSelect" class="select">
               <option value="latest">최신순</option>
               <option value="oldest">오래된순</option>
@@ -711,10 +696,8 @@
     <section id="page-write" class="page hidden">
       <div class="container section">
         <div class="section-header">
-          <div>
-            <h2 class="section-title">소식올리기</h2>
-            <p class="section-sub">정읍문화소식 관련 글을 자유롭게 올려주세요.</p>
-          </div>
+          <h2 class="section-title">소식올리기</h2>
+          <p class="section-sub">정읍문화소식 관련 글을 자유롭게 올려주세요.</p>
         </div>
 
         <div class="panel">
@@ -728,27 +711,26 @@
                   <option value="영상행사">영상행사</option>
                   <option value="공지사항">공지사항</option>
                 </select>
-                <div class="helper">일반 사용자는 보통 소식올리기 / 문화이야기 / 영상행사를 사용하시면 됩니다.</div>
               </div>
 
               <div class="field">
                 <label for="author">작성자</label>
-                <input id="author" type="text" placeholder="이름을 입력하세요" required />
+                <input id="author" type="text" placeholder="이름을 입력하세요" required>
               </div>
 
               <div class="field full">
                 <label for="title">제목</label>
-                <input id="title" type="text" placeholder="제목을 입력하세요" required />
+                <input id="title" type="text" placeholder="제목을 입력하세요" required>
               </div>
 
               <div class="field">
                 <label for="startDate">행사 시작일</label>
-                <input id="startDate" type="date" />
+                <input id="startDate" type="date">
               </div>
 
               <div class="field">
                 <label for="endDate">행사 종료일</label>
-                <input id="endDate" type="date" />
+                <input id="endDate" type="date">
               </div>
 
               <div class="field full">
@@ -758,19 +740,19 @@
 
               <div class="field full">
                 <label for="content">내용</label>
-                <textarea id="content" placeholder="정읍문화소식 관련 내용 등을 올려주세요." required></textarea>
+                <textarea id="content" placeholder="정읍문화소식 관련 내용을 올려주세요." required></textarea>
               </div>
 
               <div class="field full">
                 <label for="image">대표 이미지</label>
-                <input id="image" type="file" accept="image/*" />
-                <div class="helper">너무 큰 이미지는 브라우저가 느려질 수 있습니다. 가능하면 3MB 이하 이미지를 권장합니다.</div>
-                <div id="imagePreview" class="preview-image hidden"></div>
+                <input id="image" type="file" accept="image/*">
+                <div class="helper">너무 큰 이미지는 브라우저를 느리게 만들 수 있어 3MB 이하를 권장합니다.</div>
+                <div id="imagePreview" class="image-preview hidden"></div>
               </div>
             </div>
 
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
-              <button type="submit" class="btn btn-primary" style="background:var(--brand); color:#fff;">등록하기</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;">
+              <button type="submit" class="btn" style="background:var(--brand); color:#fff;">등록하기</button>
               <button type="button" id="resetBtn" class="btn btn-secondary">초기화</button>
             </div>
           </form>
@@ -781,34 +763,32 @@
     <!-- DETAIL -->
     <section id="page-detail" class="page hidden">
       <div class="container section">
-        <div class="detail-wrap">
-          <button class="detail-back" id="backToBoard">← 목록으로 돌아가기</button>
+        <button id="backToBoard" class="detail-back">← 목록으로 돌아가기</button>
 
-          <article class="detail-card">
-            <div id="detailCategory" class="post-category">카테고리</div>
-            <h1 id="detailTitle" class="detail-title">제목</h1>
+        <article class="detail-card">
+          <div id="detailCategory" class="post-badge">카테고리</div>
+          <h1 id="detailTitle" class="detail-title">제목</h1>
 
-            <div id="detailMeta" class="detail-meta"></div>
+          <div id="detailMeta" class="detail-meta"></div>
 
-            <div id="detailImageWrap" class="detail-image hidden">
-              <img id="detailImage" alt="게시글 이미지" />
-            </div>
+          <div id="detailImageWrap" class="detail-image hidden">
+            <img id="detailImage" alt="게시글 이미지">
+          </div>
 
-            <div id="detailBody" class="detail-body"></div>
+          <div id="detailBody" class="detail-body"></div>
 
-            <div class="detail-actions">
-              <button id="shareBtn" class="btn btn-secondary">공유하기</button>
-              <button id="deleteBtn" class="btn btn-danger">삭제하기</button>
-            </div>
-          </article>
-        </div>
+          <div class="detail-actions">
+            <button id="shareBtn" class="btn btn-secondary" type="button">공유하기</button>
+            <button id="deleteBtn" class="btn btn-danger" type="button">삭제하기</button>
+          </div>
+        </article>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="container">
-      정읍문화소식 © 2026 · 정읍의 문화와 이야기를 나누는 공간
+      정읍문화소식 © 2026 · 정읍의 문화와 소식을 함께 나누는 공간
     </div>
   </footer>
 
@@ -816,13 +796,13 @@
     (() => {
       "use strict";
 
-      const STORAGE_KEY = "jeongeup_culture_posts_v_clean_v1";
+      const STORAGE_KEY = "jeongeup_culture_posts_clean_v2";
 
       const state = {
+        posts: [],
         currentPage: "home",
         currentCategory: "all",
-        currentDetailId: null,
-        posts: []
+        currentDetailId: null
       };
 
       const el = {
@@ -833,12 +813,14 @@
         statTotal: document.getElementById("statTotal"),
         statCulture: document.getElementById("statCulture"),
         statVideo: document.getElementById("statVideo"),
+
+        upcomingList: document.getElementById("upcomingList"),
         recentPosts: document.getElementById("recentPosts"),
 
         tabButtons: document.querySelectorAll(".tab-btn"),
+        boardList: document.getElementById("boardList"),
         searchInput: document.getElementById("searchInput"),
         sortSelect: document.getElementById("sortSelect"),
-        boardList: document.getElementById("boardList"),
 
         postForm: document.getElementById("postForm"),
         category: document.getElementById("category"),
@@ -863,6 +845,15 @@
         deleteBtn: document.getElementById("deleteBtn")
       };
 
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
       function getDayName(dateStr) {
         if (!dateStr) return "";
         const date = new Date(dateStr);
@@ -883,9 +874,7 @@
 
       function formatDateWithDay(dateStr) {
         if (!dateStr) return "";
-        const base = formatDate(dateStr);
-        const day = getDayName(dateStr);
-        return day ? `${base} (${day})` : base;
+        return `${formatDate(dateStr)} (${getDayName(dateStr)})`;
       }
 
       function formatRange(startDate, endDate) {
@@ -911,35 +900,8 @@
         return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       }
 
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-
       function savePosts() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.posts));
-      }
-
-      function loadPosts() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          state.posts = getDefaultPosts();
-          savePosts();
-          return;
-        }
-
-        try {
-          const parsed = JSON.parse(raw);
-          state.posts = Array.isArray(parsed) ? parsed : getDefaultPosts();
-        } catch (error) {
-          console.error("게시글 로드 오류:", error);
-          state.posts = getDefaultPosts();
-          savePosts();
-        }
       }
 
       function getDefaultPosts() {
@@ -949,9 +911,9 @@
             category: "공지사항",
             author: "관리자",
             title: "정읍문화소식 플랫폼 오픈 안내",
-            content: "정읍의 문화, 행사, 전시, 영상행사, 자유로운 소식을 함께 나누는 공간입니다.\n\n앞으로 다양한 문화 정보를 편하게 올리고 볼 수 있도록 계속 보완해 나가겠습니다.",
             startDate: "",
             endDate: "",
+            content: "정읍의 문화, 행사, 전시, 이야기들을 함께 나누는 플랫폼입니다.\n\n누구나 쉽게 소식을 올리고 볼 수 있도록 계속 보완해 나가겠습니다.",
             image: "",
             createdAt: nowString()
           },
@@ -959,106 +921,48 @@
             id: createId(),
             category: "문화이야기",
             author: "정읍문화소식",
-            title: "정읍의 문화는 일상 속 이야기에서 시작됩니다",
-            content: "정읍의 문화는 거창한 행사만이 아니라 사람들의 일상, 기억, 장소, 풍경에서 시작됩니다.\n\n이곳에서 정읍의 작은 이야기들도 자유롭게 나눠주세요.",
+            title: "정읍의 문화는 일상 속 작은 이야기에서 시작됩니다",
             startDate: "",
             endDate: "",
+            content: "정읍의 문화는 큰 행사만이 아니라 사람, 장소, 풍경, 기억에서 시작됩니다.\n\n이곳에서 정읍의 다양한 문화이야기를 나눠주세요.",
             image: "",
             createdAt: nowString()
           }
         ];
       }
 
-      function showPage(pageName) {
-        state.currentPage = pageName;
+      function loadPosts() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            state.posts = getDefaultPosts();
+            savePosts();
+            return;
+          }
 
-        el.pages.forEach(page => page.classList.add("hidden"));
-        const target = document.getElementById(`page-${pageName}`);
-        if (target) target.classList.remove("hidden");
-
-        el.navButtons.forEach(btn => {
-          btn.classList.toggle("active", btn.dataset.page === pageName);
-        });
-
-      
-       if (pageName === "home") {
-  renderHome();
-  renderUpcoming();
-}
-
-if (pageName === "board") {
-  renderBoard();
-}
-
-      function updateDatePreview() {
-        const start = el.startDate.value;
-        const end = el.endDate.value;
-
-        if (!start && !end) {
-          el.datePreview.textContent = "날짜를 선택하면 여기에 요일까지 함께 표시됩니다.";
-          return;
+          const parsed = JSON.parse(raw);
+          state.posts = Array.isArray(parsed) ? parsed : getDefaultPosts();
+        } catch (error) {
+          console.error("게시글 로드 오류:", error);
+          state.posts = getDefaultPosts();
+          savePosts();
         }
-
-        el.datePreview.textContent = formatRange(start, end);
-      }
-
-      function renderStats() {
-        const total = state.posts.length;
-        const culture = state.posts.filter(post => post.category === "문화이야기").length;
-        const video = state.posts.filter(post => post.category === "영상행사").length;
-
-        el.statTotal.textContent = total;
-        el.statCulture.textContent = culture;
-        el.statVideo.textContent = video;
       }
 
       function sortedPosts(posts) {
-        const cloned = [...posts];
-        return cloned.sort((a, b) => {
-          const aKey = String(a.createdAt || "");
-          const bKey = String(b.createdAt || "");
-          return bKey.localeCompare(aKey);
-        });
+        return [...posts].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
       }
 
-      function getFilteredPosts() {
-        const keyword = el.searchInput.value.trim().toLowerCase();
-        const sort = el.sortSelect.value;
-
-        let list = [...state.posts];
-
-        if (state.currentCategory !== "all") {
-          list = list.filter(post => post.category === state.currentCategory);
-        }
-
-        if (keyword) {
-          list = list.filter(post => {
-            const merged = [
-              post.title,
-              post.content,
-              post.author,
-              post.category
-            ].join(" ").toLowerCase();
-
-            return merged.includes(keyword);
-          });
-        }
-
-        list.sort((a, b) => {
-          const aKey = String(a.createdAt || "");
-          const bKey = String(b.createdAt || "");
-          return sort === "oldest"
-            ? aKey.localeCompare(bKey)
-            : bKey.localeCompare(aKey);
-        });
-
-        return list;
+      function renderStats() {
+        el.statTotal.textContent = state.posts.length;
+        el.statCulture.textContent = state.posts.filter(post => post.category === "문화이야기").length;
+        el.statVideo.textContent = state.posts.filter(post => post.category === "영상행사").length;
       }
 
       function buildPostCard(post) {
         const thumb = post.image
           ? `
-            <div class="thumb">
+            <div class="post-thumb">
               <img src="${post.image}" alt="${escapeHtml(post.title)}">
             </div>
           `
@@ -1066,16 +970,18 @@ if (pageName === "board") {
 
         return `
           <article class="post-card" data-id="${post.id}">
-            <div class="post-top">
-              <div style="flex:1;">
-                <div class="post-category">${escapeHtml(post.category)}</div>
+            <div class="post-main">
+              <div class="post-content">
+                <div class="post-badge">${escapeHtml(post.category)}</div>
                 <h3 class="post-title">${escapeHtml(post.title)}</h3>
                 <div class="post-meta">
                   <span>작성자: ${escapeHtml(post.author)}</span>
                   <span>등록일: ${escapeHtml(post.createdAt)}</span>
                   <span>${escapeHtml(formatRange(post.startDate, post.endDate))}</span>
                 </div>
-                <div class="post-excerpt">${escapeHtml(post.content.slice(0, 120))}${post.content.length > 120 ? "..." : ""}</div>
+                <div class="post-excerpt">
+                  ${escapeHtml(post.content.slice(0, 120))}${post.content.length > 120 ? "..." : ""}
+                </div>
               </div>
               ${thumb}
             </div>
@@ -1083,19 +989,68 @@ if (pageName === "board") {
         `;
       }
 
-function renderHome() {
-  renderStats();
+      function bindPostCardClicks(container) {
+        container.querySelectorAll(".post-card").forEach(card => {
+          card.addEventListener("click", () => {
+            openDetail(card.dataset.id);
+          });
+        });
+      }
 
-  const posts = sortedPosts(state.posts).slice(0, 8);
+      function renderHome() {
+        renderStats();
 
-  if (!posts.length) {
-    el.recentPosts.innerHTML = `<div class="empty">아직 등록된 게시글이 없습니다.</div>`;
-    return;
-  }
+        const posts = sortedPosts(state.posts).slice(0, 8);
 
-  el.recentPosts.innerHTML = posts.map(buildPostCard).join("");
-  bindPostCardClicks(el.recentPosts);
-}
+        if (!posts.length) {
+          el.recentPosts.innerHTML = `<div class="empty">아직 등록된 게시글이 없습니다.</div>`;
+          return;
+        }
+
+        el.recentPosts.innerHTML = posts.map(buildPostCard).join("");
+        bindPostCardClicks(el.recentPosts);
+      }
+
+      function renderUpcoming() {
+        const posts = [...state.posts]
+          .filter(post => post.startDate)
+          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+          .slice(0, 8);
+
+        if (!posts.length) {
+          el.upcomingList.innerHTML = `<div class="empty">행사 일정이 없습니다.</div>`;
+          return;
+        }
+
+        el.upcomingList.innerHTML = posts.map(buildPostCard).join("");
+        bindPostCardClicks(el.upcomingList);
+      }
+
+      function getFilteredPosts() {
+        const keyword = el.searchInput.value.trim().toLowerCase();
+        const sort = el.sortSelect.value;
+
+        let posts = [...state.posts];
+
+        if (state.currentCategory !== "all") {
+          posts = posts.filter(post => post.category === state.currentCategory);
+        }
+
+        if (keyword) {
+          posts = posts.filter(post => {
+            const merged = [post.title, post.content, post.author, post.category].join(" ").toLowerCase();
+            return merged.includes(keyword);
+          });
+        }
+
+        posts.sort((a, b) => {
+          const aTime = String(a.createdAt);
+          const bTime = String(b.createdAt);
+          return sort === "oldest" ? aTime.localeCompare(bTime) : bTime.localeCompare(aTime);
+        });
+
+        return posts;
+      }
 
       function renderBoard() {
         const posts = getFilteredPosts();
@@ -1109,56 +1064,67 @@ function renderHome() {
         bindPostCardClicks(el.boardList);
       }
 
-      function bindPostCardClicks(container) {
-        container.querySelectorAll(".post-card").forEach(card => {
-          card.addEventListener("click", () => {
-            const id = card.dataset.id;
-            openDetail(id);
-          });
+      function showPage(pageName) {
+        state.currentPage = pageName;
+
+        el.pages.forEach(page => page.classList.add("hidden"));
+        const target = document.getElementById(`page-${pageName}`);
+        if (target) target.classList.remove("hidden");
+
+        el.navButtons.forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.page === pageName);
         });
-      }
 
-      function openDetail(id) {
-        const post = state.posts.find(item => item.id === id);
-        if (!post) return;
-
-        state.currentDetailId = id;
-
-        el.detailCategory.textContent = post.category;
-        el.detailTitle.textContent = post.title;
-
-        const metaItems = [
-          `작성자: ${post.author}`,
-          `등록일: ${post.createdAt}`,
-          `행사일: ${formatRange(post.startDate, post.endDate)}`
-        ];
-        el.detailMeta.innerHTML = metaItems.map(item => `<span>${escapeHtml(item)}</span>`).join("");
-
-        if (post.image) {
-          el.detailImage.src = post.image;
-          el.detailImage.alt = post.title;
-          el.detailImageWrap.classList.remove("hidden");
-        } else {
-          el.detailImageWrap.classList.add("hidden");
-          el.detailImage.removeAttribute("src");
+        if (pageName === "home") {
+          renderHome();
+          renderUpcoming();
         }
 
-        el.detailBody.textContent = post.content;
-        showPage("detail");
+        if (pageName === "board") {
+          renderBoard();
+        }
+      }
+
+      function updateDatePreview() {
+        const start = el.startDate.value;
+        const end = el.endDate.value;
+
+        if (!start && !end) {
+          el.datePreview.textContent = "날짜를 선택하면 여기에 요일까지 함께 표시됩니다.";
+          return;
+        }
+
+        el.datePreview.textContent = formatRange(start, end);
       }
 
       function resetForm() {
         el.postForm.reset();
+        el.datePreview.textContent = "날짜를 선택하면 여기에 요일까지 함께 표시됩니다.";
         el.imagePreview.innerHTML = "";
         el.imagePreview.classList.add("hidden");
-        updateDatePreview();
       }
 
-      function readImageFile(file) {
+      function handleImagePreview() {
+        const file = el.image.files[0];
+        if (!file) {
+          el.imagePreview.innerHTML = "";
+          el.imagePreview.classList.add("hidden");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          el.imagePreview.innerHTML = `<img src="${reader.result}" alt="이미지 미리보기">`;
+          el.imagePreview.classList.remove("hidden");
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function readFileAsDataURL(file) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.onerror = () => reject(new Error("이미지 읽기 실패"));
+          reader.onerror = reject;
           reader.readAsDataURL(file);
         });
       }
@@ -1175,7 +1141,7 @@ function renderHome() {
         const imageFile = el.image.files[0];
 
         if (!author || !title || !content) {
-          alert("작성자, 제목, 내용은 꼭 입력해주세요.");
+          alert("작성자, 제목, 내용은 반드시 입력해주세요.");
           return;
         }
 
@@ -1184,23 +1150,23 @@ function renderHome() {
           return;
         }
 
-        let imageData = "";
+        let image = "";
         if (imageFile) {
-          if (imageFile.size > 5 * 1024 * 1024) {
-            alert("이미지는 5MB 이하 파일을 권장합니다.");
+          if (imageFile.size > 3 * 1024 * 1024) {
+            alert("이미지는 3MB 이하를 권장합니다.");
             return;
           }
 
           try {
-            imageData = await readImageFile(imageFile);
+            image = await readFileAsDataURL(imageFile);
           } catch (error) {
-            console.error(error);
-            alert("이미지를 불러오는 중 오류가 발생했습니다.");
+            console.error("이미지 읽기 오류:", error);
+            alert("이미지를 불러오지 못했습니다.");
             return;
           }
         }
 
-        const post = {
+        const newPost = {
           id: createId(),
           category,
           author,
@@ -1208,34 +1174,68 @@ function renderHome() {
           startDate,
           endDate,
           content,
-          image: imageData,
+          image,
           createdAt: nowString()
         };
 
-        state.posts.unshift(post);
+        state.posts.unshift(newPost);
         savePosts();
+
         resetForm();
         renderHome();
         renderBoard();
+        renderUpcoming();
         showPage("board");
 
         alert("게시글이 등록되었습니다.");
       }
 
-      function handleImagePreview() {
-        const file = el.image.files[0];
-        if (!file) {
-          el.imagePreview.innerHTML = "";
-          el.imagePreview.classList.add("hidden");
-          return;
+      function openDetail(id) {
+        const post = state.posts.find(item => item.id === id);
+        if (!post) return;
+
+        state.currentDetailId = id;
+
+        el.detailCategory.textContent = post.category;
+        el.detailTitle.textContent = post.title;
+        el.detailMeta.innerHTML = `
+          <span>작성자: ${escapeHtml(post.author)}</span>
+          <span>등록일: ${escapeHtml(post.createdAt)}</span>
+          <span>행사일: ${escapeHtml(formatRange(post.startDate, post.endDate))}</span>
+        `;
+        el.detailBody.textContent = post.content;
+
+        if (post.image) {
+          el.detailImage.src = post.image;
+          el.detailImage.alt = post.title;
+          el.detailImageWrap.classList.remove("hidden");
+        } else {
+          el.detailImageWrap.classList.add("hidden");
+          el.detailImage.removeAttribute("src");
         }
 
-        const reader = new FileReader();
-        reader.onload = () => {
-          el.imagePreview.innerHTML = `<img src="${reader.result}" alt="미리보기 이미지">`;
-          el.imagePreview.classList.remove("hidden");
-        };
-        reader.readAsDataURL(file);
+        showPage("detail");
+      }
+
+      async function handleShare() {
+        const post = state.posts.find(item => item.id === state.currentDetailId);
+        if (!post) return;
+
+        const text = `[${post.category}] ${post.title}\n작성자: ${post.author}\n${post.content}`;
+
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: post.title,
+              text
+            });
+          } else {
+            await navigator.clipboard.writeText(text);
+            alert("공유할 내용이 복사되었습니다.");
+          }
+        } catch (error) {
+          console.error("공유 실패:", error);
+        }
       }
 
       function handleDelete() {
@@ -1247,52 +1247,27 @@ function renderHome() {
         state.posts = state.posts.filter(post => post.id !== state.currentDetailId);
         savePosts();
         state.currentDetailId = null;
+
         renderHome();
         renderBoard();
+        renderUpcoming();
         showPage("board");
-      }
-
-      async function handleShare() {
-        const post = state.posts.find(item => item.id === state.currentDetailId);
-        if (!post) return;
-
-        const shareText = `[${post.category}] ${post.title}\n작성자: ${post.author}\n${post.content}`;
-
-        try {
-          if (navigator.share) {
-            await navigator.share({
-              title: post.title,
-              text: shareText
-            });
-          } else {
-            await navigator.clipboard.writeText(shareText);
-            alert("공유할 내용이 클립보드에 복사되었습니다.");
-          }
-        } catch (error) {
-          console.error("공유 실패:", error);
-        }
       }
 
       function initEvents() {
         el.navButtons.forEach(btn => {
-          btn.addEventListener("click", () => {
-            showPage(btn.dataset.page);
-          });
+          btn.addEventListener("click", () => showPage(btn.dataset.page));
         });
 
         el.goButtons.forEach(btn => {
-          btn.addEventListener("click", () => {
-            showPage(btn.dataset.go);
-          });
+          btn.addEventListener("click", () => showPage(btn.dataset.go));
         });
 
         el.tabButtons.forEach(btn => {
           btn.addEventListener("click", () => {
             state.currentCategory = btn.dataset.category;
-
             el.tabButtons.forEach(item => item.classList.remove("active"));
             btn.classList.add("active");
-
             renderBoard();
           });
         });
@@ -1302,8 +1277,8 @@ function renderHome() {
 
         el.startDate.addEventListener("change", updateDatePreview);
         el.endDate.addEventListener("change", updateDatePreview);
-
         el.image.addEventListener("change", handleImagePreview);
+
         el.postForm.addEventListener("submit", handleSubmit);
         el.resetBtn.addEventListener("click", resetForm);
 
@@ -1315,9 +1290,9 @@ function renderHome() {
       function init() {
         loadPosts();
         initEvents();
-        updateDatePreview();
         renderHome();
         renderBoard();
+        renderUpcoming();
         showPage("home");
       }
 
