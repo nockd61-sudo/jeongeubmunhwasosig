@@ -668,6 +668,8 @@
 
           <div class="panel">
             <div id="recentPosts" class="post-list"></div>
+            <h2 class="section-title">가까운 날짜순 문화소식</h2>
+           <div id="upcomingList" class="post-list"></div>
           </div>
         </div>
       </section>
@@ -978,9 +980,15 @@
           btn.classList.toggle("active", btn.dataset.page === pageName);
         });
 
-        if (pageName === "home") renderHome();
-        if (pageName === "board") renderBoard();
-      }
+      
+       if (pageName === "home") {
+  renderHome();
+  renderUpcoming();
+}
+
+if (pageName === "board") {
+  renderBoard();
+}
 
       function updateDatePreview() {
         const start = el.startDate.value;
@@ -1075,18 +1083,19 @@
         `;
       }
 
-      function renderHome() {
-        renderStats();
+function renderHome() {
+  renderStats();
 
-        const posts = sortedPosts(state.posts).slice(0, 5);
-        if (!posts.length) {
-          el.recentPosts.innerHTML = `<div class="empty">아직 등록된 게시글이 없습니다.</div>`;
-          return;
-        }
+  const posts = sortedPosts(state.posts).slice(0, 8);
 
-        el.recentPosts.innerHTML = posts.map(buildPostCard).join("");
-        bindPostCardClicks(el.recentPosts);
-      }
+  if (!posts.length) {
+    el.recentPosts.innerHTML = `<div class="empty">아직 등록된 게시글이 없습니다.</div>`;
+    return;
+  }
+
+  el.recentPosts.innerHTML = posts.map(buildPostCard).join("");
+  bindPostCardClicks(el.recentPosts);
+}
 
       function renderBoard() {
         const posts = getFilteredPosts();
