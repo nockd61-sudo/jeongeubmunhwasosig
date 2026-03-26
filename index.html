@@ -1216,27 +1216,32 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-    async function uploadFileToR2(file) {
-      const formData = new FormData();
-      formData.append('file', file);
+ async function uploadFileToR2(file) {
+  const formData = new FormData();
+  formData.append('file', file);
 
-      const response = await fetch(R2_UPLOAD_ENDPOINT, {
-        method: 'POST',
-        body: formData
-      });
+  const response = await fetch('https://jeongeup-upload.nockd61.workers.dev', {
+    method: 'POST',
+    body: formData
+  });
 
-      if (!response.ok) {
-        throw new Error('업로드 서버 응답 오류');
-      }
+  console.log('응답 상태:', response.status);
 
-      const result = await response.json();
+  if (!response.ok) {
+    alert('업로드 실패 (서버 오류)');
+    throw new Error('업로드 서버 오류');
+  }
 
-      if (!result.ok || !result.url) {
-        throw new Error(result.error || '업로드 실패');
-      }
+  const result = await response.json();
+  console.log('업로드 결과:', result);
 
-      return result.url;
-    }
+  if (!result.ok || !result.url) {
+    alert('이미지 업로드 실패');
+    throw new Error(result.error || '업로드 실패');
+  }
+
+  return result.url;
+}
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
