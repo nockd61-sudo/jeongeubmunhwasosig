@@ -4,29 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정읍문화소식 | 정읍 문화 플랫폼</title>
-  <meta name="description" content="정읍 문화 행사, 전시, 축제, 문화이야기, 영상행사를 한눈에 보는 정읍문화소식 플랫폼" />
-  <meta name="keywords" content="정읍문화소식, 정읍문화, 정읍행사, 정읍축제, 문화이야기, 영상행사" />
-  <meta name="theme-color" content="#6d4cff" />
-
+  <meta name="description" content="정읍의 문화와 소식을 한곳에서 만나는 정읍 문화 플랫폼" />
   <style>
     :root {
-      --bg: #f3f4f8;
-      --card: #ffffff;
-      --text: #1f2937;
+      --bg: #f5f7fb;
+      --paper: #ffffff;
+      --text: #111827;
       --muted: #6b7280;
       --line: #e5e7eb;
       --brand: #6d4cff;
       --brand-dark: #5337d6;
-      --soft: #f5f3ff;
-      --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      --radius: 20px;
+      --soft: #f3f0ff;
+      --shadow: 0 14px 40px rgba(31, 41, 55, 0.10);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
       --max: 1180px;
-      --danger: #dc2626;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html {
       scroll-behavior: smooth;
@@ -34,601 +30,688 @@
 
     body {
       margin: 0;
-      font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-      background: var(--bg);
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(109,76,255,0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(49,120,255,0.10), transparent 30%),
+        linear-gradient(180deg, #f8faff 0%, #f4f6fb 100%);
     }
 
-    img {
-      max-width: 100%;
-      display: block;
-    }
-
-    button,
-    input,
-    textarea,
-    select {
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    button, input, textarea, select {
       font: inherit;
     }
 
     .container {
-      width: min(calc(100% - 32px), var(--max));
+      width: min(var(--max), calc(100% - 32px));
       margin: 0 auto;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    header {
+    .topbar {
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.88);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(229, 231, 235, 0.9);
+      border-bottom: 1px solid rgba(229,231,235,0.9);
     }
 
-    .nav {
-      min-height: 74px;
+    .topbar-inner {
+      height: 76px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 10px 0;
     }
 
     .brand {
       display: flex;
       align-items: center;
       gap: 12px;
-      font-weight: 900;
-      font-size: 18px;
+      min-width: 0;
     }
 
     .brand-badge {
-      width: 38px;
-      height: 38px;
+      width: 44px;
+      height: 44px;
       border-radius: 14px;
+      background: linear-gradient(135deg, #7b61ff, #4f7cff);
+      color: #fff;
       display: grid;
       place-items: center;
-      color: #fff;
-      font-weight: 900;
-      background: linear-gradient(135deg, #7c3aed, #3b82f6);
-      box-shadow: var(--shadow);
+      font-weight: 800;
+      font-size: 20px;
+      box-shadow: 0 10px 24px rgba(109,76,255,0.28);
+      flex-shrink: 0;
     }
 
-    .nav-menu {
+    .brand-title {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+
+    .nav {
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .nav-btn {
       border: 1px solid var(--line);
       background: #fff;
-      color: var(--text);
+      color: #1f2937;
+      padding: 11px 18px;
       border-radius: 999px;
-      padding: 10px 18px;
       cursor: pointer;
-      font-weight: 700;
-      transition: 0.2s ease;
+      transition: .2s ease;
+      font-weight: 600;
     }
 
-    .nav-btn.active,
-    .nav-btn:hover {
+    .nav-btn:hover,
+    .nav-btn.active {
       background: var(--brand);
-      border-color: var(--brand);
       color: #fff;
+      border-color: var(--brand);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(109,76,255,0.22);
     }
 
-    .page {
-      padding-bottom: 40px;
-    }
-
-    .hero-wrap {
-      padding: 36px 0 24px;
+    main {
+      padding: 34px 0 80px;
     }
 
     .hero {
       position: relative;
       overflow: hidden;
-      border-radius: 30px;
-      min-height: 290px;
+      min-height: 390px;
+      border-radius: 34px;
+      padding: 44px;
+      display: grid;
+      align-items: center;
       box-shadow: var(--shadow);
       background:
-        linear-gradient(135deg, rgba(109,76,255,0.84), rgba(59,130,246,0.66)),
-        url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop") center/cover no-repeat;
-      display: flex;
-      align-items: center;
+        linear-gradient(115deg, rgba(91, 49, 226, 0.92) 0%, rgba(93, 77, 231, 0.86) 26%, rgba(76, 129, 255, 0.72) 60%, rgba(35, 75, 170, 0.65) 100%),
+        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      color: #fff;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 22%, rgba(255,255,255,0.18), transparent 22%),
+        radial-gradient(circle at 75% 35%, rgba(255,255,255,0.12), transparent 26%);
+      pointer-events: none;
     }
 
     .hero-content {
       position: relative;
       z-index: 1;
-      max-width: 780px;
-      padding: 34px 28px;
-      color: #fff;
+      max-width: 700px;
     }
 
-    .hero-title {
-      margin: 0 0 14px;
-      font-size: clamp(34px, 5vw, 62px);
-      line-height: 1.08;
-      font-weight: 900;
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.24);
+      margin-bottom: 20px;
+      font-size: 14px;
+      font-weight: 700;
       letter-spacing: -0.02em;
     }
 
-    .hero-desc {
-      margin: 0 0 24px;
-      color: rgba(255,255,255,0.95);
-      font-size: 18px;
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(38px, 5vw, 66px);
+      line-height: 1.04;
+      letter-spacing: -0.05em;
+      font-weight: 900;
+      text-shadow: 0 8px 26px rgba(0,0,0,0.14);
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: clamp(16px, 2vw, 20px);
       line-height: 1.7;
+      color: rgba(255,255,255,0.94);
+      max-width: 640px;
     }
 
     .hero-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
+      margin-top: 28px;
     }
 
     .btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
+      border: 0;
       cursor: pointer;
+      border-radius: 16px;
+      padding: 14px 20px;
       font-weight: 800;
-      transition: 0.2s ease;
+      transition: .2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
     }
 
     .btn-primary {
       background: #fff;
       color: var(--brand-dark);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.14);
     }
 
-    .btn-primary:hover {
-      transform: translateY(-1px);
-    }
-
-    .btn-ghost {
-      color: #fff;
+    .btn-secondary {
       background: rgba(255,255,255,0.12);
+      color: #fff;
       border: 1px solid rgba(255,255,255,0.24);
+      backdrop-filter: blur(5px);
     }
 
     .section {
-      padding: 14px 0 10px;
+      margin-top: 34px;
     }
 
-    .section-header {
-      margin-bottom: 14px;
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
     }
 
     .section-title {
-      margin: 0 0 6px;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: -0.01em;
-    }
-
-    .section-sub {
       margin: 0;
+      font-size: clamp(28px, 3vw, 40px);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      font-weight: 900;
+    }
+
+    .section-desc {
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
     }
 
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .stats-grid {
+    .stats {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 16px;
     }
 
     .stat-card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 18px;
-      min-height: 94px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(229,231,235,0.85);
+      border-radius: 22px;
+      padding: 22px 20px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.05);
+      backdrop-filter: blur(8px);
     }
 
     .stat-label {
       color: var(--muted);
       font-size: 14px;
       margin-bottom: 10px;
+      font-weight: 600;
     }
 
     .stat-value {
-      font-size: 22px;
+      font-size: 42px;
       font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #0f172a;
     }
 
-    .sub-block-title {
-      font-size: 16px;
-      font-weight: 900;
-      margin: 8px 0 12px;
+    .panel {
+      display: none;
     }
 
-    .post-list {
+    .panel.active {
+      display: block;
+    }
+
+    .board-wrap {
       display: grid;
-      gap: 14px;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      align-items: start;
     }
 
-    .post-card {
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      background: #fff;
-      padding: 16px;
-      cursor: pointer;
-      transition: 0.2s ease;
-    }
-
-    .post-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.06);
-    }
-
-    .post-main {
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
-    }
-
-    .post-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .post-thumb {
-      width: 132px;
-      min-width: 132px;
-      height: 100px;
+    .card {
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(229,231,235,0.85);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
       overflow: hidden;
-      border-radius: 14px;
-      background: #f3f4f6;
-      border: 1px solid var(--line);
+      backdrop-filter: blur(9px);
     }
 
-    .post-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .card-head {
+      padding: 24px 24px 14px;
+      border-bottom: 1px solid var(--line);
     }
 
-    .post-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--brand-dark);
-      background: var(--soft);
-      padding: 7px 10px;
-      border-radius: 999px;
-      margin-bottom: 8px;
+    .card-head h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
     }
 
-    .post-title {
-      margin: 0 0 8px;
-      font-size: 20px;
-      line-height: 1.35;
-      font-weight: 900;
-      word-break: break-word;
-    }
-
-    .post-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+    .card-head p {
+      margin: 8px 0 0;
       color: var(--muted);
-      font-size: 13px;
-      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.6;
     }
 
-    .post-excerpt {
-      color: #374151;
-      line-height: 1.7;
-      font-size: 15px;
-      word-break: break-word;
-    }
-
-    .empty {
-      border: 1px dashed var(--line);
-      border-radius: 16px;
-      background: #fafafa;
-      text-align: center;
-      color: var(--muted);
-      padding: 26px 14px;
+    .card-body {
+      padding: 18px 24px 24px;
     }
 
     .toolbar {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
-    .search-input,
-    .select,
-    input[type="text"],
-    input[type="date"],
-    input[type="file"],
-    textarea {
-      width: 100%;
+    .chip {
       border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px 14px;
-      outline: none;
       background: #fff;
-    }
-
-    .search-input:focus,
-    .select:focus,
-    input:focus,
-    textarea:focus {
-      border-color: var(--brand);
-    }
-
-    .toolbar .search-input {
-      flex: 1;
-      min-width: 240px;
-    }
-
-    .toolbar .select {
-      width: 160px;
-    }
-
-    .tab-bar {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .tab-btn {
-      border: none;
+      color: #374151;
       border-radius: 999px;
       padding: 10px 14px;
       cursor: pointer;
-      font-weight: 800;
-      background: #f3f4f6;
-      color: #374151;
+      font-weight: 700;
     }
 
-    .tab-btn.active {
-      background: var(--brand);
-      color: #fff;
+    .chip.active {
+      background: var(--soft);
+      border-color: #d7cbff;
+      color: var(--brand-dark);
+    }
+
+    .post-list {
+      display: grid;
+      gap: 16px;
+    }
+
+    .post-item {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px 18px 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #fafbff 100%);
+      transition: .18s ease;
+      cursor: pointer;
+    }
+
+    .post-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(31,41,55,0.08);
+      border-color: #d9dff0;
+    }
+
+    .post-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .post-category {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .post-date {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .post-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      word-break: keep-all;
+    }
+
+    .post-summary {
+      margin: 0;
+      color: #4b5563;
+      font-size: 15px;
+      line-height: 1.7;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .post-meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 16px;
     }
 
     .field {
-      display: flex;
-      flex-direction: column;
+      display: grid;
       gap: 8px;
     }
 
-    .field.full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      font-size: 14px;
+    .field label {
       font-weight: 800;
-    }
-
-    textarea {
-      min-height: 220px;
-      resize: vertical;
-      line-height: 1.7;
-    }
-
-    .helper {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-    }
-
-    .date-preview {
-      background: #faf5ff;
-      border: 1px dashed #d8b4fe;
-      color: var(--brand-dark);
-      border-radius: 14px;
-      padding: 12px;
       font-size: 14px;
-      font-weight: 700;
+      color: #111827;
     }
 
-    .image-preview {
-      margin-top: 10px;
-      max-width: 280px;
-      border-radius: 14px;
-      overflow: hidden;
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
       border: 1px solid var(--line);
-      background: #f8fafc;
+      border-radius: 16px;
+      background: #fff;
+      padding: 14px 15px;
+      outline: none;
+      transition: .18s ease;
     }
 
-    .detail-back {
-      border: none;
-      background: none;
-      cursor: pointer;
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #b4a2ff;
+      box-shadow: 0 0 0 4px rgba(109,76,255,0.10);
+    }
+
+    .field textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.65;
+    }
+
+    .submit-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--brand), #4f7cff);
+      color: #fff;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 16px;
       font-weight: 800;
-      color: var(--brand-dark);
-      padding: 0;
-      margin-bottom: 14px;
+      cursor: pointer;
+      box-shadow: 0 14px 30px rgba(109,76,255,0.25);
+    }
+
+    .ghost-btn {
+      background: #fff;
+      color: #374151;
+      border: 1px solid var(--line);
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .empty-box {
+      border: 1px dashed #d5d9e5;
+      background: linear-gradient(180deg, #fcfcff 0%, #f7f8fc 100%);
+      border-radius: 22px;
+      padding: 30px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .detail-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,0.48);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 200;
+    }
+
+    .detail-overlay.show {
+      display: flex;
     }
 
     .detail-card {
+      width: min(820px, 100%);
+      max-height: 88vh;
+      overflow: auto;
       background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 24px;
+      border-radius: 28px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.24);
+      border: 1px solid rgba(229,231,235,0.9);
     }
 
-    .detail-title {
-      margin: 10px 0 12px;
-      font-size: 32px;
-      line-height: 1.2;
-      font-weight: 900;
-      word-break: break-word;
+    .detail-head {
+      padding: 26px 28px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .detail-head h2 {
+      margin: 10px 0 0;
+      font-size: 30px;
+      line-height: 1.25;
+      letter-spacing: -0.04em;
     }
 
     .detail-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
       color: var(--muted);
       font-size: 14px;
-      margin-bottom: 18px;
+      margin-top: 10px;
+      line-height: 1.7;
     }
 
-    .detail-image {
-      overflow: hidden;
-      border-radius: 16px;
+    .close-btn {
       border: 1px solid var(--line);
-      background: #f3f4f6;
-      margin-bottom: 18px;
-    }
-
-    .detail-image img {
-      width: 100%;
-      max-height: 520px;
-      object-fit: cover;
+      background: #fff;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
     .detail-body {
+      padding: 24px 28px 30px;
+      color: #1f2937;
+      line-height: 1.85;
       font-size: 16px;
-      line-height: 1.95;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
-    .detail-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 24px;
-    }
-
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #111827;
-    }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #fff;
-    }
-
     .footer {
-      padding: 30px 0 60px;
+      margin-top: 52px;
+      border-top: 1px solid rgba(229,231,235,0.8);
+      padding: 26px 0 50px;
       color: var(--muted);
-      text-align: center;
       font-size: 14px;
     }
 
-    @media (max-width: 920px) {
-      .stats-grid,
-      .form-grid {
+    .notice {
+      margin-top: 14px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .notice.show {
+      display: block;
+    }
+
+    .notice.ok {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    .notice.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    @media (max-width: 1024px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .board-wrap {
         grid-template-columns: 1fr;
       }
 
-      .post-main {
-        flex-direction: column;
-      }
-
-      .post-thumb {
-        width: 100%;
-        min-width: 0;
-        height: 220px;
-      }
-
-      .detail-title {
-        font-size: 26px;
+      .hero {
+        min-height: 340px;
       }
     }
 
-    @media (max-width: 640px) {
-      .container {
-        width: min(calc(100% - 20px), var(--max));
+    @media (max-width: 720px) {
+      .topbar-inner {
+        height: auto;
+        padding: 12px 0;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .brand {
+        justify-content: center;
+      }
+
+      .brand-title {
+        font-size: 24px;
       }
 
       .nav {
-        flex-direction: column;
-        align-items: flex-start;
+        justify-content: center;
       }
 
       .hero {
-        min-height: 260px;
+        padding: 28px 22px;
+        border-radius: 24px;
       }
 
-      .hero-content {
-        padding: 28px 20px;
+      .hero h1 {
+        font-size: 36px;
       }
 
-      .hero-title {
-        font-size: 40px;
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .section-title {
+        font-size: 28px;
+      }
+
+      .card-head,
+      .card-body {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .detail-head,
+      .detail-body {
+        padding-left: 18px;
+        padding-right: 18px;
       }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="container nav">
-      <div class="brand">
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a href="#" class="brand" onclick="showPanel('home'); return false;">
         <div class="brand-badge">정</div>
-        <div>정읍문화소식</div>
-      </div>
+        <div class="brand-title">정읍문화소식</div>
+      </a>
 
-      <div class="nav-menu">
-        <button class="nav-btn active" data-page="home">홈</button>
-        <button class="nav-btn" data-page="board">게시판</button>
-        <button class="nav-btn" data-page="write">소식올리기</button>
-      </div>
+      <nav class="nav">
+        <button class="nav-btn active" data-panel-btn="home" onclick="showPanel('home')">홈</button>
+        <button class="nav-btn" data-panel-btn="board" onclick="showPanel('board')">게시판</button>
+        <button class="nav-btn" data-panel-btn="write" onclick="showPanel('write')">소식올리기</button>
+      </nav>
     </div>
   </header>
 
-  <main>
+  <main class="container">
     <!-- HOME -->
-    <section id="page-home" class="page">
-      <div class="container hero-wrap">
-        <div class="hero">
-          <div class="hero-content">
-            <h1 class="hero-title">정읍의 문화와 소식을<br>한곳에서 만나는 공간</h1>
-            <p class="hero-desc">
-              공지사항, 문화이야기, 영상행사, 자유로운 소식까지 누구나 쉽게 보고
-              올릴 수 있는 정읍 문화 플랫폼입니다.
-            </p>
-            <div class="hero-actions">
-              <button class="btn btn-primary" data-go="board">게시판 보기</button>
-              <button class="btn btn-ghost" data-go="write">소식 올리기</button>
-            </div>
+    <section id="panel-home" class="panel active">
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-kicker">정읍의 문화 · 행사 · 이야기 · 영상</div>
+          <h1>정읍의 문화와 소식을<br>한곳에서 만나는 공간</h1>
+          <p>
+            공지사항, 문화이야기, 영상행사, 자유로운 소식까지
+            누구나 쉽게 보고 올릴 수 있는 정읍 문화 플랫폼입니다.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="showPanel('board')">게시판 보기</button>
+            <button class="btn btn-secondary" onclick="showPanel('write')">소식 올리기</button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="container section">
-        <div class="section-header">
-          <h2 class="section-title">한눈에 보기</h2>
-          <p class="section-sub">등록된 콘텐츠 수와 최근 흐름을 빠르게 볼 수 있습니다.</p>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">한눈에 보기</h2>
+            <p class="section-desc">등록된 콘텐츠 수와 최근 흐름을 빠르게 볼 수 있습니다.</p>
+          </div>
         </div>
-        <div class="stats-grid">
+
+        <div class="stats">
           <div class="stat-card">
             <div class="stat-label">전체 게시글</div>
-            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-value" id="statAll">0</div>
           </div>
           <div class="stat-card">
             <div class="stat-label">문화이야기</div>
@@ -638,666 +721,461 @@
             <div class="stat-label">영상행사</div>
             <div class="stat-value" id="statVideo">0</div>
           </div>
+          <div class="stat-card">
+            <div class="stat-label">자유소식</div>
+            <div class="stat-value" id="statFree">0</div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="container section">
-        <div class="section-header">
-          <h2 class="section-title">가까운 날짜순 문화소식</h2>
-          <p class="section-sub">행사 시작일 기준으로 가까운 일정부터 보여드립니다.</p>
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <h2 class="section-title">최근 올라온 소식</h2>
+            <p class="section-desc">최신 등록 순으로 주요 글을 보여드립니다.</p>
+          </div>
         </div>
-        <div class="panel">
-          <div id="upcomingList" class="post-list"></div>
-        </div>
-      </div>
 
-      <div class="container section">
-        <div class="section-header">
-          <h2 class="section-title">최근 올라온 소식</h2>
-          <p class="section-sub">최신 등록 순으로 표시됩니다.</p>
+        <div class="card">
+          <div class="card-head">
+            <h3>가까운 날짜순 문화소식</h3>
+            <p>행사일이 있는 글은 날짜를 참고해 보여주고, 일반 글은 최신 등록 순으로 정렬합니다.</p>
+          </div>
+          <div class="card-body">
+            <div id="homeRecentList" class="post-list"></div>
+          </div>
         </div>
-        <div class="panel">
-          <div id="recentPosts" class="post-list"></div>
-        </div>
-      </div>
+      </section>
     </section>
 
     <!-- BOARD -->
-    <section id="page-board" class="page hidden">
-      <div class="container section">
-        <div class="section-header">
+    <section id="panel-board" class="panel">
+      <div class="section-head">
+        <div>
           <h2 class="section-title">게시판</h2>
-          <p class="section-sub">공지사항 / 문화이야기 / 영상행사 / 소식올리기</p>
+          <p class="section-desc">공지사항, 문화이야기, 영상행사, 자유소식을 한곳에서 확인할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="board-wrap">
+        <div class="card">
+          <div class="card-head">
+            <h3>게시글 목록</h3>
+            <p>카드를 클릭하면 자세한 내용을 볼 수 있습니다.</p>
+          </div>
+          <div class="card-body">
+            <div class="toolbar">
+              <button class="chip active" data-filter="all" onclick="setFilter('all')">전체</button>
+              <button class="chip" data-filter="공지사항" onclick="setFilter('공지사항')">공지사항</button>
+              <button class="chip" data-filter="문화이야기" onclick="setFilter('문화이야기')">문화이야기</button>
+              <button class="chip" data-filter="영상행사" onclick="setFilter('영상행사')">영상행사</button>
+              <button class="chip" data-filter="자유소식" onclick="setFilter('자유소식')">자유소식</button>
+            </div>
+
+            <div id="boardList" class="post-list"></div>
+          </div>
         </div>
 
-        <div class="panel">
-          <div class="tab-bar">
-            <button class="tab-btn active" data-category="all">전체</button>
-            <button class="tab-btn" data-category="공지사항">공지사항</button>
-            <button class="tab-btn" data-category="문화이야기">문화이야기</button>
-            <button class="tab-btn" data-category="영상행사">영상행사</button>
-            <button class="tab-btn" data-category="소식올리기">소식올리기</button>
+        <div class="card">
+          <div class="card-head">
+            <h3>안내</h3>
+            <p>정읍문화소식 관련 내용 등을 자유롭게 올려주세요.</p>
           </div>
-
-          <div class="toolbar">
-            <input id="searchInput" class="search-input" type="text" placeholder="제목, 내용, 작성자를 검색하세요">
-            <select id="sortSelect" class="select">
-              <option value="latest">최신순</option>
-              <option value="oldest">오래된순</option>
-            </select>
+          <div class="card-body">
+            <div class="empty-box">
+              문화 행사, 전시, 공연, 지역 이야기, 영상 소개 등<br>
+              다양한 정읍 소식을 함께 나눌 수 있습니다.
+              <div style="margin-top:16px;">
+                <button class="submit-btn" onclick="showPanel('write')">글 쓰러 가기</button>
+              </div>
+            </div>
           </div>
-
-          <div id="boardList" class="post-list"></div>
         </div>
       </div>
     </section>
 
     <!-- WRITE -->
-    <section id="page-write" class="page hidden">
-      <div class="container section">
-        <div class="section-header">
-          <h2 class="section-title">소식올리기</h2>
-          <p class="section-sub">정읍문화소식 관련 글을 자유롭게 올려주세요.</p>
+    <section id="panel-write" class="panel">
+      <div class="section-head">
+        <div>
+          <h2 class="section-title">소식 올리기</h2>
+          <p class="section-desc">제목과 내용을 입력해 누구나 쉽게 소식을 올릴 수 있습니다.</p>
         </div>
+      </div>
 
-        <div class="panel">
-          <form id="postForm">
-            <div class="form-grid">
+      <div class="board-wrap">
+        <div class="card">
+          <div class="card-head">
+            <h3>글쓰기</h3>
+            <p>정읍문화소식 관련 글을 올려주세요.</p>
+          </div>
+          <div class="card-body">
+            <form id="postForm" class="form-grid">
               <div class="field">
-                <label for="category">게시판 종류</label>
+                <label for="category">분류</label>
                 <select id="category" required>
-                  <option value="소식올리기">소식올리기</option>
+                  <option value="">선택하세요</option>
+                  <option value="공지사항">공지사항</option>
                   <option value="문화이야기">문화이야기</option>
                   <option value="영상행사">영상행사</option>
-                  <option value="공지사항">공지사항</option>
+                  <option value="자유소식">자유소식</option>
                 </select>
               </div>
 
               <div class="field">
-                <label for="author">작성자</label>
-                <input id="author" type="text" placeholder="이름을 입력하세요" required>
-              </div>
-
-              <div class="field full">
                 <label for="title">제목</label>
-                <input id="title" type="text" placeholder="제목을 입력하세요" required>
+                <input id="title" type="text" placeholder="제목을 입력하세요" required />
               </div>
 
               <div class="field">
-                <label for="startDate">행사 시작일</label>
-                <input id="startDate" type="date">
+                <label for="author">작성자</label>
+                <input id="author" type="text" placeholder="이름 또는 닉네임" required />
               </div>
 
               <div class="field">
-                <label for="endDate">행사 종료일</label>
-                <input id="endDate" type="date">
+                <label for="eventDate">행사 날짜 (선택)</label>
+                <input id="eventDate" type="date" />
               </div>
 
-              <div class="field full">
-                <label>날짜 미리보기</label>
-                <div id="datePreview" class="date-preview">날짜를 선택하면 여기에 요일까지 함께 표시됩니다.</div>
-              </div>
-
-              <div class="field full">
+              <div class="field">
                 <label for="content">내용</label>
-                <textarea id="content" placeholder="정읍문화소식 관련 내용을 올려주세요." required></textarea>
+                <textarea id="content" placeholder="정읍문화소식 관련 내용 등을 올려주세요." required></textarea>
               </div>
 
-              <div class="field full">
-                <label for="image">대표 이미지</label>
-                <input id="image" type="file" accept="image/*">
-                <div class="helper">너무 큰 이미지는 브라우저를 느리게 만들 수 있어 3MB 이하를 권장합니다.</div>
-                <div id="imagePreview" class="image-preview hidden"></div>
+              <div class="submit-row">
+                <button type="submit" class="submit-btn">등록하기</button>
+                <button type="button" class="ghost-btn" onclick="resetForm()">다시쓰기</button>
               </div>
-            </div>
 
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:18px;">
-              <button type="submit" class="btn" style="background:var(--brand); color:#fff;">등록하기</button>
-              <button type="button" id="resetBtn" class="btn btn-secondary">초기화</button>
+              <div id="formNotice" class="notice"></div>
+            </form>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>작성 안내</h3>
+            <p>간단한 제목과 내용을 넣어도 등록됩니다.</p>
+          </div>
+          <div class="card-body">
+            <div class="empty-box" style="text-align:left;">
+              <strong>예시</strong><br><br>
+              · 분류: 문화이야기<br>
+              · 제목: 정읍 지역 전시 소식 안내<br>
+              · 작성자: 홍길동<br>
+              · 내용: 전시 장소, 일정, 간단한 소개
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- DETAIL -->
-    <section id="page-detail" class="page hidden">
-      <div class="container section">
-        <button id="backToBoard" class="detail-back">← 목록으로 돌아가기</button>
-
-        <article class="detail-card">
-          <div id="detailCategory" class="post-badge">카테고리</div>
-          <h1 id="detailTitle" class="detail-title">제목</h1>
-
-          <div id="detailMeta" class="detail-meta"></div>
-
-          <div id="detailImageWrap" class="detail-image hidden">
-            <img id="detailImage" alt="게시글 이미지">
-          </div>
-
-          <div id="detailBody" class="detail-body"></div>
-
-          <div class="detail-actions">
-            <button id="shareBtn" class="btn btn-secondary" type="button">공유하기</button>
-            <button id="deleteBtn" class="btn btn-danger" type="button">삭제하기</button>
-          </div>
-        </article>
+    <footer class="footer">
+      <div class="container" style="padding:0;">
+        정읍문화소식 · 정읍의 문화와 소식을 한곳에서
       </div>
-    </section>
+    </footer>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      정읍문화소식 © 2026 · 정읍의 문화와 소식을 함께 나누는 공간
+  <!-- DETAIL MODAL -->
+  <div id="detailOverlay" class="detail-overlay" onclick="handleOverlayClick(event)">
+    <div class="detail-card">
+      <div class="detail-head">
+        <div>
+          <div id="detailCategory" class="post-category">분류</div>
+          <h2 id="detailTitle">제목</h2>
+          <div id="detailMeta" class="detail-meta"></div>
+        </div>
+        <button class="close-btn" onclick="closeDetail()">×</button>
+      </div>
+      <div id="detailContent" class="detail-body"></div>
     </div>
-  </footer>
+  </div>
 
   <script>
-    (() => {
-      "use strict";
+    const STORAGE_KEY = "jeongeup_culture_posts_v2";
+    let currentFilter = "all";
 
-      const STORAGE_KEY = "jeongeup_culture_posts_clean_v2";
+    const seedPosts = [
+      {
+        id: makeId(),
+        category: "공지사항",
+        title: "정읍문화소식 플랫폼이 새롭게 시작됩니다",
+        author: "관리자",
+        eventDate: "",
+        content: "정읍의 문화, 행사, 이야기, 영상 소식을 한곳에 모아 누구나 쉽게 보고 참여할 수 있도록 정읍문화소식 플랫폼을 시작합니다.",
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: makeId(),
+        category: "문화이야기",
+        title: "정읍의 문화와 일상을 함께 나누는 공간",
+        author: "정읍문화소식",
+        eventDate: "",
+        content: "지역의 전시, 공연, 문화 이야기, 사람들의 기록을 함께 올리고 보는 열린 공간입니다. 자유롭게 소식을 나눠주세요.",
+        createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString()
+      }
+    ];
 
-      const state = {
-        posts: [],
-        currentPage: "home",
-        currentCategory: "all",
-        currentDetailId: null
-      };
+    function makeId() {
+      return "p_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
 
-      const el = {
-        pages: document.querySelectorAll(".page"),
-        navButtons: document.querySelectorAll(".nav-btn"),
-        goButtons: document.querySelectorAll("[data-go]"),
-
-        statTotal: document.getElementById("statTotal"),
-        statCulture: document.getElementById("statCulture"),
-        statVideo: document.getElementById("statVideo"),
-
-        upcomingList: document.getElementById("upcomingList"),
-        recentPosts: document.getElementById("recentPosts"),
-
-        tabButtons: document.querySelectorAll(".tab-btn"),
-        boardList: document.getElementById("boardList"),
-        searchInput: document.getElementById("searchInput"),
-        sortSelect: document.getElementById("sortSelect"),
-
-        postForm: document.getElementById("postForm"),
-        category: document.getElementById("category"),
-        author: document.getElementById("author"),
-        title: document.getElementById("title"),
-        startDate: document.getElementById("startDate"),
-        endDate: document.getElementById("endDate"),
-        datePreview: document.getElementById("datePreview"),
-        content: document.getElementById("content"),
-        image: document.getElementById("image"),
-        imagePreview: document.getElementById("imagePreview"),
-        resetBtn: document.getElementById("resetBtn"),
-
-        backToBoard: document.getElementById("backToBoard"),
-        detailCategory: document.getElementById("detailCategory"),
-        detailTitle: document.getElementById("detailTitle"),
-        detailMeta: document.getElementById("detailMeta"),
-        detailImageWrap: document.getElementById("detailImageWrap"),
-        detailImage: document.getElementById("detailImage"),
-        detailBody: document.getElementById("detailBody"),
-        shareBtn: document.getElementById("shareBtn"),
-        deleteBtn: document.getElementById("deleteBtn")
-      };
-
-      function escapeHtml(str) {
-        return String(str)
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
+    function getPosts() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seedPosts));
+        return [...seedPosts];
       }
 
-      function getDayName(dateStr) {
-        if (!dateStr) return "";
-        const date = new Date(dateStr);
-        if (Number.isNaN(date.getTime())) return "";
-        const days = ["일", "월", "화", "수", "목", "금", "토"];
-        return days[date.getDay()];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seedPosts));
+        return [...seedPosts];
+      }
+    }
+
+    function savePosts(posts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    }
+
+    function showPanel(name) {
+      document.querySelectorAll(".panel").forEach(panel => {
+        panel.classList.remove("active");
+      });
+
+      const target = document.getElementById("panel-" + name);
+      if (target) target.classList.add("active");
+
+      document.querySelectorAll(".nav-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.panelBtn === name);
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      if (name === "board") renderBoard();
+      if (name === "home") renderHomeRecent();
+    }
+
+    function setFilter(filter) {
+      currentFilter = filter;
+
+      document.querySelectorAll(".chip").forEach(chip => {
+        chip.classList.toggle("active", chip.dataset.filter === filter);
+      });
+
+      renderBoard();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "";
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return dateStr;
+
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}.${m}.${day}`;
+    }
+
+    function getEventTimestamp(post) {
+      if (post.eventDate) {
+        const t = new Date(post.eventDate).getTime();
+        if (!Number.isNaN(t)) return t;
+      }
+      return new Date(post.createdAt).getTime();
+    }
+
+    function getSortedPosts() {
+      const posts = getPosts();
+      return posts.sort((a, b) => getEventTimestamp(a) - getEventTimestamp(b));
+    }
+
+    function getLatestPosts() {
+      const posts = getPosts();
+      return posts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    function renderStats() {
+      const posts = getPosts();
+
+      const all = posts.length;
+      const culture = posts.filter(p => p.category === "문화이야기").length;
+      const video = posts.filter(p => p.category === "영상행사").length;
+      const free = posts.filter(p => p.category === "자유소식").length;
+
+      document.getElementById("statAll").textContent = all;
+      document.getElementById("statCulture").textContent = culture;
+      document.getElementById("statVideo").textContent = video;
+      document.getElementById("statFree").textContent = free;
+    }
+
+    function createPostCard(post) {
+      const div = document.createElement("div");
+      div.className = "post-item";
+      div.onclick = () => openDetail(post.id);
+
+      const eventText = post.eventDate ? `행사일 ${formatDate(post.eventDate)}` : "일반 소식";
+      const summary = escapeHtml(post.content || "").replace(/\n/g, " ");
+
+      div.innerHTML = `
+        <div class="post-top">
+          <div class="post-category">${escapeHtml(post.category)}</div>
+          <div class="post-date">${formatDate(post.createdAt)}</div>
+        </div>
+        <h4 class="post-title">${escapeHtml(post.title)}</h4>
+        <p class="post-summary">${summary}</p>
+        <div class="post-meta">
+          <span>작성자 ${escapeHtml(post.author)}</span>
+          <span>${eventText}</span>
+        </div>
+      `;
+      return div;
+    }
+
+    function renderBoard() {
+      const list = document.getElementById("boardList");
+      list.innerHTML = "";
+
+      let posts = getLatestPosts();
+      if (currentFilter !== "all") {
+        posts = posts.filter(post => post.category === currentFilter);
       }
 
-      function formatDate(dateStr) {
-        if (!dateStr) return "";
-        const date = new Date(dateStr);
-        if (Number.isNaN(date.getTime())) return "";
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, "0");
-        const d = String(date.getDate()).padStart(2, "0");
-        return `${y}.${m}.${d}`;
-      }
-
-      function formatDateWithDay(dateStr) {
-        if (!dateStr) return "";
-        return `${formatDate(dateStr)} (${getDayName(dateStr)})`;
-      }
-
-      function formatRange(startDate, endDate) {
-        if (startDate && endDate) {
-          return `${formatDateWithDay(startDate)} ~ ${formatDateWithDay(endDate)}`;
-        }
-        if (startDate) return `${formatDateWithDay(startDate)}`;
-        if (endDate) return `${formatDateWithDay(endDate)}`;
-        return "행사 날짜 없음";
-      }
-
-      function nowString() {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        const hh = String(now.getHours()).padStart(2, "0");
-        const mm = String(now.getMinutes()).padStart(2, "0");
-        return `${y}.${m}.${d} ${hh}:${mm}`;
-      }
-
-      function createId() {
-        return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-      }
-
-      function savePosts() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.posts));
-      }
-
-      function getDefaultPosts() {
-        return [
-          {
-            id: createId(),
-            category: "공지사항",
-            author: "관리자",
-            title: "정읍문화소식 플랫폼 오픈 안내",
-            startDate: "",
-            endDate: "",
-            content: "정읍의 문화, 행사, 전시, 이야기들을 함께 나누는 플랫폼입니다.\n\n누구나 쉽게 소식을 올리고 볼 수 있도록 계속 보완해 나가겠습니다.",
-            image: "",
-            createdAt: nowString()
-          },
-          {
-            id: createId(),
-            category: "문화이야기",
-            author: "정읍문화소식",
-            title: "정읍의 문화는 일상 속 작은 이야기에서 시작됩니다",
-            startDate: "",
-            endDate: "",
-            content: "정읍의 문화는 큰 행사만이 아니라 사람, 장소, 풍경, 기억에서 시작됩니다.\n\n이곳에서 정읍의 다양한 문화이야기를 나눠주세요.",
-            image: "",
-            createdAt: nowString()
-          }
-        ];
-      }
-
-      function loadPosts() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            state.posts = getDefaultPosts();
-            savePosts();
-            return;
-          }
-
-          const parsed = JSON.parse(raw);
-          state.posts = Array.isArray(parsed) ? parsed : getDefaultPosts();
-        } catch (error) {
-          console.error("게시글 로드 오류:", error);
-          state.posts = getDefaultPosts();
-          savePosts();
-        }
-      }
-
-      function sortedPosts(posts) {
-        return [...posts].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-      }
-
-      function renderStats() {
-        el.statTotal.textContent = state.posts.length;
-        el.statCulture.textContent = state.posts.filter(post => post.category === "문화이야기").length;
-        el.statVideo.textContent = state.posts.filter(post => post.category === "영상행사").length;
-      }
-
-      function buildPostCard(post) {
-        const thumb = post.image
-          ? `
-            <div class="post-thumb">
-              <img src="${post.image}" alt="${escapeHtml(post.title)}">
-            </div>
-          `
-          : "";
-
-        return `
-          <article class="post-card" data-id="${post.id}">
-            <div class="post-main">
-              <div class="post-content">
-                <div class="post-badge">${escapeHtml(post.category)}</div>
-                <h3 class="post-title">${escapeHtml(post.title)}</h3>
-                <div class="post-meta">
-                  <span>작성자: ${escapeHtml(post.author)}</span>
-                  <span>등록일: ${escapeHtml(post.createdAt)}</span>
-                  <span>${escapeHtml(formatRange(post.startDate, post.endDate))}</span>
-                </div>
-                <div class="post-excerpt">
-                  ${escapeHtml(post.content.slice(0, 120))}${post.content.length > 120 ? "..." : ""}
-                </div>
-              </div>
-              ${thumb}
-            </div>
-          </article>
+      if (!posts.length) {
+        list.innerHTML = `
+          <div class="empty-box">
+            아직 등록된 게시글이 없습니다.<br>
+            첫 소식을 올려보세요.
+          </div>
         `;
+        return;
       }
 
-      function bindPostCardClicks(container) {
-        container.querySelectorAll(".post-card").forEach(card => {
-          card.addEventListener("click", () => {
-            openDetail(card.dataset.id);
-          });
-        });
-      }
+      posts.forEach(post => list.appendChild(createPostCard(post)));
+    }
 
-      function renderHome() {
-        renderStats();
+    function renderHomeRecent() {
+      const list = document.getElementById("homeRecentList");
+      list.innerHTML = "";
 
-        const posts = sortedPosts(state.posts).slice(0, 8);
+      const posts = getSortedPosts().slice(0, 8);
 
-        if (!posts.length) {
-          el.recentPosts.innerHTML = `<div class="empty">아직 등록된 게시글이 없습니다.</div>`;
-          return;
-        }
-
-        el.recentPosts.innerHTML = posts.map(buildPostCard).join("");
-        bindPostCardClicks(el.recentPosts);
-      }
-
-      function renderUpcoming() {
-        const posts = [...state.posts]
-          .filter(post => post.startDate)
-          .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
-          .slice(0, 8);
-
-        if (!posts.length) {
-          el.upcomingList.innerHTML = `<div class="empty">행사 일정이 없습니다.</div>`;
-          return;
-        }
-
-        el.upcomingList.innerHTML = posts.map(buildPostCard).join("");
-        bindPostCardClicks(el.upcomingList);
-      }
-
-      function getFilteredPosts() {
-        const keyword = el.searchInput.value.trim().toLowerCase();
-        const sort = el.sortSelect.value;
-
-        let posts = [...state.posts];
-
-        if (state.currentCategory !== "all") {
-          posts = posts.filter(post => post.category === state.currentCategory);
-        }
-
-        if (keyword) {
-          posts = posts.filter(post => {
-            const merged = [post.title, post.content, post.author, post.category].join(" ").toLowerCase();
-            return merged.includes(keyword);
-          });
-        }
-
-        posts.sort((a, b) => {
-          const aTime = String(a.createdAt);
-          const bTime = String(b.createdAt);
-          return sort === "oldest" ? aTime.localeCompare(bTime) : bTime.localeCompare(aTime);
-        });
-
-        return posts;
-      }
-
-      function renderBoard() {
-        const posts = getFilteredPosts();
-
-        if (!posts.length) {
-          el.boardList.innerHTML = `<div class="empty">조건에 맞는 게시글이 없습니다.</div>`;
-          return;
-        }
-
-        el.boardList.innerHTML = posts.map(buildPostCard).join("");
-        bindPostCardClicks(el.boardList);
-      }
-
-      function showPage(pageName) {
-        state.currentPage = pageName;
-
-        el.pages.forEach(page => page.classList.add("hidden"));
-        const target = document.getElementById(`page-${pageName}`);
-        if (target) target.classList.remove("hidden");
-
-        el.navButtons.forEach(btn => {
-          btn.classList.toggle("active", btn.dataset.page === pageName);
-        });
-
-        if (pageName === "home") {
-          renderHome();
-          renderUpcoming();
-        }
-
-        if (pageName === "board") {
-          renderBoard();
-        }
-      }
-
-      function updateDatePreview() {
-        const start = el.startDate.value;
-        const end = el.endDate.value;
-
-        if (!start && !end) {
-          el.datePreview.textContent = "날짜를 선택하면 여기에 요일까지 함께 표시됩니다.";
-          return;
-        }
-
-        el.datePreview.textContent = formatRange(start, end);
-      }
-
-      function resetForm() {
-        el.postForm.reset();
-        el.datePreview.textContent = "날짜를 선택하면 여기에 요일까지 함께 표시됩니다.";
-        el.imagePreview.innerHTML = "";
-        el.imagePreview.classList.add("hidden");
-      }
-
-      function handleImagePreview() {
-        const file = el.image.files[0];
-        if (!file) {
-          el.imagePreview.innerHTML = "";
-          el.imagePreview.classList.add("hidden");
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          el.imagePreview.innerHTML = `<img src="${reader.result}" alt="이미지 미리보기">`;
-          el.imagePreview.classList.remove("hidden");
-        };
-        reader.readAsDataURL(file);
-      }
-
-      function readFileAsDataURL(file) {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
-      }
-
-      async function handleSubmit(event) {
-        event.preventDefault();
-
-        const category = el.category.value.trim();
-        const author = el.author.value.trim();
-        const title = el.title.value.trim();
-        const startDate = el.startDate.value;
-        const endDate = el.endDate.value;
-        const content = el.content.value.trim();
-        const imageFile = el.image.files[0];
-
-        if (!author || !title || !content) {
-          alert("작성자, 제목, 내용은 반드시 입력해주세요.");
-          return;
-        }
-
-        if (startDate && endDate && startDate > endDate) {
-          alert("종료일은 시작일보다 빠를 수 없습니다.");
-          return;
-        }
-
-        let image = "";
-        if (imageFile) {
-          if (imageFile.size > 3 * 1024 * 1024) {
-            alert("이미지는 3MB 이하를 권장합니다.");
-            return;
-          }
-
-          try {
-            image = await readFileAsDataURL(imageFile);
-          } catch (error) {
-            console.error("이미지 읽기 오류:", error);
-            alert("이미지를 불러오지 못했습니다.");
-            return;
-          }
-        }
-
-        const newPost = {
-          id: createId(),
-          category,
-          author,
-          title,
-          startDate,
-          endDate,
-          content,
-          image,
-          createdAt: nowString()
-        };
-
-        state.posts.unshift(newPost);
-        savePosts();
-
-        resetForm();
-        renderHome();
-        renderBoard();
-        renderUpcoming();
-        showPage("board");
-
-        alert("게시글이 등록되었습니다.");
-      }
-
-      function openDetail(id) {
-        const post = state.posts.find(item => item.id === id);
-        if (!post) return;
-
-        state.currentDetailId = id;
-
-        el.detailCategory.textContent = post.category;
-        el.detailTitle.textContent = post.title;
-        el.detailMeta.innerHTML = `
-          <span>작성자: ${escapeHtml(post.author)}</span>
-          <span>등록일: ${escapeHtml(post.createdAt)}</span>
-          <span>행사일: ${escapeHtml(formatRange(post.startDate, post.endDate))}</span>
+      if (!posts.length) {
+        list.innerHTML = `
+          <div class="empty-box">
+            아직 등록된 소식이 없습니다.<br>
+            소식 올리기에서 첫 글을 등록해보세요.
+          </div>
         `;
-        el.detailBody.textContent = post.content;
-
-        if (post.image) {
-          el.detailImage.src = post.image;
-          el.detailImage.alt = post.title;
-          el.detailImageWrap.classList.remove("hidden");
-        } else {
-          el.detailImageWrap.classList.add("hidden");
-          el.detailImage.removeAttribute("src");
-        }
-
-        showPage("detail");
+        return;
       }
 
-      async function handleShare() {
-        const post = state.posts.find(item => item.id === state.currentDetailId);
-        if (!post) return;
+      posts.forEach(post => list.appendChild(createPostCard(post)));
+    }
 
-        const text = `[${post.category}] ${post.title}\n작성자: ${post.author}\n${post.content}`;
+    function openDetail(postId) {
+      const posts = getPosts();
+      const post = posts.find(p => p.id === postId);
+      if (!post) return;
 
-        try {
-          if (navigator.share) {
-            await navigator.share({
-              title: post.title,
-              text
-            });
-          } else {
-            await navigator.clipboard.writeText(text);
-            alert("공유할 내용이 복사되었습니다.");
-          }
-        } catch (error) {
-          console.error("공유 실패:", error);
-        }
+      document.getElementById("detailCategory").textContent = post.category;
+      document.getElementById("detailTitle").textContent = post.title;
+      document.getElementById("detailMeta").innerHTML = `
+        작성자: ${escapeHtml(post.author)}<br>
+        등록일: ${formatDate(post.createdAt)}<br>
+        ${post.eventDate ? `행사일: ${formatDate(post.eventDate)}` : "행사일: 없음"}
+      `;
+      document.getElementById("detailContent").textContent = post.content;
+
+      document.getElementById("detailOverlay").classList.add("show");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeDetail() {
+      document.getElementById("detailOverlay").classList.remove("show");
+      document.body.style.overflow = "";
+    }
+
+    function handleOverlayClick(event) {
+      if (event.target.id === "detailOverlay") {
+        closeDetail();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("postForm").reset();
+      hideNotice();
+    }
+
+    function showNotice(message, type = "ok") {
+      const el = document.getElementById("formNotice");
+      el.className = `notice show ${type}`;
+      el.textContent = message;
+    }
+
+    function hideNotice() {
+      const el = document.getElementById("formNotice");
+      el.className = "notice";
+      el.textContent = "";
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    document.getElementById("postForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const category = document.getElementById("category").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const eventDate = document.getElementById("eventDate").value;
+      const content = document.getElementById("content").value.trim();
+
+      if (!category || !title || !author || !content) {
+        showNotice("분류, 제목, 작성자, 내용을 모두 입력해주세요.", "error");
+        return;
       }
 
-      function handleDelete() {
-        if (!state.currentDetailId) return;
+      const posts = getPosts();
+      posts.unshift({
+        id: makeId(),
+        category,
+        title,
+        author,
+        eventDate,
+        content,
+        createdAt: new Date().toISOString()
+      });
 
-        const ok = confirm("이 게시글을 삭제하시겠습니까?");
-        if (!ok) return;
+      savePosts(posts);
+      renderStats();
+      renderBoard();
+      renderHomeRecent();
+      resetForm();
+      showNotice("게시글이 등록되었습니다.", "ok");
 
-        state.posts = state.posts.filter(post => post.id !== state.currentDetailId);
-        savePosts();
-        state.currentDetailId = null;
+      setTimeout(() => {
+        showPanel("board");
+      }, 350);
+    });
 
-        renderHome();
-        renderBoard();
-        renderUpcoming();
-        showPage("board");
-      }
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeDetail();
+    });
 
-      function initEvents() {
-        el.navButtons.forEach(btn => {
-          btn.addEventListener("click", () => showPage(btn.dataset.page));
-        });
-
-        el.goButtons.forEach(btn => {
-          btn.addEventListener("click", () => showPage(btn.dataset.go));
-        });
-
-        el.tabButtons.forEach(btn => {
-          btn.addEventListener("click", () => {
-            state.currentCategory = btn.dataset.category;
-            el.tabButtons.forEach(item => item.classList.remove("active"));
-            btn.classList.add("active");
-            renderBoard();
-          });
-        });
-
-        el.searchInput.addEventListener("input", renderBoard);
-        el.sortSelect.addEventListener("change", renderBoard);
-
-        el.startDate.addEventListener("change", updateDatePreview);
-        el.endDate.addEventListener("change", updateDatePreview);
-        el.image.addEventListener("change", handleImagePreview);
-
-        el.postForm.addEventListener("submit", handleSubmit);
-        el.resetBtn.addEventListener("click", resetForm);
-
-        el.backToBoard.addEventListener("click", () => showPage("board"));
-        el.shareBtn.addEventListener("click", handleShare);
-        el.deleteBtn.addEventListener("click", handleDelete);
-      }
-
-      function init() {
-        loadPosts();
-        initEvents();
-        renderHome();
-        renderBoard();
-        renderUpcoming();
-        showPage("home");
-      }
-
-      init();
-    })();
+    renderStats();
+    renderBoard();
+    renderHomeRecent();
+    showPanel("home");
   </script>
 </body>
 </html>
