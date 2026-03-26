@@ -6,7 +6,6 @@
   <title>정읍문화소식</title>
   <style>
     * { box-sizing: border-box; }
-
     :root{
       --text:#18212f;
       --muted:#667085;
@@ -400,10 +399,6 @@
       flex-wrap:wrap;
     }
 
-    .hide{
-      display:none !important;
-    }
-
     @media (max-width:1100px){
       .featured-grid{ grid-template-columns:repeat(3,1fr); }
       .home-grid{ grid-template-columns:1fr; }
@@ -427,7 +422,7 @@
   <div class="wrap">
     <section class="hero">
       <h1>정읍문화소식</h1>
-      <p>정읍의 문화, 행사, 이야기, 영상을 한곳에 모아보는 소식 공간입니다. 시민 누구나 소식을 올리고, 운영자는 공지사항과 문화이야기를 따로 관리할 수 있습니다.</p>
+      <p>정읍의 문화, 행사, 이야기, 영상을 한곳에 모아보는 소식 공간입니다. 시민 누구나 소식을 올리고, 공지사항과 문화이야기는 별도 글쓰기 창에서 관리할 수 있습니다.</p>
     </section>
 
     <div class="topbar">
@@ -483,10 +478,10 @@
       <div class="panel">
         <div class="section-head">
           <h2>문화이야기</h2>
-          <div class="muted">운영자가 별도로 쓰는 문화 글과 시민 제보를 함께 볼 수 있습니다.</div>
+          <div class="muted">별도 글쓰기와 검색이 가능합니다.</div>
         </div>
 
-        <div id="storyWriterWrap" class="hide">
+        <div id="storyWriterWrap">
           <div class="form-grid" style="margin-bottom:16px;">
             <div class="field full">
               <label for="storyTitle">문화이야기 제목</label>
@@ -494,7 +489,7 @@
             </div>
             <div class="field">
               <label for="storyAuthor">작성자</label>
-              <input id="storyAuthor" type="text" placeholder="예: 운영자" />
+              <input id="storyAuthor" type="text" placeholder="예: 운영자 또는 시민" />
             </div>
             <div class="field">
               <label for="storyPlace">관련 장소</label>
@@ -527,10 +522,10 @@
       <div class="panel">
         <div class="section-head">
           <h2>공지사항</h2>
-          <div class="muted">중요한 안내와 운영 공지를 올리는 곳입니다.</div>
+          <div class="muted">별도 공지 글쓰기와 목록 확인이 가능합니다.</div>
         </div>
 
-        <div id="noticeWriterWrap" class="hide">
+        <div id="noticeWriterWrap">
           <div class="form-grid" style="margin-bottom:16px;">
             <div class="field full">
               <label for="noticeTitle">공지 제목</label>
@@ -695,8 +690,10 @@
     function switchTab(tabId) {
       document.querySelectorAll(".tabs").forEach(el => el.classList.remove("active"));
       document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
-      document.getElementById(tabId).classList.add("active");
-      document.querySelector(`.nav-btn[data-tab="${tabId}"]`).classList.add("active");
+      const tab = document.getElementById(tabId);
+      if (tab) tab.classList.add("active");
+      const btn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+      if (btn) btn.classList.add("active");
     }
 
     document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -907,7 +904,8 @@
     }
 
     function renderStories() {
-      const q = document.getElementById("storySearch").value.trim().toLowerCase();
+      const qEl = document.getElementById("storySearch");
+      const q = qEl ? qEl.value.trim().toLowerCase() : "";
       let stories = getStories();
       if (q) {
         stories = stories.filter(item =>
@@ -1105,8 +1103,6 @@
 
     function renderAll() {
       document.getElementById("adminToggleBtn").textContent = isAdmin ? "관리자 로그아웃" : "관리자 로그인";
-      document.getElementById("storyWriterWrap").classList.toggle("hide", !isAdmin);
-      document.getElementById("noticeWriterWrap").classList.toggle("hide", !isAdmin);
       renderFeatured();
       renderAllPostsList();
       renderStories();
@@ -1117,6 +1113,7 @@
 
     seedDataIfEmpty();
     renderAll();
+    switchTab("homeTab");
   </script>
 </body>
 </html>
