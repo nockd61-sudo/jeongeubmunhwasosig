@@ -1137,6 +1137,14 @@
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
 
+    function removeBrokenWorkerPosts() {
+      const posts = getStored(POSTS_KEY, demoPosts).map((post) => ({
+        ...post,
+        mediaUrl: normalizeMediaUrl(post?.mediaUrl || '')
+      }));
+      saveStored(POSTS_KEY, posts);
+    }
+
     function structuredCloneSafe(data) {
       return JSON.parse(JSON.stringify(data));
     }
@@ -1175,6 +1183,11 @@
 
       try {
         const parsed = new URL(value);
+        const pathname = parsed.pathname.replace(/^\/+/, '');
+
+        if (parsed.hostname.endsWith('workers.dev')) {
+          return R2_PUBLIC_BASE_URL + '/' + pathname;
+        }
 
         if (parsed.hostname.endsWith('r2.dev') && parsed.origin !== R2_PUBLIC_BASE_URL) {
           return R2_PUBLIC_BASE_URL + parsed.pathname;
@@ -2064,7 +2077,7 @@
         }
 
         const posts = getPosts();
-        posts.push({
+        posts.unshift({
           id: String(Date.now()),
           title: document.getElementById('title').value.trim(),
           date: startDate,
@@ -2236,21 +2249,14 @@
     });
 
    function migrateBrokenR2Posts() {
-  const posts = getPosts().map((post) => {
-    const mediaUrl = String(post.mediaUrl || '').trim();
-
-    if (mediaUrl.includes('r2.dev')) {
-      post.mediaUrl = mediaUrl.replace(
-        /^https:\/\/pub-[^/]+\.r2\.dev/,
-        R2_PUBLIC_BASE_URL
-      );
-    }
-
-    return post;
-  });
+  const posts = getPosts().map((post) => ({
+    ...post,
+    mediaUrl: normalizeMediaUrl(post.mediaUrl || '')
+  }));
 
   savePosts(posts);
 }
+    removeBrokenWorkerPosts();
     migrateBrokenR2Posts();
     renderAll();
     openPostFromHash();
