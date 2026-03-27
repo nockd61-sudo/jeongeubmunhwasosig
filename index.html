@@ -1404,13 +1404,12 @@
 
       finalUrl = normalizeMediaUrl(finalUrl);
 
-      if (!finalUrl) {
-        throw new Error(result?.error || '업로드 실패');
-      }
+     if (!finalUrl) {
+  throw new Error(result?.error || '업로드 실패');
+}
 
-      return finalUrl;
-    }
-
+return finalUrl;
+}
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
       if (Number.isNaN(d.getTime())) return dateString;
