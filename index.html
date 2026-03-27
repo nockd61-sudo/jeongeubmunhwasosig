@@ -1331,22 +1331,8 @@
     }
 
     function handleCardImageError(img) {
-      const tried = Number(img.getAttribute('data-retry-count') || '0');
-
-      if (tried < 3) {
-        retryImageLoad(img);
-        return;
-      }
-
-      const placeholder = createImagePlaceholder('이미지를 불러오는 중입니다. 잠시 후 다시 열어보세요.');
-      const thumb = img.closest('.thumb');
-
-      if (thumb) {
-        img.remove();
-        thumb.appendChild(placeholder);
-      } else {
-        img.replaceWith(placeholder);
-      }
+      retryImageLoad(img);
+      updateVisibleCount();
     }
 
     function checkImageReady(url) {
@@ -1361,10 +1347,10 @@
     async function waitForMediaAvailability(url, mediaType) {
       if (mediaType !== 'image') return true;
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 8; i++) {
         const ok = await checkImageReady(url);
         if (ok) return true;
-        await wait(700);
+        await wait(900);
       }
 
       return false;
@@ -1470,7 +1456,8 @@
     }
 
     function getRenderablePosts(limit = MAX_VISIBLE_POSTS) {
-      return currentFilteredPosts().slice(0, limit);
+      const sourcePosts = currentFilteredPosts();
+      return sourcePosts.slice(0, limit);
     }
 
     async function renderPosts() {
@@ -2040,8 +2027,6 @@
           return;
         }
 
-        const ready = await waitForMediaAvailability(uploadedUrl, mediaTypeSelect.value);
-
         const posts = getPosts();
         posts.push({
           id: String(Date.now()),
@@ -2063,13 +2048,7 @@
         renderPreview(null, 'image');
         mediaTypeSelect.value = 'image';
         renderAll();
-
-        if (!ready && mediaTypeSelect.value === 'image') {
-          alert('등록은 완료되었습니다. 이미지가 서버에 반영되는 동안 잠깐 회색 안내칸으로 보일 수 있습니다. 잠시 후 새로고침하면 정상 표시됩니다.');
-        } else {
-          alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
-        }
-
+        alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
         closeModal('uploadModal');
       } catch (error) {
         console.error(error);
