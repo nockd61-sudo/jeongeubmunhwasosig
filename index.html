@@ -1322,7 +1322,7 @@ async function uploadFileToR2(file) {
     }
 
     finalUrl = String(finalUrl || '').replace(/([^:]\/)\/+/g, '$1').trim();
-
+   finalUrl = finalUrl.replace('http://', 'https://');
     if (!isValidHttpUrl(finalUrl)) {
       throw new Error('업로드 후 이미지 주소를 만들지 못했습니다.');
     }
