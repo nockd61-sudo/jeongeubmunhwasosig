@@ -1275,13 +1275,18 @@ async function uploadFileToR2(file) {
       if (post.mediaType === 'video') {
         return buildEventVideoHtml(post);
       }
-      return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
-    }
+     const imgUrl = post.mediaUrl || post.url || post.image || '';
+  return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}"
+  onerror="this.style.background='#ddd'; this.src='';"
+  style="width:100%; height:200px; object-fit:cover;">`;
 
     function currentFilteredPosts() {
       const typeValue = filterType.value;
       const keyword = searchInput.value.trim().toLowerCase();
-      let posts = sortPosts(getPosts()).filter((post) => String(post.mediaUrl || '').trim() !== '');
+    let posts = sortPosts(getPosts()).filter(post => {
+  const imgUrl = post.mediaUrl || post.url || post.image || '';
+  return String(imgUrl).trim() !== '';
+});
 
       if (typeValue !== 'all') {
         posts = posts.filter((post) => post.mediaType === typeValue);
