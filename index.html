@@ -2077,14 +2077,7 @@ mediaTypeSelect.value = 'image';
 renderAll();
 alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
 closeModal('uploadModal');
-      } catch (error) {
-        console.error(error);
-        alert('업로드 실패: ' + error.message);
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '게시글 등록';
-      }
-    });
+    
 
     uploadForm.addEventListener('reset', () => {
       setTimeout(() => {
