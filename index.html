@@ -1220,7 +1220,7 @@ async function uploadFileToR2(file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch('https://jeongeup-upload.nockd61.workers.dev', {
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
     method: 'POST',
     body: formData
   });
@@ -1234,16 +1234,26 @@ async function uploadFileToR2(file) {
 
   const result = await response.json();
   console.log('업로드 결과 전체:', result);
-  console.log('result.ok:', result?.ok);
-  console.log('result.url:', result?.url);
 
-  if (!result.ok || !result.url) {
-    alert('이미지 업로드 실패');
-    throw new Error(result.error || '업로드 실패');
+  let finalUrl = '';
+
+  if (result && typeof result.url === 'string' && result.url.trim()) {
+    finalUrl = result.url.trim();
+  } else if (result && typeof result.pathname === 'string' && result.pathname.trim()) {
+    finalUrl = 'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev' + result.pathname.trim();
+  } else if (result && typeof result.key === 'string' && result.key.trim()) {
+    finalUrl = 'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev/' + result.key.trim().replace(/^\/+/, '');
   }
 
-  alert('저장될 이미지 주소: ' + result?.url);
-  return result.url;
+  console.log('최종 URL:', finalUrl);
+
+  if (!finalUrl) {
+    alert('이미지 업로드 실패');
+    throw new Error(result?.error || '업로드 실패');
+  }
+
+  alert('저장될 이미지 주소: ' + finalUrl);
+  return finalUrl;
 }
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1846,17 +1856,12 @@ async function uploadFileToR2(file) {
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-     const file = fileInput.files[0];
-let mediaUrl = "";
+      const file = fileInput.files[0];
 
-if (file) {
-  mediaUrl = URL.createObjectURL(file);
-}
-
-if (!file) {
-  alert('이미지 또는 영상을 선택해 주세요.');
-  return;
-}
+      if (!file) {
+        alert('이미지 또는 영상을 선택해 주세요.');
+        return;
+      }
 
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
