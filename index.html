@@ -898,7 +898,7 @@
       <div class="modal-body">
         <div class="upload-box" style="margin-top:0;">
           <h3>시민이 직접 문화소식 올리기</h3>
-          <p>이미지 또는 영상을 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다.</p>
+          <p>이미지를 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다. 영상은 영상행사 메뉴에서 유튜브 링크로 등록해주세요.</p>
           <form id="uploadForm">
             <div class="form-grid">
               <div class="field">
@@ -972,9 +972,7 @@
     const LEGACY_POST_KEYS = ['jeongeup-culture-posts-v5', 'jeongeup-culture-posts-v6', 'jeongeup-culture-posts-v7'];
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
-    const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
-    const R2_PUBLIC_BASE = 'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev';
-    const ADMIN_PASSWORD = '1234';
+        const ADMIN_PASSWORD = '1234';
 
     const demoPosts = [
       {
@@ -1137,16 +1135,22 @@
       localStorage.setItem(key, JSON.stringify(value));
     }
 
-    function isValidHttpUrl(value) {
+    function isValidMediaUrl(value) {
       if (typeof value !== 'string') return false;
       const trimmed = value.trim();
-      if (!/^https?:\/\//i.test(trimmed)) return false;
-      try {
-        new URL(trimmed);
-        return true;
-      } catch (error) {
-        return false;
+      if (!trimmed) return false;
+
+      if (/^data:(image|video)\//i.test(trimmed)) return true;
+      if (/^https?:\/\//i.test(trimmed)) {
+        try {
+          new URL(trimmed);
+          return true;
+        } catch (error) {
+          return false;
+        }
       }
+
+      return false;
     }
 
     function normalizeMediaType(value) {
@@ -1158,7 +1162,7 @@
 
       const mediaUrl = String(post.mediaUrl || post.url || post.image || '').trim();
       const mediaType = normalizeMediaType(post.mediaType);
-      if (!isValidHttpUrl(mediaUrl)) return null;
+      if (!isValidMediaUrl(mediaUrl)) return null;
 
       return {
         id: String(post.id || Date.now()),
@@ -1274,69 +1278,35 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-async function uploadFileToR2(file) {
+async function fileToDataUrl(file, mediaType) {
   if (!file) {
     throw new Error('업로드할 파일이 없습니다.');
   }
 
-  const maxSize = file.type.startsWith('video/') ? 200 * 1024 * 1024 : 15 * 1024 * 1024;
-  if (file.size > maxSize) {
-    throw new Error(file.type.startsWith('video/') ? '영상은 200MB 이하만 업로드할 수 있습니다.' : '이미지는 15MB 이하만 업로드할 수 있습니다.');
+  if (mediaType === 'video') {
+    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch(R2_UPLOAD_ENDPOINT, {
-      method: 'POST',
-      body: formData,
-      signal: controller.signal
-    });
-
-    const responseText = await response.text();
-    let result = {};
-    try {
-      result = responseText ? JSON.parse(responseText) : {};
-    } catch (error) {
-      result = { raw: responseText };
-    }
-
-    console.log('응답 상태:', response.status, result);
-
-    if (!response.ok) {
-      throw new Error(result?.error || '업로드 서버 오류');
-    }
-
-    let finalUrl = '';
-
-    if (result && typeof result.url === 'string' && isValidHttpUrl(result.url)) {
-      finalUrl = result.url.trim();
-    } else if (result && typeof result.pathname === 'string' && result.pathname.trim()) {
-      finalUrl = R2_PUBLIC_BASE + '/' + result.pathname.trim().replace(/^\/+/, '');
-    } else if (result && typeof result.key === 'string' && result.key.trim()) {
-      finalUrl = R2_PUBLIC_BASE + '/' + result.key.trim().replace(/^\/+/, '');
-    }
-
-    finalUrl = String(finalUrl || '').replace(/([^:]\/)\/+/g, '$1').trim();
-   finalUrl = finalUrl.replace('http://', 'https://');
-    if (!isValidHttpUrl(finalUrl)) {
-      throw new Error('업로드 후 이미지 주소를 만들지 못했습니다.');
-    }
-
-    return finalUrl;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('업로드 시간이 너무 오래 걸립니다. 잠시 후 다시 시도해주세요.');
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
+  const imageMaxBytes = 2 * 1024 * 1024;
+  if (file.size > imageMaxBytes) {
+    throw new Error('이미지는 2MB 이하 파일만 올려주세요.');
   }
+
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      if (!/^data:image\//i.test(result)) {
+        reject(new Error('이미지 변환에 실패했습니다.'));
+        return;
+      }
+      resolve(result);
+    };
+    reader.onerror = () => reject(new Error('이미지 읽기에 실패했습니다.'));
+    reader.readAsDataURL(file);
+  });
 }
+
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
       if (Number.isNaN(d.getTime())) return dateString;
@@ -1384,14 +1354,14 @@ async function uploadFileToR2(file) {
 
     function buildMedia(post) {
       if (post.mediaType === 'video') {
-        if (!isValidHttpUrl(post.mediaUrl) && !post.youtubeId) {
+        if (!isValidMediaUrl(post.mediaUrl) && !post.youtubeId) {
           return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
         }
         return buildEventVideoHtml(post).replace('<video ', '<video preload="metadata" ');
       }
 
       const imgUrl = String(post.mediaUrl || post.url || post.image || '').trim();
-      if (!isValidHttpUrl(imgUrl)) {
+      if (!isValidMediaUrl(imgUrl)) {
         return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
       }
 
@@ -1404,9 +1374,9 @@ async function uploadFileToR2(file) {
 
       let posts = sortPosts(getPosts()).filter(post => {
         if (post.mediaType === 'video') {
-          return Boolean(post.youtubeId || isValidHttpUrl(post.mediaUrl));
+          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
         }
-        return isValidHttpUrl(post.mediaUrl);
+        return isValidMediaUrl(post.mediaUrl);
       });
 
       if (typeValue !== 'all') {
@@ -2008,7 +1978,7 @@ async function uploadFileToR2(file) {
         submitBtn.disabled = true;
         submitBtn.textContent = '업로드 중...';
 
-        const uploadedUrl = await uploadFileToR2(file);
+        const uploadedUrl = await fileToDataUrl(file, mediaTypeSelect.value);
 
         const posts = getPosts();
         posts.unshift({
