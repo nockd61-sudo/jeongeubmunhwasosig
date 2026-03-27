@@ -1170,7 +1170,7 @@
       }
 
       if (!/^https?:\/\//i.test(value)) {
-        value = R2_PUBLIC_BASE_URL + '/' + value.replace(/^\/+/, '');
+        return R2_PUBLIC_BASE_URL + '/' + value.replace(/^\/+/, '');
       }
 
       try {
@@ -1362,15 +1362,7 @@
     }
 
     async function waitForMediaAvailability(url, mediaType) {
-      if (mediaType !== 'image') return true;
-
-      for (let i = 0; i < 8; i++) {
-        const ok = await checkImageReady(url);
-        if (ok) return true;
-        await wait(900);
-      }
-
-      return false;
+      return true;
     }
 
     async function uploadFileToR2(file) {
@@ -1389,13 +1381,15 @@
       const result = await response.json();
       let finalUrl = '';
 
-      if (result && typeof result.url === 'string' && result.url.trim()) {
-        finalUrl = result.url.trim();
-      } else if (result && typeof result.pathname === 'string' && result.pathname.trim()) {
-        finalUrl = 'https://pub-e700af33a2bb499fa1ecf4510a90412.r2.dev' + result.pathname.trim();
+      if (result && typeof result.pathname === 'string' && result.pathname.trim()) {
+        finalUrl = R2_PUBLIC_BASE_URL + '/' + result.pathname.trim().replace(/^\/+/, '');
       } else if (result && typeof result.key === 'string' && result.key.trim()) {
-        finalUrl = 'https://pub-e700af33a2bb499fa1ecf4510a90412.r2.dev/' + result.key.trim().replace(/^\/+/, '');
+        finalUrl = R2_PUBLIC_BASE_URL + '/' + result.key.trim().replace(/^\/+/, '');
+      } else if (result && typeof result.url === 'string' && result.url.trim()) {
+        finalUrl = normalizeMediaUrl(result.url.trim());
       }
+
+      finalUrl = normalizeMediaUrl(finalUrl);
 
       if (!finalUrl) {
         throw new Error(result?.error || '업로드 실패');
@@ -2067,7 +2061,6 @@
 
         const ready = await waitForMediaAvailability(uploadedUrl, mediaTypeSelect.value);
         if (!ready && mediaTypeSelect.value === 'image') {
-          alert('업로드는 완료됐지만 이미지 주소가 바로 열리지 않아 첫 화면에는 숨김 처리될 수 있습니다. 잠시 후 다시 보이거나, 관리자 삭제 후 다시 올리면 정상 반영될 수 있습니다.');
         }
 
         const posts = getPosts();
@@ -2242,6 +2235,20 @@
       videoWritePanel.style.display = 'block';
     });
 
+    function migrateBrokenR2Posts() {
+      const posts = getPosts().map((post) => {
+        if (String(post.mediaUrl || '').includes('pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev')) {
+          post.mediaUrl = String(post.mediaUrl).replace(
+            'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev',
+            R2_PUBLIC_BASE_URL
+          );
+        }
+        return post;
+      });
+      savePosts(posts);
+    }
+
+    migrateBrokenR2Posts();
     renderAll();
     openPostFromHash();
     window.addEventListener('hashchange', openPostFromHash);
