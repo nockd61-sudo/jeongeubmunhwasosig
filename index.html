@@ -1158,6 +1158,28 @@
       localStorage.setItem(key, JSON.stringify(value));
     }
 
+    function normalizeMediaUrl(url) {
+      let value = String(url || '').trim();
+      if (!value) return '';
+
+      value = value.replace(/\\/g, '/');
+
+      if (value.startsWith('//')) {
+        value = 'https:' + value;
+      }
+
+      if (!/^https?:\/\//i.test(value) && value.includes('r2.dev/')) {
+        value = 'https://' + value.replace(/^\/+/, '');
+      }
+
+      try {
+        const parsed = new URL(value);
+        return parsed.toString();
+      } catch (e) {
+        return value;
+      }
+    }
+
     function normalizePost(post) {
       const normalized = {
         likes: 0,
@@ -1168,7 +1190,7 @@
       };
 
       normalized.mediaType = normalized.mediaType === 'video' ? 'video' : 'image';
-      normalized.mediaUrl = String(normalized.mediaUrl || normalized.url || normalized.image || '').trim();
+      normalized.mediaUrl = normalizeMediaUrl(normalized.mediaUrl || normalized.url || normalized.image || '');
 
       return normalized;
     }
@@ -1280,6 +1302,49 @@
       return `<video src="${escapeHtml(post.mediaUrl)}" controls muted playsinline preload="metadata"></video>`;
     }
 
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function retryImageLoad(img) {
+      const original = img.getAttribute('data-original-src') || img.getAttribute('src') || '';
+      const tried = Number(img.getAttribute('data-retry-count') || '0');
+
+      if (!img.getAttribute('data-original-src')) {
+        img.setAttribute('data-original-src', original);
+      }
+
+      if (tried < 3 && original) {
+        img.setAttribute('data-retry-count', String(tried + 1));
+        const joiner = original.includes('?') ? '&' : '?';
+        img.src = `${original}${joiner}retry=${Date.now()}`;
+        return;
+      }
+
+      img.replaceWith(createImagePlaceholder('이미지 불러오기 실패'));
+    }
+
+    function checkImageReady(url) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url + (url.includes('?') ? '&' : '?') + 'check=' + Date.now();
+      });
+    }
+
+    async function waitForMediaAvailability(url, mediaType) {
+      if (mediaType !== 'image') return true;
+
+      for (let i = 0; i < 8; i++) {
+        const ok = await checkImageReady(url);
+        if (ok) return true;
+        await wait(900);
+      }
+
+      return false;
+    }
+
     async function uploadFileToR2(file) {
       const formData = new FormData();
       formData.append('file', file);
@@ -1350,13 +1415,13 @@
         return buildEventVideoHtml(post);
       }
 
-      const imgUrl = String(post.mediaUrl || '').trim();
+      const imgUrl = normalizeMediaUrl(post.mediaUrl);
       if (!imgUrl) {
         return `<div class="thumb-placeholder">이미지 없음</div>`;
       }
 
       return `<img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(post.title)}" loading="lazy"
-        onerror="this.replaceWith(createImagePlaceholder('이미지 불러오기 실패'));">`;
+        onerror="retryImageLoad(this)">`;
     }
 
     function currentFilteredPosts() {
@@ -1722,8 +1787,8 @@
                  style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
                  allowfullscreen loading="lazy"></iframe>
              </div>`
-          : `<video src="${escapeHtml(post.mediaUrl)}" controls playsinline preload="metadata"></video>`)
-        : `<img src="${escapeHtml(post.mediaUrl)}" alt="${escapeHtml(post.title)}" onerror="this.replaceWith(createImagePlaceholder('이미지 불러오기 실패'));">`;
+          : `<video src="${escapeHtml(normalizeMediaUrl(post.mediaUrl))}" controls playsinline preload="metadata"></video>`)
+        : `<img src="${escapeHtml(normalizeMediaUrl(post.mediaUrl))}" alt="${escapeHtml(post.title)}" onerror="retryImageLoad(this)">`;
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
@@ -1938,10 +2003,15 @@
         submitBtn.disabled = true;
         submitBtn.textContent = '업로드 중...';
 
-        const uploadedUrl = await uploadFileToR2(file);
+        const uploadedUrl = normalizeMediaUrl(await uploadFileToR2(file));
         if (!uploadedUrl) {
           alert('파일 업로드 실패');
           return;
+        }
+
+        const ready = await waitForMediaAvailability(uploadedUrl, mediaTypeSelect.value);
+        if (!ready && mediaTypeSelect.value === 'image') {
+          alert('업로드는 되었지만 이미지 반영이 조금 늦고 있습니다. 잠시 후 새로고침하면 보일 수 있습니다.');
         }
 
         const posts = getPosts();
@@ -1954,7 +2024,7 @@
           author: document.getElementById('author').value.trim(),
           description: document.getElementById('description').value.trim(),
           mediaType: mediaTypeSelect.value,
-          mediaUrl: uploadedUrl,
+          mediaUrl: normalizeMediaUrl(uploadedUrl),
           likes: 0,
           views: 0,
           comments: []
