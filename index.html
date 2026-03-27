@@ -2235,19 +2235,22 @@
       videoWritePanel.style.display = 'block';
     });
 
-    function migrateBrokenR2Posts() {
-      const posts = getPosts().map((post) => {
-        if (String(post.mediaUrl || '').includes('pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev')) {
-          post.mediaUrl = String(post.mediaUrl).replace(
-            'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev',
-            R2_PUBLIC_BASE_URL
-          );
-        }
-        return post;
-      });
-      savePosts(posts);
+   function migrateBrokenR2Posts() {
+  const posts = getPosts().map((post) => {
+    const mediaUrl = String(post.mediaUrl || '').trim();
+
+    if (mediaUrl.includes('r2.dev')) {
+      post.mediaUrl = mediaUrl.replace(
+        /^https:\/\/pub-[^/]+\.r2\.dev/,
+        R2_PUBLIC_BASE_URL
+      );
     }
 
+    return post;
+  });
+
+  savePosts(posts);
+}
     migrateBrokenR2Posts();
     renderAll();
     openPostFromHash();
