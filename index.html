@@ -1331,8 +1331,17 @@
     }
 
     function handleCardImageError(img) {
+      const card = img.closest('.card');
+      if (card) {
+        card.remove();
+        updateVisibleCount();
+        if (document.querySelectorAll('#eventGrid .card').length === 0) {
+          eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
+          paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        }
+        return;
+      }
       retryImageLoad(img);
-      updateVisibleCount();
     }
 
     function checkImageReady(url) {
@@ -1375,9 +1384,9 @@
       if (result && typeof result.url === 'string' && result.url.trim()) {
         finalUrl = result.url.trim();
       } else if (result && typeof result.pathname === 'string' && result.pathname.trim()) {
-        finalUrl = 'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev' + result.pathname.trim();
+        finalUrl = 'https://pub-e700af33a2bb499fa1ecf4510a90412.r2.dev' + result.pathname.trim();
       } else if (result && typeof result.key === 'string' && result.key.trim()) {
-        finalUrl = 'https://pub-fde151a124604f9ebb0e0fc5d36b88ea.r2.dev/' + result.key.trim().replace(/^\/+/, '');
+        finalUrl = 'https://pub-e700af33a2bb499fa1ecf4510a90412.r2.dev/' + result.key.trim().replace(/^\/+/, '');
       }
 
       if (!finalUrl) {
