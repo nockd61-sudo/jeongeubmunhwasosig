@@ -1331,19 +1331,22 @@
     }
 
     function handleCardImageError(img) {
-      const card = img.closest('.card');
-      if (card) {
-        card.remove();
-        updateVisibleCount();
+      const tried = Number(img.getAttribute('data-retry-count') || '0');
 
-        if (document.querySelectorAll('#eventGrid .card').length === 0) {
-          eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
-          paginationInfo.textContent = '표시할 문화소식이 없습니다.';
-        }
+      if (tried < 3) {
+        retryImageLoad(img);
         return;
       }
 
-      retryImageLoad(img);
+      const placeholder = createImagePlaceholder('이미지를 불러오는 중입니다. 잠시 후 다시 열어보세요.');
+      const thumb = img.closest('.thumb');
+
+      if (thumb) {
+        img.remove();
+        thumb.appendChild(placeholder);
+      } else {
+        img.replaceWith(placeholder);
+      }
     }
 
     function checkImageReady(url) {
@@ -1358,10 +1361,10 @@
     async function waitForMediaAvailability(url, mediaType) {
       if (mediaType !== 'image') return true;
 
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 3; i++) {
         const ok = await checkImageReady(url);
         if (ok) return true;
-        await wait(900);
+        await wait(700);
       }
 
       return false;
@@ -1466,36 +1469,14 @@
       return posts;
     }
 
-    async function isRenderablePost(post) {
-      if (!post) return false;
-
-      if (post.mediaType === 'video') {
-        return true;
-      }
-
-      const url = normalizeMediaUrl(post.mediaUrl);
-      if (!url) return false;
-
-      return await checkImageReady(url);
-    }
-
-    async function getRenderablePosts(limit = MAX_VISIBLE_POSTS) {
-      const sourcePosts = currentFilteredPosts();
-      const visible = [];
-
-      for (const post of sourcePosts) {
-        if (visible.length >= limit) break;
-        const ok = await isRenderablePost(post);
-        if (ok) visible.push(post);
-      }
-
-      return visible;
+    function getRenderablePosts(limit = MAX_VISIBLE_POSTS) {
+      return currentFilteredPosts().slice(0, limit);
     }
 
     async function renderPosts() {
       eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">불러오는 중...</div>';
 
-      const posts = await getRenderablePosts(MAX_VISIBLE_POSTS);
+      const posts = getRenderablePosts(MAX_VISIBLE_POSTS);
 
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
@@ -2060,9 +2041,6 @@
         }
 
         const ready = await waitForMediaAvailability(uploadedUrl, mediaTypeSelect.value);
-        if (!ready && mediaTypeSelect.value === 'image') {
-          alert('업로드는 완료됐지만 이미지 주소가 바로 열리지 않아 첫 화면에는 숨김 처리될 수 있습니다. 잠시 후 다시 보이거나, 관리자 삭제 후 다시 올리면 정상 반영될 수 있습니다.');
-        }
 
         const posts = getPosts();
         posts.push({
@@ -2085,7 +2063,13 @@
         renderPreview(null, 'image');
         mediaTypeSelect.value = 'image';
         renderAll();
-        alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
+
+        if (!ready && mediaTypeSelect.value === 'image') {
+          alert('등록은 완료되었습니다. 이미지가 서버에 반영되는 동안 잠깐 회색 안내칸으로 보일 수 있습니다. 잠시 후 새로고침하면 정상 표시됩니다.');
+        } else {
+          alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
+        }
+
         closeModal('uploadModal');
       } catch (error) {
         console.error(error);
