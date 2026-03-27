@@ -1324,6 +1324,28 @@
       img.replaceWith(createImagePlaceholder('이미지 불러오기 실패'));
     }
 
+
+    function updateVisibleCount() {
+      const count = document.querySelectorAll('#eventGrid .card').length;
+      paginationInfo.textContent = count > 0 ? `가까운 날짜순 ${count}개 노출` : '표시할 문화소식이 없습니다.';
+    }
+
+    function handleCardImageError(img) {
+      const card = img.closest('.card');
+      if (card) {
+        card.remove();
+        updateVisibleCount();
+
+        if (document.querySelectorAll('#eventGrid .card').length === 0) {
+          eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
+          paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        }
+        return;
+      }
+
+      retryImageLoad(img);
+    }
+
     function checkImageReady(url) {
       return new Promise((resolve) => {
         const img = new Image();
@@ -1421,7 +1443,7 @@
       }
 
       return `<img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(post.title)}" loading="lazy"
-        onerror="retryImageLoad(this)">`;
+        onerror="handleCardImageError(this)">`;
     }
 
     function currentFilteredPosts() {
@@ -1441,14 +1463,42 @@
         );
       }
 
-      return posts.slice(0, MAX_VISIBLE_POSTS);
+      return posts;
     }
 
-    function renderPosts() {
-      const posts = currentFilteredPosts();
+    async function isRenderablePost(post) {
+      if (!post) return false;
+
+      if (post.mediaType === 'video') {
+        return true;
+      }
+
+      const url = normalizeMediaUrl(post.mediaUrl);
+      if (!url) return false;
+
+      return await checkImageReady(url);
+    }
+
+    async function getRenderablePosts(limit = MAX_VISIBLE_POSTS) {
+      const sourcePosts = currentFilteredPosts();
+      const visible = [];
+
+      for (const post of sourcePosts) {
+        if (visible.length >= limit) break;
+        const ok = await isRenderablePost(post);
+        if (ok) visible.push(post);
+      }
+
+      return visible;
+    }
+
+    async function renderPosts() {
+      eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">불러오는 중...</div>';
+
+      const posts = await getRenderablePosts(MAX_VISIBLE_POSTS);
 
       if (posts.length === 0) {
-        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
         return;
       }
@@ -1598,8 +1648,8 @@
 
     window.playCustomVideo = playCustomVideo;
 
-    function renderAll() {
-      renderPosts();
+    async function renderAll() {
+      await renderPosts();
       renderNotices();
       renderBoardList();
       renderVideoList();
@@ -2011,7 +2061,7 @@
 
         const ready = await waitForMediaAvailability(uploadedUrl, mediaTypeSelect.value);
         if (!ready && mediaTypeSelect.value === 'image') {
-          alert('업로드는 되었지만 이미지 반영이 조금 늦고 있습니다. 잠시 후 새로고침하면 보일 수 있습니다.');
+          alert('업로드는 완료됐지만 이미지 주소가 바로 열리지 않아 첫 화면에는 숨김 처리될 수 있습니다. 잠시 후 다시 보이거나, 관리자 삭제 후 다시 올리면 정상 반영될 수 있습니다.');
         }
 
         const posts = getPosts();
