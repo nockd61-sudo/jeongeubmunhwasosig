@@ -1216,7 +1216,7 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
- async function uploadFileToR2(file) {
+async function uploadFileToR2(file) {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -1233,16 +1233,18 @@
   }
 
   const result = await response.json();
-  console.log('업로드 결과:', result);
+  console.log('업로드 결과 전체:', result);
+  console.log('result.ok:', result?.ok);
+  console.log('result.url:', result?.url);
 
   if (!result.ok || !result.url) {
     alert('이미지 업로드 실패');
     throw new Error(result.error || '업로드 실패');
   }
 
+  alert('저장될 이미지 주소: ' + result?.url);
   return result.url;
 }
-
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
       if (Number.isNaN(d.getTime())) return dateString;
