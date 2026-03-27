@@ -985,6 +985,33 @@
   </footer>
 
   <script>
+
+async function uploadToR2(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("https://jeongeup-upload.nockd61.workers.dev", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    alert("업로드 실패: " + data.error);
+    return null;
+  }
+
+  return data.url;
+}
+
+
+// 기존 함수들 ↓↓↓
+async function addPost() {
+  ...
+}
+
+</script>
     const POSTS_KEY = 'jeongeup-culture-posts-v6';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
@@ -2001,9 +2028,28 @@
         alert('이미지 또는 영상을 선택해 주세요.');
         return;
       }
+     let imageUrl = "";
 
+    if (file) {
+  imageUrl = await uploadToR2(file);
+  if (!imageUrl) return;
+    }
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
+        const title = document.getElementById('title').value;
+const place = document.getElementById('place').value;
+const description = document.getElementById('description').value;
+const post = {
+  id: Date.now(),
+  title,
+  place,
+  description,
+  startDate,
+  endDate,
+  mediaUrl: imageUrl,
+  createdAt: new Date().toISOString()
+};
+     
 
       if (!startDate || !endDate) {
         alert('행사 기간을 입력해 주세요.');
@@ -2014,35 +2060,14 @@
         alert('종료일이 시작일보다 빠를 수 없습니다.');
         return;
       }
+ let posts = JSON.parse(localStorage.getItem(POSTS_KEY) || '[]');
 
-      const submitBtn = uploadForm.querySelector('.submit');
+posts.unshift(post);
 
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '업로드 중...';
-
-        const uploadedUrl = normalizeMediaUrl(await uploadFileToR2(file));
-        if (!uploadedUrl) {
-          alert('파일 업로드 실패');
-          return;
-        }
-
-        const posts = getPosts();
-        posts.push({
-          id: String(Date.now()),
-          title: document.getElementById('title').value.trim(),
-          date: startDate,
-          endDate: endDate,
-          place: document.getElementById('place').value.trim(),
-          author: document.getElementById('author').value.trim(),
-          description: document.getElementById('description').value.trim(),
-          mediaType: mediaTypeSelect.value,
-          mediaUrl: normalizeMediaUrl(uploadedUrl),
-          likes: 0,
-          views: 0,
-          comments: []
-        });
-
+localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+renderPosts();
+uploadForm.reset();
+     
         savePosts(posts);
         uploadForm.reset();
         renderPreview(null, 'image');
