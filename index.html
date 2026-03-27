@@ -1846,11 +1846,17 @@ async function uploadFileToR2(file) {
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      const file = fileInput.files?.[0];
-      if (!file) {
-        alert('이미지 또는 영상을 선택해 주세요.');
-        return;
-      }
+     const file = fileInput.files[0];
+let mediaUrl = "";
+
+if (file) {
+  mediaUrl = URL.createObjectURL(file);
+}
+
+if (!file) {
+  alert('이미지 또는 영상을 선택해 주세요.');
+  return;
+}
 
       const startDate = document.getElementById('startDate').value;
       const endDate = document.getElementById('endDate').value;
