@@ -2039,15 +2039,22 @@ async function addPost() {
         const title = document.getElementById('title').value;
 const place = document.getElementById('place').value;
 const description = document.getElementById('description').value;
+const author = document.getElementById('author').value;
+const mediaType = mediaTypeSelect.value;
+
 const post = {
-  id: Date.now(),
+  id: String(Date.now()),
   title,
-  place,
-  description,
-  startDate,
+  date: startDate,
   endDate,
+  place,
+  author,
+  description,
+  mediaType,
   mediaUrl: imageUrl,
-  createdAt: new Date().toISOString()
+  likes: 0,
+  views: 0,
+  comments: []
 };
      
 
@@ -2060,21 +2067,16 @@ const post = {
         alert('종료일이 시작일보다 빠를 수 없습니다.');
         return;
       }
- let posts = JSON.parse(localStorage.getItem(POSTS_KEY) || '[]');
-
+const posts = getPosts();
 posts.unshift(post);
+savePosts(posts);
 
-localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
-renderPosts();
 uploadForm.reset();
-     
-        savePosts(posts);
-        uploadForm.reset();
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-        renderAll();
-        alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
-        closeModal('uploadModal');
+renderPreview(null, 'image');
+mediaTypeSelect.value = 'image';
+renderAll();
+alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
+closeModal('uploadModal');
       } catch (error) {
         console.error(error);
         alert('업로드 실패: ' + error.message);
