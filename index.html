@@ -973,6 +973,8 @@
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
         const ADMIN_PASSWORD = '1234';
+    const R2_UPLOAD_ENDPOINT = 'https://delicate-thunder-912b.nockd61.workers.dev';
+    const POSTS_FALLBACK_KEY = 'jeongeup-culture-posts-api-fallback-v1';
 
     const demoPosts = [
       {
@@ -1114,19 +1116,69 @@
     let isAdminLoggedIn = false;
 
    async function getPosts() {
-  const res = await fetch('https://jeongeup-art.com/api/posts');
-  return await res.json();
+  try {
+    const res = await fetch('https://jeongeup-art.com/api/posts', {
+      cache: 'no-store'
+    });
+
+    if (!res.ok) {
+      throw new Error(`게시글 불러오기 실패 (${res.status})`);
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data)) {
+      throw new Error('게시글 데이터 형식이 올바르지 않습니다.');
+    }
+
+    const normalized = data.map(normalizePost).filter(Boolean);
+    if (normalized.length) {
+      localStorage.setItem(POSTS_FALLBACK_KEY, JSON.stringify(normalized));
+      return normalized;
+    }
+  } catch (error) {
+    console.warn('API getPosts 실패, 로컬 저장본으로 대체합니다.', error);
+  }
+
+  const local = getStored(POSTS_FALLBACK_KEY, demoPosts);
+  const normalizedLocal = Array.isArray(local) ? local.map(normalizePost).filter(Boolean) : [];
+  if (normalizedLocal.length) {
+    return normalizedLocal;
+  }
+
+  return demoPosts.map(normalizePost).filter(Boolean);
 }
 
 async function savePost(post) {
-  await fetch('https://jeongeup-art.com/api/posts', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(post)
-  });
+  const normalized = normalizePost(post);
+  if (!normalized) {
+    throw new Error('저장할 게시글 데이터가 올바르지 않습니다.');
+  }
+
+  try {
+    const res = await fetch('https://jeongeup-art.com/api/posts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(normalized)
+    });
+
+    if (!res.ok) {
+      throw new Error(`게시글 저장 실패 (${res.status})`);
+    }
+  } catch (error) {
+    console.warn('API savePost 실패, 로컬 저장본으로 대체합니다.', error);
+  }
+
+  const current = await getPosts();
+  const exists = current.some(item => String(item.id) === String(normalized.id));
+  const next = exists
+    ? current.map(item => String(item.id) === String(normalized.id) ? normalized : item)
+    : [normalized, ...current];
+  localStorage.setItem(POSTS_FALLBACK_KEY, JSON.stringify(next));
+  return normalized;
 }
+
 
     function isValidMediaUrl(value) {
       if (typeof value !== 'string') return false;
@@ -1251,33 +1303,56 @@ async function savePost(post) {
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-async function fileToDataUrl(file, mediaType) {
+
+async function uploadFileToWorker(file, mediaType) {
   if (!file) {
     throw new Error('업로드할 파일이 없습니다.');
   }
 
-  if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+  const normalizedType = mediaType === 'video' ? 'video' : 'image';
+  const imageMaxBytes = 10 * 1024 * 1024;
+  const videoMaxBytes = 50 * 1024 * 1024;
+  const maxBytes = normalizedType === 'video' ? videoMaxBytes : imageMaxBytes;
+
+  if (file.size > maxBytes) {
+    throw new Error(
+      normalizedType === 'video'
+        ? '영상은 50MB 이하 파일만 올려주세요.'
+        : '이미지는 10MB 이하 파일만 올려주세요.'
+    );
   }
 
-  const imageMaxBytes = 2 * 1024 * 1024;
-  if (file.size > imageMaxBytes) {
-    throw new Error('이미지는 2MB 이하 파일만 올려주세요.');
-  }
+  const formData = new FormData();
+  formData.append('file', file);
 
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result || '');
-      if (!/^data:image\//i.test(result)) {
-        reject(new Error('이미지 변환에 실패했습니다.'));
-        return;
-      }
-      resolve(result);
-    };
-    reader.onerror = () => reject(new Error('이미지 읽기에 실패했습니다.'));
-    reader.readAsDataURL(file);
+  const res = await fetch(R2_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    body: formData
   });
+
+  if (!res.ok) {
+    let detail = '';
+    try {
+      detail = await res.text();
+    } catch (e) {
+      detail = '';
+    }
+    throw new Error(detail || `업로드 서버 오류 (${res.status})`);
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    throw new Error('업로드 응답을 해석하지 못했습니다.');
+  }
+
+  const uploadedUrl = String(data?.url || '').trim();
+  if (!isValidMediaUrl(uploadedUrl)) {
+    throw new Error('업로드 주소를 받지 못했습니다.');
+  }
+
+  return uploadedUrl;
 }
 
     function formatDate(dateString) {
@@ -1936,7 +2011,7 @@ async function fileToDataUrl(file, mediaType) {
         submitBtn.disabled = true;
         submitBtn.textContent = '업로드 중...';
 
-        const uploadedUrl = await fileToDataUrl(file, mediaTypeSelect.value);
+        const uploadedUrl = await uploadFileToWorker(file, mediaTypeSelect.value);
 
         await savePost({
           id: String(Date.now()),
