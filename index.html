@@ -1174,44 +1174,24 @@ async function savePost(post) {
       };
     }
 
-    function migrateLegacyPosts() {
-      const existing = localStorage.getItem(POSTS_KEY);
-      if (existing) return;
 
-      let migrated = [];
-      for (const key of LEGACY_POST_KEYS) {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        try {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            migrated = parsed;
-            break;
-          }
-        } catch (error) {}
+    function getStored(key, fallback) {
+      const raw = localStorage.getItem(key);
+      if (!raw) {
+        localStorage.setItem(key, JSON.stringify(fallback));
+        return JSON.parse(JSON.stringify(fallback));
       }
 
-      const source = migrated.length ? migrated : demoPosts;
-      const normalized = source.map(normalizePost).filter(Boolean);
-      saveStored(POSTS_KEY, normalized);
-    }
-
-    function getPosts() {
-      migrateLegacyPosts();
-
-      const rawPosts = getStored(POSTS_KEY, demoPosts);
-      const normalizedPosts = rawPosts.map(normalizePost).filter(Boolean);
-
-      if (normalizedPosts.length !== rawPosts.length) {
-        saveStored(POSTS_KEY, normalizedPosts);
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        localStorage.setItem(key, JSON.stringify(fallback));
+        return JSON.parse(JSON.stringify(fallback));
       }
-
-      return normalizedPosts;
     }
 
-    function savePosts(posts) {
-      const cleaned = (Array.isArray(posts) ? posts : []).map(normalizePost).filter(Boolean);
-      saveStored(POSTS_KEY, cleaned);
+    function saveStored(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
     }
 
     function getNotices() {
@@ -1361,11 +1341,11 @@ async function fileToDataUrl(file, mediaType) {
       return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
     }
 
-    function currentFilteredPosts() {
+    async function currentFilteredPosts() {
       const typeValue = filterType.value;
       const keyword = searchInput.value.trim().toLowerCase();
 
-      let posts = sortPosts(getPosts()).filter(post => {
+      let posts = sortPosts(await getPosts()).filter(post => {
         if (post.mediaType === 'video') {
           return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
         }
@@ -1386,8 +1366,8 @@ async function fileToDataUrl(file, mediaType) {
       return posts.slice(0, 6);
     }
 
-    function renderPosts() {
-      const posts = currentFilteredPosts();
+    async function renderPosts() {
+      const posts = await currentFilteredPosts();
 
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
@@ -1452,8 +1432,8 @@ async function fileToDataUrl(file, mediaType) {
         : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
     }
 
-    function renderBoardList() {
-      const posts = sortPosts(getPosts());
+    async function renderBoardList() {
+      const posts = sortPosts(await getPosts());
 
       if (!posts.length) {
         boardPostList.innerHTML = '<li style="padding:14px 0; border-bottom:1px solid #e5e7eb;"><strong>등록된 게시글이 없습니다.</strong></li>';
@@ -1472,8 +1452,8 @@ async function fileToDataUrl(file, mediaType) {
    `).join('');
     }
 
-    function renderVideoList() {
-      const postVideos = sortPosts(getPosts()).filter((post) => post.mediaType === 'video');
+    async function renderVideoList() {
+      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
       const customVideos = getVideoItems();
 
       const merged = [
@@ -1543,11 +1523,11 @@ async function fileToDataUrl(file, mediaType) {
 
     window.playCustomVideo = playCustomVideo;
 
-    function renderAll() {
-      renderPosts();
+    async function renderAll() {
+      await renderPosts();
       renderNotices();
-      renderBoardList();
-      renderVideoList();
+      await renderBoardList();
+      await renderVideoList();
     }
 
     function renderPreview(file, mediaType) {
@@ -1667,43 +1647,30 @@ async function fileToDataUrl(file, mediaType) {
       renderNotices();
     }
 
-    function findPostById(id) {
-      return getPosts().find((post) => String(post.id) === String(id));
+    async function findPostById(id) {
+      const posts = await getPosts();
+      return posts.find((post) => String(post.id) === String(id));
     }
 
-    function addView(id) {
-      const posts = getPosts();
+    async function addView(id) {
+      const posts = await getPosts();
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
-
       target.views = (target.views || 0) + 1;
-      savePosts(posts);
       return target;
     }
 
-    function likePost(id) {
-      const posts = getPosts();
+    async function likePost(id) {
+      const posts = await getPosts();
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
-
       target.likes = (target.likes || 0) + 1;
-      savePosts(posts);
+      alert('좋아요 저장 API는 다음 단계에서 연결하겠습니다.');
       return target;
     }
 
     function deletePost(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-
-      if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
-
-      const posts = getPosts().filter(p => String(p.id) !== String(id));
-      savePosts(posts);
-      renderAll();
-      closeModal('detailModal');
-      alert('삭제되었습니다.');
+      alert('삭제 기능은 게시글 수정/삭제 API를 추가한 뒤 연결하겠습니다.');
     }
 
     function renderComments(post) {
@@ -1723,8 +1690,8 @@ async function fileToDataUrl(file, mediaType) {
       `).join('');
     }
 
-    function openDetail(id) {
-      const post = addView(id);
+    async function openDetail(id) {
+      const post = await addView(id);
       if (!post) return;
 
       detailTitle.textContent = post.title;
@@ -1742,11 +1709,11 @@ async function fileToDataUrl(file, mediaType) {
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
-      detailLikeBtn.onclick = () => {
-        const updated = likePost(id);
+      detailLikeBtn.onclick = async () => {
+        const updated = await likePost(id);
         if (!updated) return;
         openDetail(id);
-        renderAll();
+        await renderAll();
       };
 
       commentForm.dataset.postId = String(id);
@@ -1755,8 +1722,8 @@ async function fileToDataUrl(file, mediaType) {
       renderAll();
     }
 
-    function sharePost(id) {
-      const post = findPostById(id);
+    async function sharePost(id) {
+      const post = await findPostById(id);
       if (!post) {
         alert('공유할 글을 찾지 못했습니다.');
         return;
@@ -1822,7 +1789,7 @@ async function fileToDataUrl(file, mediaType) {
     noticeViewTab.addEventListener('click', showNoticeList);
     noticeWriteTab.addEventListener('click', showNoticeWrite);
 
-    document.getElementById('boardWriteForm')?.addEventListener('submit', function(e) {
+    document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const title = document.getElementById('boardTitle').value.trim();
@@ -1833,12 +1800,11 @@ async function fileToDataUrl(file, mediaType) {
         return;
       }
 
-      const posts = getPosts();
-
-      posts.unshift({
+      await savePost({
         id: String(Date.now()),
         title,
         date: new Date().toISOString().slice(0, 10),
+        endDate: new Date().toISOString().slice(0, 10),
         place: '시민 문화이야기',
         author: '시민',
         description: content,
@@ -1849,9 +1815,8 @@ async function fileToDataUrl(file, mediaType) {
         comments: []
       });
 
-      savePosts(posts);
       this.reset();
-      renderAll();
+      await renderAll();
       showBoardList();
       alert('문화이야기가 등록되었습니다.');
     });
@@ -1973,8 +1938,7 @@ async function fileToDataUrl(file, mediaType) {
 
         const uploadedUrl = await fileToDataUrl(file, mediaTypeSelect.value);
 
-        const posts = getPosts();
-        posts.unshift({
+        await savePost({
           id: String(Date.now()),
           title: titleValue,
           date: startDate,
@@ -1988,12 +1952,10 @@ async function fileToDataUrl(file, mediaType) {
           views: 0,
           comments: []
         });
-
-        savePosts(posts);
         uploadForm.reset();
         renderPreview(null, 'image');
         mediaTypeSelect.value = 'image';
-        renderAll();
+        await renderAll();
         alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
         closeModal('uploadModal');
       } catch (error) {
@@ -2049,35 +2011,18 @@ async function fileToDataUrl(file, mediaType) {
       alert(editId ? '공지 수정 완료' : '공지 등록 완료');
     });
 
-    commentForm.addEventListener('submit', (e) => {
+    commentForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const id = commentForm.dataset.postId;
-      const posts = getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return;
-
-      if (!target.comments) target.comments = [];
-
-      target.comments.unshift({
-        author: document.getElementById('commentAuthor').value.trim(),
-        text: document.getElementById('commentText').value.trim(),
-        date: new Date().toISOString().slice(0, 10)
-      });
-
-      savePosts(posts);
+      alert('댓글 저장 API는 다음 단계에서 연결하겠습니다.');
       commentForm.reset();
-      renderComments(target);
-      renderAll();
-      openDetail(id);
     });
 
-    function openPostFromHash() {
+    async function openPostFromHash() {
       const hash = window.location.hash || '';
       if (!hash.startsWith('#post-')) return;
 
       const id = hash.replace('#post-', '');
-      const post = findPostById(id);
+      const post = await findPostById(id);
       if (post) {
         openDetail(id);
       }
@@ -2086,7 +2031,6 @@ async function fileToDataUrl(file, mediaType) {
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    migrateLegacyPosts();
     renderAll();
     openPostFromHash();
 
