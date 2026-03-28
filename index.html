@@ -974,7 +974,6 @@
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
         const ADMIN_PASSWORD = '1234';
     const R2_UPLOAD_ENDPOINT = 'https://delicate-thunder-912b.nockd61.workers.dev';
-    const POSTS_FALLBACK_KEY = 'jeongeup-culture-posts-api-fallback-v1';
 
     const demoPosts = [
       {
@@ -1115,70 +1114,52 @@
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
 
-   async function getPosts() {
-  try {
-    const res = await fetch('https://jeongeup-art.com/api/posts', {
-      cache: 'no-store'
-    });
+    async function getPosts() {
+      const primary = localStorage.getItem(POSTS_KEY);
+      if (primary) {
+        try {
+          const parsed = JSON.parse(primary);
+          const normalized = Array.isArray(parsed)
+            ? parsed.map(normalizePost).filter(Boolean)
+            : [];
+          return sortPosts(normalized);
+        } catch (error) {
+          console.error('저장된 게시글 읽기 실패', error);
+        }
+      }
 
-    if (!res.ok) {
-      throw new Error(`게시글 불러오기 실패 (${res.status})`);
+      for (const legacyKey of LEGACY_POST_KEYS) {
+        const legacyRaw = localStorage.getItem(legacyKey);
+        if (!legacyRaw) continue;
+        try {
+          const parsed = JSON.parse(legacyRaw);
+          const normalized = Array.isArray(parsed)
+            ? parsed.map(normalizePost).filter(Boolean)
+            : [];
+          if (normalized.length) {
+            localStorage.setItem(POSTS_KEY, JSON.stringify(normalized));
+            return sortPosts(normalized);
+          }
+        } catch (error) {
+          console.error('레거시 게시글 읽기 실패', legacyKey, error);
+        }
+      }
+
+      const seeded = demoPosts.map(normalizePost).filter(Boolean);
+      localStorage.setItem(POSTS_KEY, JSON.stringify(seeded));
+      return sortPosts(seeded);
     }
 
-    const data = await res.json();
-    if (!Array.isArray(data)) {
-      throw new Error('게시글 데이터 형식이 올바르지 않습니다.');
-    }
-
-    const normalized = data.map(normalizePost).filter(Boolean);
-    if (normalized.length) {
-      localStorage.setItem(POSTS_FALLBACK_KEY, JSON.stringify(normalized));
+    async function savePost(post) {
+      const current = await getPosts();
+      const normalized = normalizePost(post);
+      if (!normalized) {
+        throw new Error('저장할 게시글 형식이 올바르지 않습니다.');
+      }
+      const next = [normalized, ...current.filter(item => String(item.id) !== String(normalized.id))];
+      localStorage.setItem(POSTS_KEY, JSON.stringify(next));
       return normalized;
     }
-  } catch (error) {
-    console.warn('API getPosts 실패, 로컬 저장본으로 대체합니다.', error);
-  }
-
-  const local = getStored(POSTS_FALLBACK_KEY, demoPosts);
-  const normalizedLocal = Array.isArray(local) ? local.map(normalizePost).filter(Boolean) : [];
-  if (normalizedLocal.length) {
-    return normalizedLocal;
-  }
-
-  return demoPosts.map(normalizePost).filter(Boolean);
-}
-
-async function savePost(post) {
-  const normalized = normalizePost(post);
-  if (!normalized) {
-    throw new Error('저장할 게시글 데이터가 올바르지 않습니다.');
-  }
-
-  try {
-    const res = await fetch('https://jeongeup-art.com/api/posts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(normalized)
-    });
-
-    if (!res.ok) {
-      throw new Error(`게시글 저장 실패 (${res.status})`);
-    }
-  } catch (error) {
-    console.warn('API savePost 실패, 로컬 저장본으로 대체합니다.', error);
-  }
-
-  const current = await getPosts();
-  const exists = current.some(item => String(item.id) === String(normalized.id));
-  const next = exists
-    ? current.map(item => String(item.id) === String(normalized.id) ? normalized : item)
-    : [normalized, ...current];
-  localStorage.setItem(POSTS_FALLBACK_KEY, JSON.stringify(next));
-  return normalized;
-}
-
 
     function isValidMediaUrl(value) {
       if (typeof value !== 'string') return false;
@@ -1303,52 +1284,41 @@ async function savePost(post) {
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-
 async function uploadFileToWorker(file, mediaType) {
   if (!file) {
     throw new Error('업로드할 파일이 없습니다.');
   }
 
-  const normalizedType = mediaType === 'video' ? 'video' : 'image';
-  const imageMaxBytes = 10 * 1024 * 1024;
-  const videoMaxBytes = 50 * 1024 * 1024;
-  const maxBytes = normalizedType === 'video' ? videoMaxBytes : imageMaxBytes;
+  if (mediaType === 'video') {
+    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+  }
 
-  if (file.size > maxBytes) {
-    throw new Error(
-      normalizedType === 'video'
-        ? '영상은 50MB 이하 파일만 올려주세요.'
-        : '이미지는 10MB 이하 파일만 올려주세요.'
-    );
+  const imageMaxBytes = 10 * 1024 * 1024;
+  if (file.size > imageMaxBytes) {
+    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
   const formData = new FormData();
   formData.append('file', file);
 
-  const res = await fetch(R2_UPLOAD_ENDPOINT, {
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
     method: 'POST',
-    body: formData
+    body: formData,
   });
 
-  if (!res.ok) {
-    let detail = '';
-    try {
-      detail = await res.text();
-    } catch (e) {
-      detail = '';
-    }
-    throw new Error(detail || `업로드 서버 오류 (${res.status})`);
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
   }
 
-  let data;
-  try {
-    data = await res.json();
-  } catch (e) {
-    throw new Error('업로드 응답을 해석하지 못했습니다.');
+  if (!response.ok) {
+    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
   }
 
   const uploadedUrl = String(data?.url || '').trim();
-  if (!isValidMediaUrl(uploadedUrl)) {
+  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
     throw new Error('업로드 주소를 받지 못했습니다.');
   }
 
@@ -1732,6 +1702,7 @@ async function uploadFileToWorker(file, mediaType) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
       target.views = (target.views || 0) + 1;
+      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
       return target;
     }
 
@@ -1740,12 +1711,16 @@ async function uploadFileToWorker(file, mediaType) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
       target.likes = (target.likes || 0) + 1;
-      alert('좋아요 저장 API는 다음 단계에서 연결하겠습니다.');
+      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
       return target;
     }
 
-    function deletePost(id) {
-      alert('삭제 기능은 게시글 수정/삭제 API를 추가한 뒤 연결하겠습니다.');
+    async function deletePost(id) {
+      const posts = await getPosts();
+      const next = posts.filter(p => String(p.id) !== String(id));
+      localStorage.setItem(POSTS_KEY, JSON.stringify(next));
+      await renderAll();
+      alert('게시글을 삭제했습니다.');
     }
 
     function renderComments(post) {
@@ -2088,8 +2063,23 @@ async function uploadFileToWorker(file, mediaType) {
 
     commentForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      alert('댓글 저장 API는 다음 단계에서 연결하겠습니다.');
+      const postId = commentForm.dataset.postId;
+      const author = document.getElementById('commentAuthor').value.trim();
+      const textValue = document.getElementById('commentText').value.trim();
+      if (!postId || !author || !textValue) return;
+      const posts = await getPosts();
+      const target = posts.find(p => String(p.id) === String(postId));
+      if (!target) return;
+      target.comments = Array.isArray(target.comments) ? target.comments : [];
+      target.comments.unshift({
+        author,
+        text: textValue,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
       commentForm.reset();
+      await openDetail(postId);
+      await renderAll();
     });
 
     async function openPostFromHash() {
