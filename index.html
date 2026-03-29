@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정읍문화소식</title>
@@ -665,6 +666,16 @@
 </style>
 </head>
 <body>
+ <button
+  onclick="shareKakao(
+    '정읍문화소식',
+    '정읍 문화정보를 확인해보세요',
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+    window.location.href
+  )"
+  style="padding:10px 16px; margin:12px; background:#FEE500; border:none; border-radius:8px; font-weight:700; cursor:pointer;"
+>카톡 공유 테스트</button>
+
   <header>
     <div class="wrap topbar">
       <a href="#top" class="brand">
@@ -2283,6 +2294,32 @@ return uploadedUrI;
       videoViewPanel.style.display = 'none';
       videoWritePanel.style.display = 'block';
     });
+   Kakao.init('1c0147d8515c426787e201fbb816958c');
+
+function shareKakao(title, desc, imageUrl, linkUrl) {
+  Kakao.Share.sendDefault({
+    objectType: 'feed',
+    content: {
+      title: title,
+      description: desc,
+      imageUrl: imageUrl,
+      link: {
+        mobileWebUrl: linkUrl,
+        webUrl: linkUrl,
+      },
+    },
+    buttons: [
+      {
+        title: '자세히 보기',
+        link: {
+          mobileWebUrl: linkUrl,
+          webUrl: linkUrl,
+        },
+      },
+    ],
+  });
+}ㅇ
+
   </script>
 </body>
 </html>
