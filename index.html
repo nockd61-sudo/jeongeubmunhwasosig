@@ -968,11 +968,12 @@
   </footer>
 
   <script>
-    const POSTS_KEY = 'jeongeup-culture-posts-v8';
-    const LEGACY_POST_KEYS = ['jeongeup-culture-posts-v5', 'jeongeup-culture-posts-v6', 'jeongeup-culture-posts-v7'];
+    const API_POSTS_ENDPOINT = '/api/posts';
+    const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
+    const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
-        const ADMIN_PASSWORD = '1234';
+    const ADMIN_PASSWORD = '1234';
     const R2_UPLOAD_ENDPOINT = 'https://delicate-thunder-912b.nockd61.workers.dev';
 
     const demoPosts = [
@@ -1114,51 +1115,117 @@
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
 
+    function getStoredObject(key) {
+      const raw = localStorage.getItem(key);
+      if (!raw) return {};
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch (error) {
+        console.error('저장 데이터 읽기 실패', key, error);
+        return {};
+      }
+    }
+
+    function saveStoredObject(key, value) {
+      localStorage.setItem(key, JSON.stringify(value || {}));
+    }
+
+    function getPostMetaMap() {
+      return getStoredObject(POST_META_KEY);
+    }
+
+    function savePostMetaMap(value) {
+      saveStoredObject(POST_META_KEY, value);
+    }
+
+    function getPostCommentsMap() {
+      return getStoredObject(POST_COMMENTS_KEY);
+    }
+
+    function savePostCommentsMap(value) {
+      saveStoredObject(POST_COMMENTS_KEY, value);
+    }
+
     async function getPosts() {
-      const primary = localStorage.getItem(POSTS_KEY);
-      if (primary) {
-        try {
-          const parsed = JSON.parse(primary);
-          const normalized = Array.isArray(parsed)
-            ? parsed.map(normalizePost).filter(Boolean)
-            : [];
-          return sortPosts(normalized);
-        } catch (error) {
-          console.error('저장된 게시글 읽기 실패', error);
+      try {
+        const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`게시글 불러오기 실패 (${response.status})`);
         }
-      }
 
-      for (const legacyKey of LEGACY_POST_KEYS) {
-        const legacyRaw = localStorage.getItem(legacyKey);
-        if (!legacyRaw) continue;
-        try {
-          const parsed = JSON.parse(legacyRaw);
-          const normalized = Array.isArray(parsed)
-            ? parsed.map(normalizePost).filter(Boolean)
-            : [];
-          if (normalized.length) {
-            localStorage.setItem(POSTS_KEY, JSON.stringify(normalized));
-            return sortPosts(normalized);
-          }
-        } catch (error) {
-          console.error('레거시 게시글 읽기 실패', legacyKey, error);
-        }
-      }
+        const data = await response.json();
+        const items = Array.isArray(data) ? data : [];
+        const metaMap = getPostMetaMap();
+        const commentsMap = getPostCommentsMap();
 
-      const seeded = demoPosts.map(normalizePost).filter(Boolean);
-      localStorage.setItem(POSTS_KEY, JSON.stringify(seeded));
-      return sortPosts(seeded);
+        const normalized = items
+          .map((item) => {
+            const id = String(item.id || '');
+            const meta = metaMap[id] || {};
+            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
+
+            return normalizePost({
+              ...item,
+              author: item.author || meta.author || '시민',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              comments
+            });
+          })
+          .filter(Boolean);
+
+        return sortPosts(normalized);
+      } catch (error) {
+        console.error('서버 게시글 읽기 실패', error);
+        return [];
+      }
     }
 
     async function savePost(post) {
-      const current = await getPosts();
       const normalized = normalizePost(post);
       if (!normalized) {
         throw new Error('저장할 게시글 형식이 올바르지 않습니다.');
       }
-      const next = [normalized, ...current.filter(item => String(item.id) !== String(normalized.id))];
-      localStorage.setItem(POSTS_KEY, JSON.stringify(next));
-      return normalized;
+
+      const payload = {
+        id: normalized.id,
+        title: normalized.title,
+        content: normalized.description,
+        mediaType: normalized.mediaType,
+        mediaUrl: normalized.mediaUrl,
+        imageUrl: normalized.mediaUrl,
+        startDate: normalized.date,
+        date: normalized.date,
+        endDate: normalized.endDate,
+        place: normalized.place,
+        author: normalized.author,
+        createdAt: new Date().toISOString()
+      };
+
+      const response = await fetch(API_POSTS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '게시글 저장에 실패했습니다.');
+      }
+
+      return {
+        ...normalized,
+        id: String(result?.id || normalized.id)
+      };
     }
 
     function isValidMediaUrl(value) {
@@ -1186,18 +1253,28 @@
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const mediaUrl = String(post.mediaUrl || post.url || post.image || '').trim();
+      const mediaUrl = String(
+        post.mediaUrl ||
+        post.imageUrl ||
+        post.url ||
+        post.image ||
+        ''
+      ).trim();
+
       const mediaType = normalizeMediaType(post.mediaType);
       if (!isValidMediaUrl(mediaUrl)) return null;
+
+      const startDate = String(post.startDate || post.date || '').trim();
+      const endDate = String(post.endDate || post.startDate || post.date || '').trim();
 
       return {
         id: String(post.id || Date.now()),
         title: String(post.title || '제목 없음').trim(),
-        date: String(post.date || '').trim(),
-        endDate: String(post.endDate || post.date || '').trim(),
+        date: startDate,
+        endDate,
         place: String(post.place || '').trim(),
-        author: String(post.author || '').trim(),
-        description: String(post.description || '').trim(),
+        author: String(post.author || '시민').trim(),
+        description: String(post.description || post.content || '').trim(),
         mediaType,
         mediaUrl,
         youtubeId: String(post.youtubeId || '').trim(),
@@ -1206,7 +1283,6 @@
         comments: Array.isArray(post.comments) ? post.comments : []
       };
     }
-
 
     function getStored(key, fallback) {
       const raw = localStorage.getItem(key);
@@ -1701,8 +1777,19 @@ async function uploadFileToWorker(file, mediaType) {
       const posts = await getPosts();
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
-      target.views = (target.views || 0) + 1;
-      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+
+      const metaMap = getPostMetaMap();
+      const currentMeta = metaMap[String(id)] || {};
+      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
+      metaMap[String(id)] = {
+        ...currentMeta,
+        author: currentMeta.author || target.author || '시민',
+        likes: Number(currentMeta.likes) || target.likes || 0,
+        views: nextViews
+      };
+      savePostMetaMap(metaMap);
+
+      target.views = nextViews;
       return target;
     }
 
@@ -1710,17 +1797,24 @@ async function uploadFileToWorker(file, mediaType) {
       const posts = await getPosts();
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
-      target.likes = (target.likes || 0) + 1;
-      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+
+      const metaMap = getPostMetaMap();
+      const currentMeta = metaMap[String(id)] || {};
+      const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
+      metaMap[String(id)] = {
+        ...currentMeta,
+        author: currentMeta.author || target.author || '시민',
+        likes: nextLikes,
+        views: Number(currentMeta.views) || target.views || 0
+      };
+      savePostMetaMap(metaMap);
+
+      target.likes = nextLikes;
       return target;
     }
 
     async function deletePost(id) {
-      const posts = await getPosts();
-      const next = posts.filter(p => String(p.id) !== String(id));
-      localStorage.setItem(POSTS_KEY, JSON.stringify(next));
-      await renderAll();
-      alert('게시글을 삭제했습니다.');
+      alert('현재 게시글 삭제는 화면 코드만으로는 되지 않습니다. Worker에 DELETE API를 추가해야 모든 기기에서 함께 삭제됩니다.');
     }
 
     function renderComments(post) {
@@ -1740,8 +1834,9 @@ async function uploadFileToWorker(file, mediaType) {
       `).join('');
     }
 
-    async function openDetail(id) {
-      const post = await addView(id);
+    async function openDetail(id, options = {}) {
+      const { incrementView = true } = options;
+      const post = incrementView ? await addView(id) : await findPostById(id);
       if (!post) return;
 
       detailTitle.textContent = post.title;
@@ -1762,14 +1857,14 @@ async function uploadFileToWorker(file, mediaType) {
       detailLikeBtn.onclick = async () => {
         const updated = await likePost(id);
         if (!updated) return;
-        openDetail(id);
+        await openDetail(id, { incrementView: false });
         await renderAll();
       };
 
       commentForm.dataset.postId = String(id);
       renderComments(post);
       openModal('detailModal');
-      renderAll();
+      await renderAll();
     }
 
     async function sharePost(id) {
@@ -2067,18 +2162,21 @@ async function uploadFileToWorker(file, mediaType) {
       const author = document.getElementById('commentAuthor').value.trim();
       const textValue = document.getElementById('commentText').value.trim();
       if (!postId || !author || !textValue) return;
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(postId));
-      if (!target) return;
-      target.comments = Array.isArray(target.comments) ? target.comments : [];
-      target.comments.unshift({
-        author,
-        text: textValue,
-        date: new Date().toISOString().slice(0, 10)
-      });
-      localStorage.setItem(POSTS_KEY, JSON.stringify(posts));
+
+      const commentsMap = getPostCommentsMap();
+      const currentComments = Array.isArray(commentsMap[postId]) ? commentsMap[postId] : [];
+      commentsMap[postId] = [
+        {
+          author,
+          text: textValue,
+          date: new Date().toISOString().slice(0, 10)
+        },
+        ...currentComments
+      ];
+      savePostCommentsMap(commentsMap);
+
       commentForm.reset();
-      await openDetail(postId);
+      await openDetail(postId, { incrementView: false });
       await renderAll();
     });
 
