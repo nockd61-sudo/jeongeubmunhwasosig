@@ -1377,42 +1377,30 @@ async function uploadFileToWorker(file, mediaType) {
   const formData = new FormData();
   formData.append('file', file);
 
- const formData = new FormData();
-formData.append("file", file);
 
 const response = await fetch(R2_UPLOAD_ENDPOINT, {
   method: "POST",
   body: formData
 });
 
-const result = await response.json();
 
-if (!result.ok) {
-  alert("업로드 실패");
-  return;
+let data = null;
+try {
+  data = await response.json();
+} catch (error) {
+  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
 }
 
-// 👉 핵심
-const mediaUrl = result.url;
-
-  let data = null;
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-  }
-
-  if (!response.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-  }
-
-  const uploadedUrl = String(data?.url || '').trim();
-  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-    throw new Error('업로드 주소를 받지 못했습니다.');
-  }
-
-  return uploadedUrl;
+if (!response.ok || !data?.ok) {
+  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
 }
+
+const uploadedUrl = String(data?.url || '').trim();
+if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+  throw new Error('업로드 주소를 받지 못했습니다.');
+}
+
+return uploadedUrI;
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
