@@ -1400,7 +1400,8 @@ if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
   throw new Error('업로드 주소를 받지 못했습니다.');
 }
 
-return uploadedUrI;
+return uploadedUrl;
+}
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1815,53 +1816,7 @@ return uploadedUrI;
     }
 
     async function deletePost(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-
-      if (!id) {
-        alert('삭제할 게시글 정보를 찾지 못했습니다.');
-        return;
-      }
-
-      if (!confirm('이 게시글을 삭제하시겠습니까?')) {
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/posts/${encodeURIComponent(id)}`, {
-          method: 'DELETE'
-        });
-
-        let result = {};
-        try {
-          result = await response.json();
-        } catch (_error) {}
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.error || '삭제에 실패했습니다.');
-        }
-
-        const metaMap = getPostMetaMap();
-        delete metaMap[String(id)];
-        savePostMetaMap(metaMap);
-
-        const commentsMap = getPostCommentsMap();
-        delete commentsMap[String(id)];
-        savePostCommentsMap(commentsMap);
-
-        if (window.location.hash === `#post-${id}`) {
-          history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-        }
-
-        closeModal('detailModal');
-        await renderAll();
-        alert('삭제되었습니다.');
-      } catch (error) {
-        console.error(error);
-        alert(error.message || '삭제 중 오류가 발생했습니다.');
-      }
+      alert('현재 게시글 삭제는 화면 코드만으로는 되지 않습니다. Worker에 DELETE API를 추가해야 모든 기기에서 함께 삭제됩니다.');
     }
 
     function renderComments(post) {
