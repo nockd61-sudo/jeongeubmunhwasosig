@@ -1563,17 +1563,32 @@ return uploadedUrl;
         return;
       }
 
-     boardPostList.innerHTML = posts.map((post) => `
-   <li 
-    style="display:flex; justify-content:space-between; gap:20px; padding:14px 0; border-bottom:1px solid #e5e7eb; cursor:pointer;"
-    data-post-id="${post.id}"
-    class="board-item-click"
-   >
-    <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-    <em style="font-style:normal; color:#6b7280;">${formatDate(post.date)}</em>
+   boardPostList.innerHTML = posts.map((post) => `
+  <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
+    <div style="display:flex; justify-content:space-between; gap:20px; align-items:flex-start;">
+      <div
+        data-post-id="${post.id}"
+        class="board-item-click"
+        style="flex:1; cursor:pointer;"
+      >
+        <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
+        <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">
+          ${formatDate(post.date)}
+        </div>
+      </div>
+
+      ${isAdminLoggedIn ? `
+        <button
+          class="mini-btn danger board-delete-btn"
+          type="button"
+          data-post-id="${post.id}"
+        >
+          삭제
+        </button>
+      ` : ''}
+    </div>
   </li>
-   `).join('');
-    }
+`).join('');
 
     async function renderVideoList() {
       const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
@@ -2034,13 +2049,19 @@ return uploadedUrl;
         sharePost(shareBtn.dataset.postId);
         return;
       }
-      const boardItem = event.target.closest('.board-item-click');
+     
+const boardDeleteBtn = event.target.closest('.board-delete-btn');
+if (boardDeleteBtn) {
+  event.stopPropagation();
+  deletePost(boardDeleteBtn.dataset.postId);
+  return;
+}
+       const boardItem = event.target.closest('.board-item-click');
      if (boardItem) {
      const id = boardItem.dataset.postId;
      openDetail(id);
      return;
      }
-
       const deletePostBtn = event.target.closest('.delete-post-btn');
       if (deletePostBtn) {
         deletePost(deletePostBtn.dataset.postId);
