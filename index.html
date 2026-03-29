@@ -1815,9 +1815,44 @@ return uploadedUrl;
       return target;
     }
 
-    async function deletePost(id) {
-      alert('현재 게시글 삭제는 화면 코드만으로는 되지 않습니다. Worker에 DELETE API를 추가해야 모든 기기에서 함께 삭제됩니다.');
+  async function deletePost(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 삭제 가능합니다');
+    return;
+  }
+
+  if (!confirm('이 게시글을 삭제하시겠습니까?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/posts/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+
+    const result = await res.json().catch(() => ({}));
+
+    if (!res.ok || !result.success) {
+      throw new Error(result.error || '삭제 실패');
     }
+
+    // 로컬 데이터도 같이 정리
+    const metaMap = getPostMetaMap();
+    delete metaMap[String(id)];
+    savePostMetaMap(metaMap);
+
+    const commentsMap = getPostCommentsMap();
+    delete commentsMap[String(id)];
+    savePostCommentsMap(commentsMap);
+
+    closeModal('detailModal');
+    await renderAll();
+
+    alert('삭제 완료');
+  } catch (e) {
+    alert('삭제 실패: ' + e.message);
+  }
+}
 
     function renderComments(post) {
       const list = document.getElementById('commentList');
