@@ -666,16 +666,6 @@
 </style>
 </head>
 <body>
- <button
-  onclick="shareKakao(
-    '정읍문화소식',
-    '정읍 문화정보를 확인해보세요',
-    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
-    window.location.href
-  )"
-  style="padding:10px 16px; margin:12px; background:#FEE500; border:none; border-radius:8px; font-weight:700; cursor:pointer;"
->카톡 공유 테스트</button>
-
   <header>
     <div class="wrap topbar">
       <a href="#top" class="brand">
@@ -1413,9 +1403,7 @@ if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
   throw new Error('업로드 주소를 받지 못했습니다.');
 }
 
-return uploadedUrl;
-}
-
+return uploadedUrI;
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1908,17 +1896,52 @@ return uploadedUrl;
         return;
       }
 
-      const shareText = `[정읍문화소식] ${post.title} | ${post.place} | ${formatDate(post.date)}`;
+      const shareTitle = post.title || '정읍문화소식';
+      const shareDescription = (post.description || `${post.place || ''} ${formatDate(post.date)}` || '정읍문화소식에서 확인해보세요.')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 90);
       const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
+      const shareImage = isValidMediaUrl(post.mediaUrl)
+        ? post.mediaUrl
+        : 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+      const shareText = `[정읍문화소식] ${shareTitle} | ${post.place || ''} | ${formatDate(post.date)}`;
       const fullText = `${shareText}\n${shareUrl}`;
+
+      if (window.Kakao && Kakao.isInitialized && Kakao.isInitialized()) {
+        try {
+          Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: shareTitle,
+              description: shareDescription || '정읍문화소식에서 확인해보세요.',
+              imageUrl: shareImage,
+              link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl
+              }
+            },
+            buttons: [
+              {
+                title: '자세히 보기',
+                link: {
+                  mobileWebUrl: shareUrl,
+                  webUrl: shareUrl
+                }
+              }
+            ]
+          });
+          return;
+        } catch (error) {
+          console.error('카카오 공유 실패', error);
+        }
+      }
 
       if (navigator.share) {
         navigator.share({
-          title: post.title,
+          title: shareTitle,
           text: shareText,
           url: shareUrl
-        }).then(() => {
-          alert('공유창을 열었습니다.');
         }).catch(() => {
           fallbackShare(fullText);
         });
@@ -2320,7 +2343,7 @@ function shareKakao(title, desc, imageUrl, linkUrl) {
       },
     ],
   });
-}
+}ㅇ
 
   </script>
 </body>
