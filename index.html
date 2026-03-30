@@ -970,6 +970,8 @@
   </footer>
 
   <script>
+
+
     const API_POSTS_ENDPOINT = '/api/posts';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1403,7 +1405,9 @@ if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
   throw new Error('업로드 주소를 받지 못했습니다.');
 }
 
-return uploadedUrI;
+return uploadedUrl;
+}
+
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1890,33 +1894,55 @@ return uploadedUrI;
     }
 
     async function sharePost(id) {
-  const post = await findPostById(id);
-  if (!post) {
-    alert('공유할 글을 찾지 못했습니다.');
-    return;
-  }
+      const post = await findPostById(id);
+      if (!post) {
+        alert('공유할 글을 찾지 못했습니다.');
+        return;
+      }
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-  const shareTitle = `[정읍문화소식] ${post.title}`;
-  const shareDesc = `${post.place ? post.place + ' | ' : ''}${formatDate(post.date)}`;
-  const defaultImage = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80';
-  const shareImage = post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)
-    ? post.mediaUrl
-    : defaultImage;
+      const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
+      const shareTitle = `[정읍문화소식] ${post.title}`;
+      const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
+      const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
 
-  if (window.Kakao && window.Kakao.Share) {
-    try {
-      shareKakao(shareTitle, shareDesc, shareImage, shareUrl);
-      return;
-    } catch (error) {
-      console.error('카카오 공유 실패', error);
-    }
-  }
+      if (window.Kakao && window.Kakao.Share) {
+        try {
+          if (!window.Kakao.isInitialized()) {
+            window.Kakao.init('1c0147d8515c426787e201fbb816958c');
+          }
+          window.Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: shareTitle,
+              description: shareDesc,
+              imageUrl: shareImage,
+              link: {
+                mobileWebUrl: shareUrl,
+                webUrl: shareUrl,
+              },
+            },
+            buttons: [
+              {
+                title: '자세히 보기',
+                link: {
+                  mobileWebUrl: shareUrl,
+                  webUrl: shareUrl,
+                },
+              },
+            ],
+          });
+          return;
+        } catch (error) {
+          console.error('카카오 공유 실패', error);
+        }
+      }
 
-  fallbackShare(`${shareTitle}
+      const fullText = `${shareTitle}
 ${shareDesc}
-${shareUrl}`);
-}
+${shareUrl}`;
+      fallbackShare(fullText);
+    }
 
     function fallbackShare(fullText) {
       if (navigator.clipboard && window.isSecureContext) {
@@ -2222,8 +2248,8 @@ ${shareUrl}`);
     openPostFromHash();
 
     window.addEventListener('hashchange', openPostFromHash);
-  </script>
-  <script>
+  
+
     function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
@@ -2286,39 +2312,42 @@ ${shareUrl}`);
       videoViewPanel.style.display = 'none';
       videoWritePanel.style.display = 'block';
     });
-   if (window.Kakao && !window.Kakao.isInitialized()) {
-  Kakao.init('1c0147d8515c426787e201fbb816958c');
-}
+    if (window.Kakao && !window.Kakao.isInitialized()) {
+      window.Kakao.init('1c0147d8515c426787e201fbb816958c');
+    }
 
-function shareKakao(title, desc, imageUrl, linkUrl) {
-  if (!window.Kakao || !window.Kakao.Share) {
-    throw new Error('Kakao SDK not available');
-  }
+    function shareKakao(title, desc, imageUrl, linkUrl) {
+      if (!(window.Kakao && window.Kakao.Share)) {
+        fallbackShare(`${title}
+${desc}
+${linkUrl}`);
+        return;
+      }
 
-  Kakao.Share.sendDefault({
-    objectType: 'feed',
-    content: {
-      title: title,
-      description: desc,
-      imageUrl: imageUrl,
-      link: {
-        mobileWebUrl: linkUrl,
-        webUrl: linkUrl,
-      },
-    },
-    buttons: [
-      {
-        title: '자세히 보기',
-        link: {
-          mobileWebUrl: linkUrl,
-          webUrl: linkUrl,
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: title,
+          description: desc,
+          imageUrl: imageUrl,
+          link: {
+            mobileWebUrl: linkUrl,
+            webUrl: linkUrl,
+          },
         },
-      },
-    ],
-  });
-}
+        buttons: [
+          {
+            title: '자세히 보기',
+            link: {
+              mobileWebUrl: linkUrl,
+              webUrl: linkUrl,
+            },
+          },
+        ],
+      });
+    }
 
-  </script>
+  
+</script>
 </body>
 </html>
-<!-- update -->
