@@ -232,14 +232,12 @@
       background: #ececec;
       overflow: hidden;
       position: relative;
-      cursor: pointer;
     }
 
     .thumb img,
     .thumb video {
       height: 100%;
       object-fit: cover;
-      pointer-events: none;
     }
 
     .type-badge {
@@ -252,7 +250,6 @@
       padding: 6px 9px;
       font-size: 0.78rem;
       border-radius: 999px;
-      pointer-events: none;
     }
 
     .meta {
@@ -663,10 +660,10 @@
       .hero-overlay h1 { font-size: 1.8rem; }
       .modal-body, .modal-head { padding: 16px; }
     }
-
+  
     .board-tab-content { display: none; }
     .board-tab-content.active { display: block; }
-  </style>
+</style>
 </head>
 <body>
 <header>
@@ -769,6 +766,9 @@
     </div>
   </div>
 
+ 
+
+  
   <div class="modal-backdrop" id="boardModal">
     <div class="modal">
       <div class="modal-head">
@@ -824,29 +824,30 @@
           <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
         </div>
         <div class="panel" style="margin-top:0;">
-          <div id="videoViewPanel">
-            <h3>등록된 영상 목록</h3>
-            <div id="videoPlayer" style="margin-bottom:20px;"></div>
-            <div class="video-list" id="videoList"></div>
-          </div>
+  <div id="videoViewPanel">
+    <h3>등록된 영상 목록</h3>
+    <div id="videoPlayer" style="margin-bottom:20px;"></div>
+    <div class="video-list" id="videoList"></div>
+  </div>
+  
+  <div id="videoWritePanel" style="display:none;">
+    <h3>유튜브 영상 등록</h3>
 
-          <div id="videoWritePanel" style="display:none;">
-            <h3>유튜브 영상 등록</h3>
+    <input type="text" id="videoTitle" placeholder="영상 제목"
+      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
 
-            <input type="text" id="videoTitle" placeholder="영상 제목"
-              style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+    <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
+      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
 
-            <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
-              style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+    <textarea id="videoDesc" placeholder="영상 설명"
+      style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
 
-            <textarea id="videoDesc" placeholder="영상 설명"
-              style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
-
-            <button type="button" onclick="addVideo()"
-              style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
-              영상 등록
-            </button>
-          </div>
+    <button type="button" onclick="addVideo()"
+      style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
+      영상 등록
+    </button>
+  </div>
+</div>
         </div>
       </div>
     </div>
@@ -969,13 +970,15 @@
   </footer>
 
   <script>
+
+
     const API_POSTS_ENDPOINT = '/api/posts';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const ADMIN_PASSWORD = '1234';
-    const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
+   const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
 
     const demoPosts = [
       {
@@ -1000,6 +1003,71 @@
         description: '시민과 함께하는 열린 공연입니다.',
         mediaType: 'image',
         mediaUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
+        likes: 0,
+        views: 0,
+        comments: []
+      },
+      {
+        id: '3',
+        title: '가족 체험 프로그램',
+        date: '2026-03-22',
+        place: '문화창작소',
+        author: '시민기획팀',
+        description: '아이와 함께 만드는 즐거운 체험 시간입니다.',
+        mediaType: 'image',
+        mediaUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80',
+        likes: 0,
+        views: 0,
+        comments: []
+      },
+      {
+        id: '4',
+        title: '청년 문화 토크',
+        date: '2026-03-23',
+        place: '공유문화라운지',
+        author: '청년기획단',
+        description: '청년 문화기획자가 함께 이야기합니다.',
+        mediaType: 'video',
+        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+        likes: 0,
+        views: 0,
+        comments: []
+      },
+      {
+        id: '5',
+        title: '갤러리 오픈데이',
+        date: '2026-03-24',
+        place: '정읍 시내 갤러리',
+        author: '지역 작가회',
+        description: '지역 갤러리와 작가를 소개합니다.',
+        mediaType: 'image',
+        mediaUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
+        likes: 0,
+        views: 0,
+        comments: []
+      },
+      {
+        id: '6',
+        title: '야외 음악회',
+        date: '2026-03-25',
+        place: '정읍천 광장',
+        author: '정읍음악협회',
+        description: '야외에서 즐기는 시민 음악회입니다.',
+        mediaType: 'image',
+        mediaUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
+        likes: 0,
+        views: 0,
+        comments: []
+      },
+      {
+        id: '7',
+        title: '문화 영상 아카이브',
+        date: '2026-03-29',
+        place: '온라인 공유',
+        author: '시민제보',
+        description: '정읍 문화행사 현장을 담은 짧은 기록 영상입니다.',
+        mediaType: 'video',
+        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
         likes: 0,
         views: 0,
         comments: []
@@ -1042,6 +1110,8 @@
     const noticeWriteTab = document.getElementById('noticeWriteTab');
     const noticeListPanel = document.getElementById('noticeListPanel');
     const noticeWritePanel = document.getElementById('noticeWritePanel');
+    const boardWriteTabBtn = document.querySelector('[data-board-tab="write"]');
+    const videoWriteTab = document.getElementById('videoWriteTab');
     const noticeList = document.getElementById('noticeList');
     const adminLoginBtn = document.getElementById('adminLoginBtn');
     const noticePreviewList = document.getElementById('noticePreviewList');
@@ -1082,21 +1152,6 @@
       saveStoredObject(POST_COMMENTS_KEY, value);
     }
 
-    function getVideoItems() {
-      const raw = localStorage.getItem(VIDEO_ITEMS_KEY);
-      if (!raw) return [];
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        localStorage.removeItem(VIDEO_ITEMS_KEY);
-        return [];
-      }
-    }
-
-    function saveVideoItems(items) {
-      localStorage.setItem(VIDEO_ITEMS_KEY, JSON.stringify(items));
-    }
-
     async function getPosts() {
       try {
         const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
@@ -1125,31 +1180,10 @@
           })
           .filter(Boolean);
 
-        const legacyVideos = getVideoItems().map((item) => normalizePost({
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          youtubeId: item.youtubeId,
-          mediaType: 'video',
-          mediaUrl: `https://www.youtube.com/watch?v=${item.youtubeId}`,
-          date: item.date || new Date().toISOString().slice(0, 10),
-          endDate: item.date || new Date().toISOString().slice(0, 10),
-          place: '온라인',
-          author: '영상행사'
-        })).filter(Boolean);
-
-        const merged = [...normalized];
-
-        legacyVideos.forEach((legacy) => {
-          if (!merged.some((post) => String(post.id) === String(legacy.id))) {
-            merged.push(legacy);
-          }
-        });
-
-        return sortPosts(merged);
+        return sortPosts(normalized);
       } catch (error) {
         console.error('서버 게시글 읽기 실패', error);
-        return sortPosts(demoPosts);
+        return [];
       }
     }
 
@@ -1163,11 +1197,9 @@
         id: normalized.id,
         title: normalized.title,
         content: normalized.description,
-        description: normalized.description,
         mediaType: normalized.mediaType,
         mediaUrl: normalized.mediaUrl,
         imageUrl: normalized.mediaUrl,
-        youtubeId: normalized.youtubeId || '',
         startDate: normalized.date,
         date: normalized.date,
         endDate: normalized.endDate,
@@ -1178,7 +1210,9 @@
 
       const response = await fetch(API_POSTS_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(payload)
       });
 
@@ -1193,7 +1227,10 @@
         throw new Error(result?.error || result?.detail || '게시글 저장에 실패했습니다.');
       }
 
-      return { ...normalized, id: String(result?.id || normalized.id) };
+      return {
+        ...normalized,
+        id: String(result?.id || normalized.id)
+      };
     }
 
     function isValidMediaUrl(value) {
@@ -1221,18 +1258,16 @@
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const mediaType = normalizeMediaType(post.mediaType);
-      const youtubeId = String(post.youtubeId || getYoutubeId(post.mediaUrl || post.url || '') || '').trim();
       const mediaUrl = String(
         post.mediaUrl ||
         post.imageUrl ||
         post.url ||
         post.image ||
-        (youtubeId ? `https://www.youtube.com/watch?v=${youtubeId}` : '')
+        ''
       ).trim();
 
-      if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
-      if (mediaType === 'video' && !(youtubeId || isValidMediaUrl(mediaUrl))) return null;
+      const mediaType = normalizeMediaType(post.mediaType);
+      if (!isValidMediaUrl(mediaUrl)) return null;
 
       const startDate = String(post.startDate || post.date || '').trim();
       const endDate = String(post.endDate || post.startDate || post.date || '').trim();
@@ -1242,12 +1277,12 @@
         title: String(post.title || '제목 없음').trim(),
         date: startDate,
         endDate,
-        place: String(post.place || '온라인').trim(),
+        place: String(post.place || '').trim(),
         author: String(post.author || '시민').trim(),
         description: String(post.description || post.content || '').trim(),
         mediaType,
         mediaUrl,
-        youtubeId,
+        youtubeId: String(post.youtubeId || '').trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
         comments: Array.isArray(post.comments) ? post.comments : []
@@ -1260,6 +1295,7 @@
         localStorage.setItem(key, JSON.stringify(fallback));
         return JSON.parse(JSON.stringify(fallback));
       }
+
       try {
         return JSON.parse(raw);
       } catch (e) {
@@ -1279,9 +1315,24 @@
     function saveNotices(notices) {
       saveStored(NOTICES_KEY, notices);
     }
+    function getVideoItems() {
+      const raw = localStorage.getItem(VIDEO_ITEMS_KEY);
+      if (!raw) return [];
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        localStorage.removeItem(VIDEO_ITEMS_KEY);
+        return [];
+      }
+    }
+
+    function saveVideoItems(items) {
+      localStorage.setItem(VIDEO_ITEMS_KEY, JSON.stringify(items));
+    }
 
     function getYoutubeId(url) {
       if (!url) return '';
+
       let videoId = '';
       if (url.includes('watch?v=')) {
         videoId = url.split('watch?v=')[1];
@@ -1289,13 +1340,11 @@
         videoId = url.split('shorts/')[1];
       } else if (url.includes('youtu.be/')) {
         videoId = url.split('youtu.be/')[1];
-      } else if (url.includes('/embed/')) {
-        videoId = url.split('/embed/')[1];
       }
 
       if (videoId.includes('&')) videoId = videoId.split('&')[0];
       if (videoId.includes('?')) videoId = videoId.split('?')[0];
-      if (videoId.includes('/')) videoId = videoId.split('/')[0];
+
       return videoId.trim();
     }
 
@@ -1316,46 +1365,49 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-    async function uploadFileToWorker(file, mediaType) {
-      if (!file) {
-        throw new Error('업로드할 파일이 없습니다.');
-      }
+async function uploadFileToWorker(file, mediaType) {
+  if (!file) {
+    throw new Error('업로드할 파일이 없습니다.');
+  }
 
-      if (mediaType === 'video') {
-        throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
-      }
+  if (mediaType === 'video') {
+    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+  }
 
-      const imageMaxBytes = 10 * 1024 * 1024;
-      if (file.size > imageMaxBytes) {
-        throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
-      }
+  const imageMaxBytes = 10 * 1024 * 1024;
+  if (file.size > imageMaxBytes) {
+    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
+  }
 
-      const formData = new FormData();
-      formData.append('file', file);
+  const formData = new FormData();
+  formData.append('file', file);
 
-      const response = await fetch(R2_UPLOAD_ENDPOINT, {
-        method: 'POST',
-        body: formData
-      });
 
-      let data = null;
-      try {
-        data = await response.json();
-      } catch (error) {
-        throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-      }
+const response = await fetch(R2_UPLOAD_ENDPOINT, {
+  method: "POST",
+  body: formData
+});
 
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-      }
 
-      const uploadedUrl = String(data?.url || '').trim();
-      if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-        throw new Error('업로드 주소를 받지 못했습니다.');
-      }
+let data = null;
+try {
+  data = await response.json();
+} catch (error) {
+  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+}
 
-      return uploadedUrl;
-    }
+if (!response.ok || !data?.ok) {
+  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+}
+
+const uploadedUrl = String(data?.url || '').trim();
+if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+  throw new Error('업로드 주소를 받지 못했습니다.');
+}
+
+return uploadedUrl;
+}
+
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1373,9 +1425,11 @@
 
     function sortPosts(posts) {
       const today = getTodayString();
+
       return [...posts].sort((a, b) => {
         const aFuture = a.date >= today ? 0 : 1;
         const bFuture = b.date >= today ? 0 : 1;
+
         if (aFuture !== bFuture) return aFuture - bFuture;
         return new Date(a.date) - new Date(b.date);
       });
@@ -1454,7 +1508,7 @@
 
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
-          <div class="thumb thumb-click" data-post-id="${post.id}">
+          <div class="thumb">
             <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
             ${buildMedia(post)}
           </div>
@@ -1518,14 +1572,23 @@
       boardPostList.innerHTML = posts.map((post) => `
         <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
           <div style="display:flex; justify-content:space-between; gap:20px; align-items:flex-start;">
-            <div data-post-id="${post.id}" class="board-item-click" style="flex:1; cursor:pointer;">
+            <div
+              data-post-id="${post.id}"
+              class="board-item-click"
+              style="flex:1; cursor:pointer;"
+            >
               <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
               <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">
                 ${formatDate(post.date)}
               </div>
             </div>
+
             ${isAdminLoggedIn ? `
-              <button class="mini-btn danger board-delete-btn" type="button" data-post-id="${post.id}">
+              <button
+                class="mini-btn danger board-delete-btn"
+                type="button"
+                data-post-id="${post.id}"
+              >
                 삭제
               </button>
             ` : ''}
@@ -1535,29 +1598,81 @@
     }
 
     async function renderVideoList() {
-      const allPosts = await getPosts();
-      const videoPosts = sortPosts(allPosts).filter((post) => post.mediaType === 'video');
+      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
+      const customVideos = getVideoItems();
 
-      if (videoPosts.length === 0) {
+      const merged = [
+        ...customVideos.map(item => ({ ...item, isCustomVideoItem: true })),
+        ...postVideos.map(item => ({ ...item, isCustomVideoItem: false }))
+      ];
+
+      if (merged.length === 0) {
         videoList.innerHTML = '<div class="video-item"><div><strong>등록된 영상이 없습니다.</strong><span>영상행사 등록 후 이곳에 표시됩니다.</span></div></div>';
         document.getElementById('videoPlayer').innerHTML = '';
         return;
       }
 
-      videoList.innerHTML = videoPosts.map((item) => `
-        <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
-          <div>
-            <strong>${escapeHtml(item.title)}</strong>
-            <span>${escapeHtml(item.description || item.place || '영상 설명 없음')}</span>
-          </div>
-          <span>${formatDate(item.date)}</span>
-        </div>
-      `).join('');
+      videoList.innerHTML = merged.map((item) => {
+        if (item.isCustomVideoItem) {
+          return `
+            <div class="video-item" style="cursor:pointer;" onclick="playCustomVideo('${item.id}')">
+              <div>
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
+              </div>
+              <span>${formatDate(item.date)}</span>
+            </div>
+          `;
+        }
 
-      const latestVideo = videoPosts[0];
-      if (latestVideo) {
-        document.getElementById('videoPlayer').innerHTML = buildEventVideoHtml(latestVideo);
+        return `
+          <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
+            <div>
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.place)} · ${escapeHtml(item.author)}</span>
+            </div>
+            <span>${formatDate(item.date)}</span>
+          </div>
+        `;
+      }).join('');
+
+      const latestCustom = customVideos[0];
+      if (latestCustom) {
+        playCustomVideo(latestCustom.id, false);
       }
+    }
+
+    function playCustomVideo(id, switchToView = true) {
+      const items = getVideoItems();
+      const target = items.find(item => item.id === id);
+      if (!target) return;
+
+      const iframe = `
+        <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+          <iframe
+            src="https://www.youtube.com/embed/${target.youtubeId}"
+            style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+            allowfullscreen
+            loading="lazy">
+          </iframe>
+        </div>
+      `;
+
+      document.getElementById('videoPlayer').innerHTML = iframe;
+
+      if (switchToView) {
+        document.getElementById('videoViewPanel').style.display = 'block';
+        document.getElementById('videoWritePanel').style.display = 'none';
+      }
+    }
+
+    window.playCustomVideo = playCustomVideo;
+
+    async function renderAll() {
+      await renderPosts();
+      renderNotices();
+      await renderBoardList();
+      await renderVideoList();
     }
 
     function renderPreview(file, mediaType) {
@@ -1585,8 +1700,12 @@
       document.getElementById(id)?.classList.add('show');
       document.body.style.overflow = 'hidden';
 
-      if (id === 'noticeModal') showNoticeList();
-      if (id === 'boardModal') showBoardList();
+      if (id === 'noticeModal') {
+        showNoticeList();
+      }
+      if (id === 'boardModal') {
+        showBoardList();
+      }
     }
 
     function closeModal(id) {
@@ -1819,7 +1938,9 @@
         }
       }
 
-      const fullText = `${shareTitle}\n${shareDesc}\n${shareUrl}`;
+      const fullText = `${shareTitle}
+${shareDesc}
+${shareUrl}`;
       fallbackShare(fullText);
     }
 
@@ -1895,6 +2016,7 @@
       alert('문화이야기가 등록되었습니다.');
     });
 
+   
     document.querySelectorAll('[data-open]').forEach((button) => {
       button.addEventListener('click', () => {
         document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
@@ -1914,12 +2036,6 @@
         return;
       }
 
-      const thumbBtn = event.target.closest('.thumb-click');
-      if (thumbBtn) {
-        openDetail(thumbBtn.dataset.postId);
-        return;
-      }
-
       const detailBtn = event.target.closest('.detail-btn');
       if (detailBtn) {
         openDetail(detailBtn.dataset.postId);
@@ -1931,12 +2047,12 @@
         sharePost(shareBtn.dataset.postId);
         return;
       }
-
       const boardItem = event.target.closest('.board-item-click');
-      if (boardItem) {
-        openDetail(boardItem.dataset.postId);
-        return;
-      }
+     if (boardItem) {
+     const id = boardItem.dataset.postId;
+     openDetail(id);
+     return;
+     }
 
       const deletePostBtn = event.target.closest('.delete-post-btn');
       if (deletePostBtn) {
@@ -2100,7 +2216,11 @@
       const commentsMap = getPostCommentsMap();
       const currentComments = Array.isArray(commentsMap[postId]) ? commentsMap[postId] : [];
       commentsMap[postId] = [
-        { author, text: textValue, date: new Date().toISOString().slice(0, 10) },
+        {
+          author,
+          text: textValue,
+          date: new Date().toISOString().slice(0, 10)
+        },
         ...currentComments
       ];
       savePostCommentsMap(commentsMap);
@@ -2121,7 +2241,16 @@
       }
     }
 
-    async function addVideo() {
+    window.editNotice = editNotice;
+    window.deleteNotice = deleteNotice;
+
+    renderAll();
+    openPostFromHash();
+
+    window.addEventListener('hashchange', openPostFromHash);
+  
+
+    function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
       const descEl = document.getElementById('videoDesc');
@@ -2136,44 +2265,35 @@
       }
 
       const videoId = getYoutubeId(url);
+
       if (!videoId || videoId.length < 5) {
         alert('유튜브 링크를 다시 확인해주세요.');
         return;
       }
 
-      try {
-        await savePost({
-          id: 'video-' + Date.now(),
-          title,
-          description: desc,
-          youtubeId: videoId,
-          mediaType: 'video',
-          mediaUrl: `https://www.youtube.com/watch?v=${videoId}`,
-          date: new Date().toISOString().slice(0, 10),
-          endDate: new Date().toISOString().slice(0, 10),
-          place: '온라인',
-          author: '영상행사',
-          likes: 0,
-          views: 0,
-          comments: []
-        });
+      const items = getVideoItems();
 
-        if (titleEl) titleEl.value = '';
-        if (urlEl) urlEl.value = '';
-        if (descEl) descEl.value = '';
+      items.unshift({
+        id: 'video-' + Date.now(),
+        title,
+        description: desc,
+        youtubeId: videoId,
+        date: new Date().toISOString().slice(0, 10)
+      });
 
-        await renderAll();
-        document.getElementById('videoViewPanel').style.display = 'block';
-        document.getElementById('videoWritePanel').style.display = 'none';
-        alert('영상이 등록되었습니다. 이제 다른 사람과 모바일에서도 보이도록 서버에 저장됩니다.');
-      } catch (error) {
-        console.error(error);
-        alert('영상 등록 실패: ' + (error && error.message ? error.message : '알 수 없는 오류'));
-      }
+      saveVideoItems(items);
+      renderVideoList();
+      playCustomVideo(items[0].id);
+
+      if (titleEl) titleEl.value = '';
+      if (urlEl) urlEl.value = '';
+      if (descEl) descEl.value = '';
+
+      document.getElementById('videoViewPanel').style.display = 'block';
+      document.getElementById('videoWritePanel').style.display = 'none';
+      alert('영상이 등록되었습니다.');
     }
 
-    window.editNotice = editNotice;
-    window.deleteNotice = deleteNotice;
     window.addVideo = addVideo;
 
     const videoViewTab = document.getElementById('videoViewTab');
@@ -2192,14 +2312,42 @@
       videoViewPanel.style.display = 'none';
       videoWritePanel.style.display = 'block';
     });
-
     if (window.Kakao && !window.Kakao.isInitialized()) {
       window.Kakao.init('1c0147d8515c426787e201fbb816958c');
     }
 
-    renderAll();
-    openPostFromHash();
-    window.addEventListener('hashchange', openPostFromHash);
-  </script>
+    function shareKakao(title, desc, imageUrl, linkUrl) {
+      if (!(window.Kakao && window.Kakao.Share)) {
+        fallbackShare(`${title}
+${desc}
+${linkUrl}`);
+        return;
+      }
+
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: title,
+          description: desc,
+          imageUrl: imageUrl,
+          link: {
+            mobileWebUrl: linkUrl,
+            webUrl: linkUrl,
+          },
+        },
+        buttons: [
+          {
+            title: '자세히 보기',
+            link: {
+              mobileWebUrl: linkUrl,
+              webUrl: linkUrl,
+            },
+          },
+        ],
+      });
+    }
+
+  
+</script>
 </body>
 </html>
