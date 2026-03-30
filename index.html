@@ -1198,11 +1198,9 @@
         id: normalized.id,
         title: normalized.title,
         content: normalized.description,
-        description: normalized.description,
         mediaType: normalized.mediaType,
         mediaUrl: normalized.mediaUrl,
         imageUrl: normalized.mediaUrl,
-        youtubeId: normalized.youtubeId || '',
         startDate: normalized.date,
         date: normalized.date,
         endDate: normalized.endDate,
@@ -1322,8 +1320,7 @@
       const raw = localStorage.getItem(VIDEO_ITEMS_KEY);
       if (!raw) return [];
       try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        return JSON.parse(raw);
       } catch (e) {
         localStorage.removeItem(VIDEO_ITEMS_KEY);
         return [];
@@ -1331,61 +1328,7 @@
     }
 
     function saveVideoItems(items) {
-      localStorage.setItem(VIDEO_ITEMS_KEY, JSON.stringify(Array.isArray(items) ? items : []));
-    }
-
-    function dedupeVideoItems(items) {
-      const seen = new Set();
-      return (Array.isArray(items) ? items : []).filter((item) => {
-        const key = String(item.id || `${item.youtubeId || ''}-${item.title || ''}`);
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
-
-    async function syncLegacyLocalVideosToServer() {
-      const legacyItems = getVideoItems();
-      if (!legacyItems.length) return;
-
-      try {
-        const posts = await getPosts();
-        const existingKeys = new Set(
-          posts
-            .filter((post) => post.mediaType === 'video')
-            .map((post) => `${String(post.youtubeId || '').trim()}__${String(post.title || '').trim()}`)
-        );
-
-        for (const item of legacyItems) {
-          const youtubeId = String(item.youtubeId || '').trim();
-          const title = String(item.title || '').trim();
-          if (!youtubeId || !title) continue;
-
-          const dedupeKey = `${youtubeId}__${title}`;
-          if (existingKeys.has(dedupeKey)) continue;
-
-          await savePost({
-            id: String(item.id || `video-${Date.now()}`),
-            title,
-            date: String(item.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
-            endDate: String(item.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
-            place: '영상행사',
-            author: '시민',
-            description: String(item.description || '').trim(),
-            mediaType: 'video',
-            mediaUrl: `https://www.youtube.com/watch?v=${youtubeId}`,
-            youtubeId,
-            likes: 0,
-            views: 0,
-            comments: []
-          });
-          existingKeys.add(dedupeKey);
-        }
-
-        localStorage.removeItem(VIDEO_ITEMS_KEY);
-      } catch (error) {
-        console.error('기존 영상 동기화 실패', error);
-      }
+      localStorage.setItem(VIDEO_ITEMS_KEY, JSON.stringify(items));
     }
 
     function getYoutubeId(url) {
@@ -1657,12 +1600,12 @@ return uploadedUrl;
 
     async function renderVideoList() {
       const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
-      const legacyVideos = dedupeVideoItems(getVideoItems());
+      const customVideos = getVideoItems();
 
-      const merged = dedupeVideoItems([
-        ...postVideos.map((item) => ({ ...item, isCustomVideoItem: false })),
-        ...legacyVideos.map((item) => ({ ...item, isCustomVideoItem: true }))
-      ]).sort((a, b) => new Date(b.date) - new Date(a.date));
+      const merged = [
+        ...customVideos.map(item => ({ ...item, isCustomVideoItem: true })),
+        ...postVideos.map(item => ({ ...item, isCustomVideoItem: false }))
+      ];
 
       if (merged.length === 0) {
         videoList.innerHTML = '<div class="video-item"><div><strong>등록된 영상이 없습니다.</strong><span>영상행사 등록 후 이곳에 표시됩니다.</span></div></div>';
@@ -1694,13 +1637,9 @@ return uploadedUrl;
         `;
       }).join('');
 
-      const latestItem = merged[0];
-      if (latestItem) {
-        if (latestItem.isCustomVideoItem) {
-          playCustomVideo(latestItem.id, false);
-        } else {
-          document.getElementById('videoPlayer').innerHTML = buildEventVideoHtml(latestItem);
-        }
+      const latestCustom = customVideos[0];
+      if (latestCustom) {
+        playCustomVideo(latestCustom.id, false);
       }
     }
 
@@ -2321,15 +2260,13 @@ ${shareUrl}`;
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    syncLegacyLocalVideosToServer().finally(async () => {
-      await renderAll();
-      openPostFromHash();
-    });
+    renderAll();
+    openPostFromHash();
 
     window.addEventListener('hashchange', openPostFromHash);
   
 
-    async function addVideo() {
+    function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
       const descEl = document.getElementById('videoDesc');
@@ -2350,65 +2287,27 @@ ${shareUrl}`;
         return;
       }
 
-      const submitButton = document.querySelector('#videoWritePanel button');
-      const originalText = submitButton ? submitButton.textContent : '';
+      const items = getVideoItems();
 
-      try {
-        if (submitButton) {
-          submitButton.disabled = true;
-          submitButton.textContent = '등록 중...';
-        }
+      items.unshift({
+        id: 'video-' + Date.now(),
+        title,
+        description: desc,
+        youtubeId: videoId,
+        date: new Date().toISOString().slice(0, 10)
+      });
 
-        await savePost({
-          id: 'video-' + Date.now(),
-          title,
-          date: new Date().toISOString().slice(0, 10),
-          endDate: new Date().toISOString().slice(0, 10),
-          place: '영상행사',
-          author: '시민',
-          description: desc || '유튜브 영상 등록',
-          mediaType: 'video',
-          mediaUrl: `https://www.youtube.com/watch?v=${videoId}`,
-          youtubeId: videoId,
-          likes: 0,
-          views: 0,
-          comments: []
-        });
+      saveVideoItems(items);
+      renderVideoList();
+      playCustomVideo(items[0].id);
 
-        await renderAll();
-        const posts = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
-        const newest = posts.find((post) => String(post.youtubeId || '').trim() === videoId) || posts[0];
-        if (newest) {
-          document.getElementById('videoPlayer').innerHTML = buildEventVideoHtml(newest);
-        }
+      if (titleEl) titleEl.value = '';
+      if (urlEl) urlEl.value = '';
+      if (descEl) descEl.value = '';
 
-        if (titleEl) titleEl.value = '';
-        if (urlEl) urlEl.value = '';
-        if (descEl) descEl.value = '';
-
-        document.getElementById('videoViewPanel').style.display = 'block';
-        document.getElementById('videoWritePanel').style.display = 'none';
-        alert('영상이 등록되었습니다. 이제 다른 사람 기기와 내 모바일에서도 동일하게 보입니다.');
-      } catch (error) {
-        console.error('영상 등록 실패', error);
-        const fallbackItems = getVideoItems();
-        fallbackItems.unshift({
-          id: 'video-' + Date.now(),
-          title,
-          description: desc,
-          youtubeId: videoId,
-          date: new Date().toISOString().slice(0, 10)
-        });
-        saveVideoItems(fallbackItems);
-        await renderVideoList();
-        playCustomVideo(fallbackItems[0].id);
-        alert('서버 저장이 잠시 실패해 이 기기에는 먼저 저장했습니다. 서버가 정상일 때 자동 동기화됩니다.');
-      } finally {
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.textContent = originalText || '영상 등록';
-        }
-      }
+      document.getElementById('videoViewPanel').style.display = 'block';
+      document.getElementById('videoWritePanel').style.display = 'none';
+      alert('영상이 등록되었습니다.');
     }
 
     window.addVideo = addVideo;
