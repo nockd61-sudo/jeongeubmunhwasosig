@@ -666,6 +666,15 @@
 </style>
 </head>
 <body>
+ <button
+  onclick="shareKakao(
+    '정읍문화소식',
+    '정읍 문화정보를 확인해보세요',
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+    window.location.href
+  )"
+  style="padding:10px 16px; margin:12px; background:#FEE500; border:none; border-radius:8px; font-weight:700; cursor:pointer;"
+>카톡 공유 테스트</button>
 
   <header>
     <div class="wrap topbar">
@@ -1406,6 +1415,7 @@ if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
 
 return uploadedUrl;
 }
+
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -2311,6 +2321,7 @@ function shareKakao(title, desc, imageUrl, linkUrl) {
     ],
   });
 }
+
   </script>
 </body>
 </html>
