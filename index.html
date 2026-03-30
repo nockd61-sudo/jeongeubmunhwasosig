@@ -232,6 +232,7 @@
       background: #ececec;
       overflow: hidden;
       position: relative;
+      cursor: pointer;
     }
 
     .thumb img,
@@ -666,7 +667,17 @@
 </style>
 </head>
 <body>
-<header>
+ <button
+  onclick="shareKakao(
+    '정읍문화소식',
+    '정읍 문화정보를 확인해보세요',
+    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80',
+    window.location.href
+  )"
+  style="padding:10px 16px; margin:12px; background:#FEE500; border:none; border-radius:8px; font-weight:700; cursor:pointer;"
+>카톡 공유 테스트</button>
+
+  <header>
     <div class="wrap topbar">
       <a href="#top" class="brand">
         <strong>정읍문화소식</strong>
@@ -970,8 +981,6 @@
   </footer>
 
   <script>
-
-
     const API_POSTS_ENDPOINT = '/api/posts';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1405,9 +1414,7 @@ if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
   throw new Error('업로드 주소를 받지 못했습니다.');
 }
 
-return uploadedUrl;
-}
-
+return uploadedUrI;
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1508,7 +1515,7 @@ return uploadedUrl;
 
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
-          <div class="thumb">
+          <div class="thumb thumb-click" data-post-id="${post.id}" title="클릭하면 자세히 보기">
             <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
             ${buildMedia(post)}
           </div>
@@ -1900,47 +1907,23 @@ return uploadedUrl;
         return;
       }
 
+      const shareText = `[정읍문화소식] ${post.title} | ${post.place} | ${formatDate(post.date)}`;
       const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-      const shareTitle = `[정읍문화소식] ${post.title}`;
-      const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-      const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
+      const fullText = `${shareText}\n${shareUrl}`;
 
-      if (window.Kakao && window.Kakao.Share) {
-        try {
-          if (!window.Kakao.isInitialized()) {
-            window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-          }
-          window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: shareTitle,
-              description: shareDesc,
-              imageUrl: shareImage,
-              link: {
-                mobileWebUrl: shareUrl,
-                webUrl: shareUrl,
-              },
-            },
-            buttons: [
-              {
-                title: '자세히 보기',
-                link: {
-                  mobileWebUrl: shareUrl,
-                  webUrl: shareUrl,
-                },
-              },
-            ],
-          });
-          return;
-        } catch (error) {
-          console.error('카카오 공유 실패', error);
-        }
+      if (navigator.share) {
+        navigator.share({
+          title: post.title,
+          text: shareText,
+          url: shareUrl
+        }).then(() => {
+          alert('공유창을 열었습니다.');
+        }).catch(() => {
+          fallbackShare(fullText);
+        });
+        return;
       }
 
-      const fullText = `${shareTitle}
-${shareDesc}
-${shareUrl}`;
       fallbackShare(fullText);
     }
 
@@ -2033,6 +2016,12 @@ ${shareUrl}`;
         const tab = tabBtn.getAttribute('data-board-tab');
         if (tab === 'list') showBoardList();
         if (tab === 'write') showBoardWrite();
+        return;
+      }
+
+      const thumbClick = event.target.closest('.thumb-click');
+      if (thumbClick) {
+        openDetail(thumbClick.dataset.postId);
         return;
       }
 
@@ -2248,8 +2237,8 @@ ${shareUrl}`;
     openPostFromHash();
 
     window.addEventListener('hashchange', openPostFromHash);
-  
-
+  </script>
+  <script>
     function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
@@ -2312,42 +2301,33 @@ ${shareUrl}`;
       videoViewPanel.style.display = 'none';
       videoWritePanel.style.display = 'block';
     });
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-      window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-    }
+   Kakao.init('1c0147d8515c426787e201fbb816958c');
 
-    function shareKakao(title, desc, imageUrl, linkUrl) {
-      if (!(window.Kakao && window.Kakao.Share)) {
-        fallbackShare(`${title}
-${desc}
-${linkUrl}`);
-        return;
-      }
-
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: title,
-          description: desc,
-          imageUrl: imageUrl,
-          link: {
-            mobileWebUrl: linkUrl,
-            webUrl: linkUrl,
-          },
+function shareKakao(title, desc, imageUrl, linkUrl) {
+  Kakao.Share.sendDefault({
+    objectType: 'feed',
+    content: {
+      title: title,
+      description: desc,
+      imageUrl: imageUrl,
+      link: {
+        mobileWebUrl: linkUrl,
+        webUrl: linkUrl,
+      },
+    },
+    buttons: [
+      {
+        title: '자세히 보기',
+        link: {
+          mobileWebUrl: linkUrl,
+          webUrl: linkUrl,
         },
-        buttons: [
-          {
-            title: '자세히 보기',
-            link: {
-              mobileWebUrl: linkUrl,
-              webUrl: linkUrl,
-            },
-          },
-        ],
-      });
-    }
+      },
+    ],
+  });
+}ㅇ
 
-  
-</script>
+  </script>
 </body>
 </html>
+<!-- update -->
