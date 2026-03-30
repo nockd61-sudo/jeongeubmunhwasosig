@@ -232,6 +232,7 @@
       background: #ececec;
       overflow: hidden;
       position: relative;
+      cursor: pointer;
     }
 
     .thumb img,
@@ -1508,7 +1509,7 @@ return uploadedUrl;
 
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
-          <div class="thumb">
+          <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
             <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
             ${buildMedia(post)}
           </div>
@@ -2042,6 +2043,12 @@ ${shareUrl}`;
         return;
       }
 
+      const thumbClick = event.target.closest('.thumb-click');
+      if (thumbClick) {
+        openDetail(thumbClick.dataset.postId);
+        return;
+      }
+
       const shareBtn = event.target.closest('.share-btn');
       if (shareBtn) {
         sharePost(shareBtn.dataset.postId);
@@ -2057,6 +2064,15 @@ ${shareUrl}`;
       const deletePostBtn = event.target.closest('.delete-post-btn');
       if (deletePostBtn) {
         deletePost(deletePostBtn.dataset.postId);
+      }
+    });
+
+    eventGrid.addEventListener('keydown', (event) => {
+      const thumbClick = event.target.closest('.thumb-click');
+      if (!thumbClick) return;
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openDetail(thumbClick.dataset.postId);
       }
     });
 
