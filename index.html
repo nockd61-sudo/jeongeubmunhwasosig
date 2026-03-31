@@ -978,6 +978,7 @@
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
+    const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
    const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
 
@@ -1121,6 +1122,39 @@
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
 
+
+    function getHiddenBrokenPostIds() {
+      const raw = localStorage.getItem(HIDDEN_BROKEN_POST_IDS_KEY);
+      if (!raw) return [];
+      try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch (error) {
+        localStorage.removeItem(HIDDEN_BROKEN_POST_IDS_KEY);
+        return [];
+      }
+    }
+
+    function saveHiddenBrokenPostIds(ids) {
+      localStorage.setItem(HIDDEN_BROKEN_POST_IDS_KEY, JSON.stringify(Array.from(new Set((ids || []).map(String)))));
+    }
+
+    function hideBrokenPostId(postId) {
+      const id = String(postId || '').trim();
+      if (!id) return;
+      const ids = getHiddenBrokenPostIds();
+      if (!ids.includes(id)) {
+        ids.push(id);
+        saveHiddenBrokenPostIds(ids);
+      }
+    }
+
+    function unhideBrokenPostId(postId) {
+      const id = String(postId || '').trim();
+      if (!id) return;
+      saveHiddenBrokenPostIds(getHiddenBrokenPostIds().filter(item => item !== id));
+    }
+
     function getStoredObject(key) {
       const raw = localStorage.getItem(key);
       if (!raw) return {};
@@ -1193,6 +1227,8 @@
       if (!normalized) {
         throw new Error('저장할 게시글 형식이 올바르지 않습니다.');
       }
+
+      unhideBrokenPostId(normalized.id);
 
       const payload = {
         id: normalized.id,
@@ -1447,10 +1483,24 @@ return uploadedUrl;
     }
 
     function handleCardImageError(postId, el) {
-      if (!el) return;
-      el.onerror = null;
-      el.src = getPlaceholderDataUrl('이미지를 불러올 수 없습니다');
-      el.dataset.failed = 'true';
+      const id = String(postId || '').trim();
+      if (id) {
+        hideBrokenPostId(id);
+      }
+
+      const card = el ? el.closest('.card') : document.getElementById(`post-${id}`);
+      if (card) {
+        card.remove();
+      }
+
+      const remainingCards = eventGrid.querySelectorAll('.card').length;
+      paginationInfo.textContent = remainingCards > 0
+        ? `가까운 날짜순 ${remainingCards}개 노출`
+        : '표시할 문화소식이 없습니다.';
+
+      if (remainingCards === 0) {
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
+      }
     }
 
     window.handleCardImageError = handleCardImageError;
@@ -1474,8 +1524,11 @@ return uploadedUrl;
     async function currentFilteredPosts() {
       const typeValue = filterType.value;
       const keyword = searchInput.value.trim().toLowerCase();
+      const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
       let posts = sortPosts(await getPosts()).filter(post => {
+        if (hiddenBrokenIds.has(String(post.id))) return false;
+
         if (post.mediaType === 'video') {
           return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
         }
