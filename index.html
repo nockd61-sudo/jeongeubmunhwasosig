@@ -1210,6 +1210,7 @@
               author: item.author || meta.author || '시민',
               likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
               views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
               comments
             });
           })
@@ -1322,6 +1323,7 @@
         youtubeId: String(post.youtubeId || '').trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
+        lastViewedAt: String(post.lastViewedAt || '').trim(),
         comments: Array.isArray(post.comments) ? post.comments : []
       };
     }
@@ -1546,7 +1548,7 @@ return uploadedUrl;
         );
       }
 
-      return posts.slice(0, 6);
+      return posts.slice(0, 8);
     } 
 
     async function renderPosts() {
@@ -1588,14 +1590,22 @@ updateTotalViews(posts);
     }
 function updateTotalViews(posts) {
   let total = 0;
+  let todayTotal = 0;
+  const today = getTodayString();
 
   posts.forEach(post => {
-    total += Number(post.views || 0);
+    const views = Number(post.views || 0);
+    total += views;
+
+    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
+    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
+      todayTotal += views;
+    }
   });
 
   const el = document.getElementById('totalViewsBox');
   if (el) {
-    el.innerText = `총 조회수: ${total}`;
+    el.innerText = `총 조회수: ${total} | 오늘 조회수: ${todayTotal}`;
   }
 }
     function renderNotices() {
@@ -1874,7 +1884,8 @@ function updateTotalViews(posts) {
         ...currentMeta,
         author: currentMeta.author || target.author || '시민',
         likes: Number(currentMeta.likes) || target.likes || 0,
-        views: nextViews
+        views: nextViews,
+        lastViewedAt: new Date().toISOString()
       };
       savePostMetaMap(metaMap);
 
@@ -2495,7 +2506,7 @@ ${linkUrl}`);
   font-size:16px;
   color:#666;
 ">
-  총 조회수: 0
+  총 조회수: 0 | 오늘 조회수: 0
 </div>
 </body>
 </html>
