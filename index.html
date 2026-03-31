@@ -12,7 +12,8 @@
       --text: #1f1f1f;
       --muted: #6b7280;
       --line: #dddddd;
-      --brand: #6d4cff;
+      --brand: #6
+      .d4cff;
       --brand-dark: #5337d6;
       --shadow: 0 10px 28px rgba(0,0,0,0.08);
       --max: 1180px;
@@ -1200,9 +1201,7 @@
         content: normalized.description,
         mediaType: normalized.mediaType,
         mediaUrl: normalized.mediaUrl,
-        imageUrl: normalized.mediaType === 'image' ? normalized.mediaUrl : '',
-        thumbnailUrl: normalized.thumbnailUrl || '',
-        youtubeId: normalized.youtubeId || '',
+        imageUrl: normalized.mediaUrl,
         startDate: normalized.date,
         date: normalized.date,
         endDate: normalized.endDate,
@@ -1257,50 +1256,67 @@
     function isYoutubeUrl(value) {
       if (typeof value !== 'string') return false;
       const trimmed = value.trim();
-      return /(?:youtube\.com|youtu\.be)/i.test(trimmed);
+      return /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)/i.test(trimmed);
+    }
+
+    function isDirectImageUrl(value) {
+      if (!isValidMediaUrl(value)) return false;
+      const trimmed = String(value).trim();
+      if (isYoutubeUrl(trimmed)) return false;
+      if (/^data:image\//i.test(trimmed)) return true;
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(trimmed) || /images\.unsplash\.com/i.test(trimmed) || /r2\.dev/i.test(trimmed);
     }
 
     function normalizeMediaType(value) {
       return value === 'video' ? 'video' : 'image';
     }
 
-    function getMediaCandidates(post) {
-      return [
-        post?.mediaUrl,
+    function getBestImageUrl(post) {
+      const candidates = [
         post?.imageUrl,
         post?.thumbnailUrl,
         post?.thumbUrl,
+        post?.mediaUrl,
         post?.url,
         post?.image
-      ]
-        .map((item) => String(item || '').trim())
-        .filter((item, index, array) => item && array.indexOf(item) === index);
-    }
+      ].map(item => String(item || '').trim()).filter(Boolean);
 
-    function getYoutubeThumbnailUrl(videoId) {
-      const cleanId = String(videoId || '').trim();
-      if (!cleanId) return '';
-      return `https://img.youtube.com/vi/${cleanId}/hqdefault.jpg`;
+      return candidates.find(isDirectImageUrl) || '';
     }
 
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const candidates = getMediaCandidates(post);
-      const explicitYoutubeId = String(post.youtubeId || '').trim();
-      const detectedYoutubeUrl = candidates.find((url) => isYoutubeUrl(url)) || '';
-      const youtubeId = explicitYoutubeId || getYoutubeId(detectedYoutubeUrl);
-      const mediaType = youtubeId ? 'video' : normalizeMediaType(post.mediaType);
+      const rawMediaUrl = String(
+        post.mediaUrl ||
+        post.imageUrl ||
+        post.url ||
+        post.image ||
+        ''
+      ).trim();
 
-      let mediaUrl = '';
+      const youtubeId = String(
+        post.youtubeId ||
+        getYoutubeId(post.mediaUrl || '') ||
+        getYoutubeId(post.videoUrl || '') ||
+        getYoutubeId(post.url || '') ||
+        getYoutubeId(post.imageUrl || '')
+      ).trim();
+
+      const mediaType = youtubeId
+        ? 'video'
+        : (normalizeMediaType(post.mediaType) === 'video' ? 'video' : 'image');
+
+      const imageUrl = getBestImageUrl(post);
+      const mediaUrl = mediaType === 'video'
+        ? rawMediaUrl
+        : imageUrl;
+
       if (mediaType === 'video') {
-        mediaUrl = detectedYoutubeUrl || candidates.find((url) => isValidMediaUrl(url)) || '';
+        if (!youtubeId && !isValidMediaUrl(rawMediaUrl)) return null;
       } else {
-        mediaUrl = candidates.find((url) => isValidMediaUrl(url) && !isYoutubeUrl(url)) || '';
+        if (!isDirectImageUrl(mediaUrl)) return null;
       }
-
-      if (mediaType === 'image' && !mediaUrl) return null;
-      if (mediaType === 'video' && !youtubeId && !mediaUrl) return null;
 
       const startDate = String(post.startDate || post.date || '').trim();
       const endDate = String(post.endDate || post.startDate || post.date || '').trim();
@@ -1315,8 +1331,8 @@
         description: String(post.description || post.content || '').trim(),
         mediaType,
         mediaUrl,
+        imageUrl,
         youtubeId,
-        thumbnailUrl: String(post.thumbnailUrl || post.thumbUrl || (youtubeId ? getYoutubeThumbnailUrl(youtubeId) : '')).trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
         comments: Array.isArray(post.comments) ? post.comments : []
@@ -1396,31 +1412,7 @@
         `;
       }
 
-      return `<video src="${post.mediaUrl}" controls muted playsinline preload="metadata"></video>`;
-    }
-
-    function buildCardMedia(post) {
-      if (post.mediaType === 'video') {
-        const thumbUrl = String(post.thumbnailUrl || (post.youtubeId ? getYoutubeThumbnailUrl(post.youtubeId) : '')).trim();
-        if (thumbUrl && isValidMediaUrl(thumbUrl)) {
-          return `<img src="${thumbUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
-        }
-        return `
-          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-weight:700;">
-            <div style="text-align:center;">
-              <div style="font-size:48px;line-height:1;">▶</div>
-              <div style="margin-top:8px;font-size:14px;opacity:0.9;">영상</div>
-            </div>
-          </div>
-        `;
-      }
-
-      const imgUrl = String(post.mediaUrl || '').trim();
-      if (!isValidMediaUrl(imgUrl) || isYoutubeUrl(imgUrl)) {
-        return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
-      }
-
-      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+      return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
 async function uploadFileToWorker(file, mediaType) {
@@ -1513,7 +1505,12 @@ return uploadedUrl;
     window.handleCardImageError = handleCardImageError;
 
     function buildMedia(post) {
-      return buildCardMedia(post);
+      const imgUrl = getBestImageUrl(post);
+      if (!isDirectImageUrl(imgUrl)) {
+        return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
+      }
+
+      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
     }
 
     async function currentFilteredPosts() {
@@ -1521,14 +1518,15 @@ return uploadedUrl;
       const keyword = searchInput.value.trim().toLowerCase();
 
       let posts = sortPosts(await getPosts()).filter(post => {
-        if (post.mediaType === 'video') {
-          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
-        }
-        return isValidMediaUrl(post.mediaUrl) && !isYoutubeUrl(post.mediaUrl);
+        return post.mediaType === 'image' && isDirectImageUrl(getBestImageUrl(post));
       });
 
-      if (typeValue !== 'all') {
-        posts = posts.filter((post) => post.mediaType === typeValue);
+      if (typeValue === 'video') {
+        return [];
+      }
+
+      if (typeValue === 'image') {
+        posts = posts.filter((post) => post.mediaType === 'image');
       }
 
       if (keyword) {
@@ -1545,8 +1543,11 @@ return uploadedUrl;
       const posts = await currentFilteredPosts();
 
       if (posts.length === 0) {
-        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
-        paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        const emptyMessage = filterType.value === 'video'
+          ? '영상은 상단의 영상행사 메뉴에서 확인해주세요.'
+          : '검색 결과가 없습니다.';
+        eventGrid.innerHTML = `<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">${emptyMessage}</div>`;
+        paginationInfo.textContent = filterType.value === 'video' ? '영상은 영상행사 메뉴에서 확인해주세요.' : '표시할 문화소식이 없습니다.';
         return;
       }
 
@@ -1644,7 +1645,9 @@ return uploadedUrl;
     }
 
     async function renderVideoList() {
-      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
+      const postVideos = sortPosts(await getPosts()).filter((post) => {
+        return post.mediaType === 'video' || !!post.youtubeId;
+      });
       const customVideos = getVideoItems();
 
       const merged = [
@@ -1920,7 +1923,7 @@ return uploadedUrl;
 
       detailMedia.innerHTML = post.mediaType === 'video'
         ? buildEventVideoHtml(post)
-        : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+        : `<img src="${getBestImageUrl(post)}" alt="${escapeHtml(post.title)}">`;
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
@@ -1950,9 +1953,7 @@ return uploadedUrl;
       const shareTitle = `[정읍문화소식] ${post.title}`;
       const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
       const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
-        ? post.mediaUrl
-        : (post.thumbnailUrl && isValidMediaUrl(post.thumbnailUrl) ? post.thumbnailUrl : defaultImage);
+      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
 
       if (window.Kakao && window.Kakao.Share) {
         try {
