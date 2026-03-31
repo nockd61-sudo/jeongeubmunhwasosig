@@ -12,8 +12,7 @@
       --text: #1f1f1f;
       --muted: #6b7280;
       --line: #dddddd;
-      --brand: #6
-      .d4cff;
+      --brand: #6d4cff;
       --brand-dark: #5337d6;
       --shadow: 0 10px 28px rgba(0,0,0,0.08);
       --max: 1180px;
@@ -1253,41 +1252,14 @@
       return false;
     }
 
-    function isYoutubeUrl(value) {
-      if (typeof value !== 'string') return false;
-      const trimmed = value.trim();
-      return /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/)/i.test(trimmed);
-    }
-
-    function isDirectImageUrl(value) {
-      if (!isValidMediaUrl(value)) return false;
-      const trimmed = String(value).trim();
-      if (isYoutubeUrl(trimmed)) return false;
-      if (/^data:image\//i.test(trimmed)) return true;
-      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(trimmed) || /images\.unsplash\.com/i.test(trimmed) || /r2\.dev/i.test(trimmed);
-    }
-
     function normalizeMediaType(value) {
       return value === 'video' ? 'video' : 'image';
-    }
-
-    function getBestImageUrl(post) {
-      const candidates = [
-        post?.imageUrl,
-        post?.thumbnailUrl,
-        post?.thumbUrl,
-        post?.mediaUrl,
-        post?.url,
-        post?.image
-      ].map(item => String(item || '').trim()).filter(Boolean);
-
-      return candidates.find(isDirectImageUrl) || '';
     }
 
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const rawMediaUrl = String(
+      const mediaUrl = String(
         post.mediaUrl ||
         post.imageUrl ||
         post.url ||
@@ -1295,28 +1267,8 @@
         ''
       ).trim();
 
-      const youtubeId = String(
-        post.youtubeId ||
-        getYoutubeId(post.mediaUrl || '') ||
-        getYoutubeId(post.videoUrl || '') ||
-        getYoutubeId(post.url || '') ||
-        getYoutubeId(post.imageUrl || '')
-      ).trim();
-
-      const mediaType = youtubeId
-        ? 'video'
-        : (normalizeMediaType(post.mediaType) === 'video' ? 'video' : 'image');
-
-      const imageUrl = getBestImageUrl(post);
-      const mediaUrl = mediaType === 'video'
-        ? rawMediaUrl
-        : imageUrl;
-
-      if (mediaType === 'video') {
-        if (!youtubeId && !isValidMediaUrl(rawMediaUrl)) return null;
-      } else {
-        if (!isDirectImageUrl(mediaUrl)) return null;
-      }
+      const mediaType = normalizeMediaType(post.mediaType);
+      if (!isValidMediaUrl(mediaUrl)) return null;
 
       const startDate = String(post.startDate || post.date || '').trim();
       const endDate = String(post.endDate || post.startDate || post.date || '').trim();
@@ -1331,8 +1283,7 @@
         description: String(post.description || post.content || '').trim(),
         mediaType,
         mediaUrl,
-        imageUrl,
-        youtubeId,
+        youtubeId: String(post.youtubeId || '').trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
         comments: Array.isArray(post.comments) ? post.comments : []
@@ -1505,12 +1456,19 @@ return uploadedUrl;
     window.handleCardImageError = handleCardImageError;
 
     function buildMedia(post) {
-      const imgUrl = getBestImageUrl(post);
-      if (!isDirectImageUrl(imgUrl)) {
+      if (post.mediaType === 'video') {
+        if (!isValidMediaUrl(post.mediaUrl) && !post.youtubeId) {
+          return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
+        }
+        return buildEventVideoHtml(post).replace('<video ', '<video preload="metadata" ');
+      }
+
+      const imgUrl = String(post.mediaUrl || post.url || post.image || '').trim();
+      if (!isValidMediaUrl(imgUrl)) {
         return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
       }
 
-      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
     }
 
     async function currentFilteredPosts() {
@@ -1518,15 +1476,14 @@ return uploadedUrl;
       const keyword = searchInput.value.trim().toLowerCase();
 
       let posts = sortPosts(await getPosts()).filter(post => {
-        return post.mediaType === 'image' && isDirectImageUrl(getBestImageUrl(post));
+        if (post.mediaType === 'video') {
+          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
+        }
+        return isValidMediaUrl(post.mediaUrl);
       });
 
-      if (typeValue === 'video') {
-        return [];
-      }
-
-      if (typeValue === 'image') {
-        posts = posts.filter((post) => post.mediaType === 'image');
+      if (typeValue !== 'all') {
+        posts = posts.filter((post) => post.mediaType === typeValue);
       }
 
       if (keyword) {
@@ -1543,11 +1500,8 @@ return uploadedUrl;
       const posts = await currentFilteredPosts();
 
       if (posts.length === 0) {
-        const emptyMessage = filterType.value === 'video'
-          ? '영상은 상단의 영상행사 메뉴에서 확인해주세요.'
-          : '검색 결과가 없습니다.';
-        eventGrid.innerHTML = `<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">${emptyMessage}</div>`;
-        paginationInfo.textContent = filterType.value === 'video' ? '영상은 영상행사 메뉴에서 확인해주세요.' : '표시할 문화소식이 없습니다.';
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
+        paginationInfo.textContent = '표시할 문화소식이 없습니다.';
         return;
       }
 
@@ -1645,9 +1599,7 @@ return uploadedUrl;
     }
 
     async function renderVideoList() {
-      const postVideos = sortPosts(await getPosts()).filter((post) => {
-        return post.mediaType === 'video' || !!post.youtubeId;
-      });
+      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
       const customVideos = getVideoItems();
 
       const merged = [
@@ -1887,7 +1839,66 @@ return uploadedUrl;
     }
 
     async function deletePost(id) {
-      alert('현재 게시글 삭제는 화면 코드만으로는 되지 않습니다. Worker에 DELETE API를 추가해야 모든 기기에서 함께 삭제됩니다.');
+      if (!isAdminLoggedIn) {
+        alert('관리자만 삭제할 수 있습니다.');
+        return;
+      }
+
+      if (!id) {
+        alert('삭제할 게시글 ID를 찾지 못했습니다.');
+        return;
+      }
+
+      if (!confirm('이 게시글을 삭제하시겠습니까?')) {
+        return;
+      }
+
+      try {
+        const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
+
+        let response = await fetch(deleteUrl, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          response = await fetch(API_POSTS_ENDPOINT, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: String(id) })
+          });
+        }
+
+        let result = {};
+        try {
+          result = await response.json();
+        } catch (error) {
+          result = {};
+        }
+
+        if (!response.ok) {
+          throw new Error(result?.error || result?.detail || `삭제 실패 (${response.status})`);
+        }
+
+        const metaMap = getPostMetaMap();
+        delete metaMap[String(id)];
+        savePostMetaMap(metaMap);
+
+        const commentsMap = getPostCommentsMap();
+        delete commentsMap[String(id)];
+        savePostCommentsMap(commentsMap);
+
+        closeModal('detailModal');
+        await renderAll();
+        alert('게시글이 삭제되었습니다.');
+      } catch (error) {
+        console.error('게시글 삭제 실패', error);
+        alert('게시글 삭제에 실패했습니다.\n현재 Worker/API에 DELETE 기능이 없거나 삭제 방식이 다를 수 있습니다.');
+      }
     }
 
     function renderComments(post) {
@@ -1923,7 +1934,7 @@ return uploadedUrl;
 
       detailMedia.innerHTML = post.mediaType === 'video'
         ? buildEventVideoHtml(post)
-        : `<img src="${getBestImageUrl(post)}" alt="${escapeHtml(post.title)}">`;
+        : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
