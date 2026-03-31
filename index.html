@@ -1559,7 +1559,7 @@ return uploadedUrl;
       }
 
       paginationInfo.textContent = `가까운 날짜순 ${posts.length}개 노출`;
-
+updateTotalViews(posts);
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
           <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
@@ -1571,7 +1571,7 @@ return uploadedUrl;
             <div class="title">${escapeHtml(post.title)}</div>
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
-              <span>조회 ${(post.views || 0)}</span>
+            
               <span>좋아요 ${(post.likes || 0)}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
@@ -1586,7 +1586,18 @@ return uploadedUrl;
         </article>
       `).join('');
     }
+function updateTotalViews(posts) {
+  let total = 0;
 
+  posts.forEach(post => {
+    total += Number(post.views || 0);
+  });
+
+  const el = document.getElementById('totalViewsBox');
+  if (el) {
+    el.innerText = `총 조회수: ${total}`;
+  }
+}
     function renderNotices() {
       const notices = [...getNotices()].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -1982,7 +1993,7 @@ return uploadedUrl;
         <div>장소: ${escapeHtml(post.place)}</div>
         <div>작성자: ${escapeHtml(post.author)}</div>
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+       좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
       detailMedia.innerHTML = post.mediaType === 'video'
@@ -2477,5 +2488,14 @@ ${linkUrl}`);
 
   
 </script>
+
+  <div id="totalViewsBox" style="
+  text-align:center;
+  margin:40px 0;
+  font-size:16px;
+  color:#666;
+">
+  총 조회수: 0
+</div>
 </body>
 </html>
