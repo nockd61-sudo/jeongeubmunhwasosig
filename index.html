@@ -1200,7 +1200,8 @@
         content: normalized.description,
         mediaType: normalized.mediaType,
         mediaUrl: normalized.mediaUrl,
-        imageUrl: normalized.imageUrl || normalized.mediaUrl,
+        imageUrl: normalized.mediaType === 'image' ? normalized.mediaUrl : '',
+        thumbnailUrl: normalized.thumbnailUrl || '',
         youtubeId: normalized.youtubeId || '',
         startDate: normalized.date,
         date: normalized.date,
@@ -1255,51 +1256,51 @@
 
     function isYoutubeUrl(value) {
       if (typeof value !== 'string') return false;
-      const trimmed = value.trim().toLowerCase();
-      return trimmed.includes('youtube.com/watch') || trimmed.includes('youtube.com/shorts/') || trimmed.includes('youtu.be/');
+      const trimmed = value.trim();
+      return /(?:youtube\.com|youtu\.be)/i.test(trimmed);
     }
 
     function normalizeMediaType(value) {
       return value === 'video' ? 'video' : 'image';
     }
 
-    function resolvePostMedia(post) {
-      const candidates = [
+    function getMediaCandidates(post) {
+      return [
         post?.mediaUrl,
         post?.imageUrl,
         post?.thumbnailUrl,
         post?.thumbUrl,
         post?.url,
-        post?.image,
-        post?.thumbnail
-      ].map(v => String(v || '').trim()).filter(Boolean);
+        post?.image
+      ]
+        .map((item) => String(item || '').trim())
+        .filter((item, index, array) => item && array.indexOf(item) === index);
+    }
 
-      const youtubeCandidate = candidates.find(isYoutubeUrl) || String(post?.youtubeUrl || '').trim();
-      const youtubeId = String(post?.youtubeId || getYoutubeId(youtubeCandidate)).trim();
-      const imageCandidate = candidates.find(url => isValidMediaUrl(url) && !isYoutubeUrl(url));
-      const videoCandidate = candidates.find(url => isValidMediaUrl(url) && /\.(mp4|webm|ogg)(\?|$)/i.test(url));
-
-      return {
-        youtubeId,
-        imageUrl: imageCandidate || '',
-        videoUrl: videoCandidate || ''
-      };
+    function getYoutubeThumbnailUrl(videoId) {
+      const cleanId = String(videoId || '').trim();
+      if (!cleanId) return '';
+      return `https://img.youtube.com/vi/${cleanId}/hqdefault.jpg`;
     }
 
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const resolved = resolvePostMedia(post);
-      let mediaType = normalizeMediaType(post.mediaType);
-      if (resolved.youtubeId || resolved.videoUrl) mediaType = 'video';
-      else if (resolved.imageUrl) mediaType = 'image';
+      const candidates = getMediaCandidates(post);
+      const explicitYoutubeId = String(post.youtubeId || '').trim();
+      const detectedYoutubeUrl = candidates.find((url) => isYoutubeUrl(url)) || '';
+      const youtubeId = explicitYoutubeId || getYoutubeId(detectedYoutubeUrl);
+      const mediaType = youtubeId ? 'video' : normalizeMediaType(post.mediaType);
 
-      const mediaUrl = mediaType === 'video'
-        ? (resolved.videoUrl || resolved.imageUrl || '')
-        : resolved.imageUrl;
+      let mediaUrl = '';
+      if (mediaType === 'video') {
+        mediaUrl = detectedYoutubeUrl || candidates.find((url) => isValidMediaUrl(url)) || '';
+      } else {
+        mediaUrl = candidates.find((url) => isValidMediaUrl(url) && !isYoutubeUrl(url)) || '';
+      }
 
-      if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
-      if (mediaType === 'video' && !resolved.youtubeId && !isValidMediaUrl(mediaUrl)) return null;
+      if (mediaType === 'image' && !mediaUrl) return null;
+      if (mediaType === 'video' && !youtubeId && !mediaUrl) return null;
 
       const startDate = String(post.startDate || post.date || '').trim();
       const endDate = String(post.endDate || post.startDate || post.date || '').trim();
@@ -1314,8 +1315,8 @@
         description: String(post.description || post.content || '').trim(),
         mediaType,
         mediaUrl,
-        imageUrl: resolved.imageUrl,
-        youtubeId: resolved.youtubeId,
+        youtubeId,
+        thumbnailUrl: String(post.thumbnailUrl || post.thumbUrl || (youtubeId ? getYoutubeThumbnailUrl(youtubeId) : '')).trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
         comments: Array.isArray(post.comments) ? post.comments : []
@@ -1395,7 +1396,31 @@
         `;
       }
 
-      return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
+      return `<video src="${post.mediaUrl}" controls muted playsinline preload="metadata"></video>`;
+    }
+
+    function buildCardMedia(post) {
+      if (post.mediaType === 'video') {
+        const thumbUrl = String(post.thumbnailUrl || (post.youtubeId ? getYoutubeThumbnailUrl(post.youtubeId) : '')).trim();
+        if (thumbUrl && isValidMediaUrl(thumbUrl)) {
+          return `<img src="${thumbUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+        }
+        return `
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-weight:700;">
+            <div style="text-align:center;">
+              <div style="font-size:48px;line-height:1;">▶</div>
+              <div style="margin-top:8px;font-size:14px;opacity:0.9;">영상</div>
+            </div>
+          </div>
+        `;
+      }
+
+      const imgUrl = String(post.mediaUrl || '').trim();
+      if (!isValidMediaUrl(imgUrl) || isYoutubeUrl(imgUrl)) {
+        return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
+      }
+
+      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
     }
 
 async function uploadFileToWorker(file, mediaType) {
@@ -1488,21 +1513,7 @@ return uploadedUrl;
     window.handleCardImageError = handleCardImageError;
 
     function buildMedia(post) {
-      const resolved = resolvePostMedia(post);
-
-      if (post.mediaType === 'video' || resolved.youtubeId) {
-        if (!resolved.youtubeId && !isValidMediaUrl(post.mediaUrl)) {
-          return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
-        }
-        return buildEventVideoHtml({ ...post, youtubeId: resolved.youtubeId || post.youtubeId }).replace('<video ', '<video preload="metadata" ');
-      }
-
-      const imgUrl = String(resolved.imageUrl || '').trim();
-      if (!isValidMediaUrl(imgUrl)) {
-        return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
-      }
-
-      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+      return buildCardMedia(post);
     }
 
     async function currentFilteredPosts() {
@@ -1510,11 +1521,10 @@ return uploadedUrl;
       const keyword = searchInput.value.trim().toLowerCase();
 
       let posts = sortPosts(await getPosts()).filter(post => {
-        const resolved = resolvePostMedia(post);
-        if ((post.mediaType === 'video') || resolved.youtubeId) {
-          return Boolean(resolved.youtubeId || isValidMediaUrl(post.mediaUrl));
+        if (post.mediaType === 'video') {
+          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
         }
-        return Boolean(resolved.imageUrl && isValidMediaUrl(resolved.imageUrl));
+        return isValidMediaUrl(post.mediaUrl) && !isYoutubeUrl(post.mediaUrl);
       });
 
       if (typeValue !== 'all') {
@@ -1634,10 +1644,7 @@ return uploadedUrl;
     }
 
     async function renderVideoList() {
-      const postVideos = sortPosts(await getPosts()).filter((post) => {
-        const resolved = resolvePostMedia(post);
-        return post.mediaType === 'video' || Boolean(resolved.youtubeId);
-      });
+      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
       const customVideos = getVideoItems();
 
       const merged = [
@@ -1706,39 +1713,6 @@ return uploadedUrl;
     }
 
     window.playCustomVideo = playCustomVideo;
-
-
-    async function syncLegacyVideoItemsToServer() {
-      const items = getVideoItems();
-      if (!items.length) return;
-
-      const syncKey = 'jeongeup-video-sync-complete-v1';
-      if (localStorage.getItem(syncKey) === 'done') return;
-
-      for (const item of items) {
-        try {
-          await savePost({
-            id: item.id || ('video-' + Date.now()),
-            title: item.title || '영상행사',
-            date: item.date || new Date().toISOString().slice(0, 10),
-            endDate: item.date || new Date().toISOString().slice(0, 10),
-            place: '영상행사',
-            author: '시민',
-            description: item.description || '',
-            mediaType: 'video',
-            mediaUrl: item.youtubeId ? `https://www.youtube.com/watch?v=${item.youtubeId}` : '',
-            youtubeId: item.youtubeId || '',
-            likes: 0,
-            views: 0,
-            comments: []
-          });
-        } catch (error) {
-          console.warn('기존 영상 서버 동기화 실패', error);
-        }
-      }
-
-      localStorage.setItem(syncKey, 'done');
-    }
 
     async function renderAll() {
       await renderPosts();
@@ -1944,10 +1918,9 @@ return uploadedUrl;
         <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
-      const resolved = resolvePostMedia(post);
-      detailMedia.innerHTML = (post.mediaType === 'video' || resolved.youtubeId)
-        ? buildEventVideoHtml({ ...post, youtubeId: resolved.youtubeId || post.youtubeId })
-        : `<img src="${resolved.imageUrl || post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
+      detailMedia.innerHTML = post.mediaType === 'video'
+        ? buildEventVideoHtml(post)
+        : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
@@ -1977,7 +1950,9 @@ return uploadedUrl;
       const shareTitle = `[정읍문화소식] ${post.title}`;
       const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
       const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
+      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
+        ? post.mediaUrl
+        : (post.thumbnailUrl && isValidMediaUrl(post.thumbnailUrl) ? post.thumbnailUrl : defaultImage);
 
       if (window.Kakao && window.Kakao.Share) {
         try {
@@ -2332,15 +2307,13 @@ ${shareUrl}`;
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    syncLegacyVideoItemsToServer().finally(() => {
-      renderAll();
-      openPostFromHash();
-    });
+    renderAll();
+    openPostFromHash();
 
     window.addEventListener('hashchange', openPostFromHash);
   
 
-    async function addVideo() {
+    function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
       const descEl = document.getElementById('videoDesc');
@@ -2361,38 +2334,19 @@ ${shareUrl}`;
         return;
       }
 
-      const videoData = {
+      const items = getVideoItems();
+
+      items.unshift({
         id: 'video-' + Date.now(),
         title,
         description: desc,
         youtubeId: videoId,
         date: new Date().toISOString().slice(0, 10)
-      };
+      });
 
-      try {
-        await savePost({
-          id: videoData.id,
-          title: videoData.title,
-          date: videoData.date,
-          endDate: videoData.date,
-          place: '영상행사',
-          author: '시민',
-          description: videoData.description,
-          mediaType: 'video',
-          mediaUrl: `https://www.youtube.com/watch?v=${videoData.youtubeId}`,
-          youtubeId: videoData.youtubeId,
-          likes: 0,
-          views: 0,
-          comments: []
-        });
-      } catch (error) {
-        const items = getVideoItems();
-        items.unshift(videoData);
-        saveVideoItems(items);
-        console.warn('영상 서버 저장 실패, 로컬 저장으로 유지', error);
-      }
-
-      await renderVideoList();
+      saveVideoItems(items);
+      renderVideoList();
+      playCustomVideo(items[0].id);
 
       if (titleEl) titleEl.value = '';
       if (urlEl) urlEl.value = '';
