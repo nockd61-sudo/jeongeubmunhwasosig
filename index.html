@@ -1181,14 +1181,10 @@
           })
           .filter(Boolean);
 
-        if (normalized.length > 0) {
-          return sortPosts(normalized);
-        }
-
-        return sortPosts(demoPosts.map(item => normalizePost(item)).filter(Boolean));
+        return sortPosts(normalized);
       } catch (error) {
         console.error('서버 게시글 읽기 실패', error);
-        return sortPosts(demoPosts.map(item => normalizePost(item)).filter(Boolean));
+        return [];
       }
     }
 
@@ -1204,7 +1200,8 @@
         content: normalized.description,
         mediaType: normalized.mediaType,
         mediaUrl: normalized.mediaUrl,
-        imageUrl: normalized.mediaUrl,
+        imageUrl: normalized.imageUrl || normalized.mediaUrl,
+        youtubeId: normalized.youtubeId || '',
         startDate: normalized.date,
         date: normalized.date,
         endDate: normalized.endDate,
@@ -1238,84 +1235,74 @@
       };
     }
 
-    function normalizePossibleUrl(value) {
-      if (typeof value !== 'string') return '';
+    function isValidMediaUrl(value) {
+      if (typeof value !== 'string') return false;
       const trimmed = value.trim();
-      if (!trimmed) return '';
+      if (!trimmed) return false;
 
-      if (/^data:(image|video)\//i.test(trimmed)) return trimmed;
-
-      if (/^\/\//.test(trimmed)) {
-        return window.location.protocol + trimmed;
-      }
-
+      if (/^data:(image|video)\//i.test(trimmed)) return true;
       if (/^https?:\/\//i.test(trimmed)) {
         try {
-          const parsed = new URL(trimmed);
-          return parsed.toString();
+          new URL(trimmed);
+          return true;
         } catch (error) {
-          try {
-            return encodeURI(trimmed);
-          } catch (e) {
-            return '';
-          }
+          return false;
         }
       }
 
-      if (/^\//.test(trimmed)) {
-        return window.location.origin + trimmed;
-      }
-
-      return '';
+      return false;
     }
 
-    function isValidMediaUrl(value) {
-      return !!normalizePossibleUrl(value);
-    }
-
-    function getImageCandidates(post) {
-      const rawCandidates = [
-        post?.mediaUrl,
-        post?.imageUrl,
-        post?.thumbnailUrl,
-        post?.thumbUrl,
-        post?.url,
-        post?.image
-      ];
-
-      const unique = [];
-      rawCandidates.forEach((item) => {
-        const normalized = normalizePossibleUrl(item);
-        if (normalized && !unique.includes(normalized)) {
-          unique.push(normalized);
-        }
-      });
-
-      return unique;
-    }
-
-    function getBestImageUrl(post) {
-      return getImageCandidates(post)[0] || '';
+    function isYoutubeUrl(value) {
+      if (typeof value !== 'string') return false;
+      const trimmed = value.trim().toLowerCase();
+      return trimmed.includes('youtube.com/watch') || trimmed.includes('youtube.com/shorts/') || trimmed.includes('youtu.be/');
     }
 
     function normalizeMediaType(value) {
       return value === 'video' ? 'video' : 'image';
     }
 
+    function resolvePostMedia(post) {
+      const candidates = [
+        post?.mediaUrl,
+        post?.imageUrl,
+        post?.thumbnailUrl,
+        post?.thumbUrl,
+        post?.url,
+        post?.image,
+        post?.thumbnail
+      ].map(v => String(v || '').trim()).filter(Boolean);
+
+      const youtubeCandidate = candidates.find(isYoutubeUrl) || String(post?.youtubeUrl || '').trim();
+      const youtubeId = String(post?.youtubeId || getYoutubeId(youtubeCandidate)).trim();
+      const imageCandidate = candidates.find(url => isValidMediaUrl(url) && !isYoutubeUrl(url));
+      const videoCandidate = candidates.find(url => isValidMediaUrl(url) && /\.(mp4|webm|ogg)(\?|$)/i.test(url));
+
+      return {
+        youtubeId,
+        imageUrl: imageCandidate || '',
+        videoUrl: videoCandidate || ''
+      };
+    }
+
     function normalizePost(post) {
       if (!post || typeof post !== 'object') return null;
 
-      const mediaType = normalizeMediaType(post.mediaType);
-      const bestImageUrl = getBestImageUrl(post);
+      const resolved = resolvePostMedia(post);
+      let mediaType = normalizeMediaType(post.mediaType);
+      if (resolved.youtubeId || resolved.videoUrl) mediaType = 'video';
+      else if (resolved.imageUrl) mediaType = 'image';
+
+      const mediaUrl = mediaType === 'video'
+        ? (resolved.videoUrl || resolved.imageUrl || '')
+        : resolved.imageUrl;
+
+      if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
+      if (mediaType === 'video' && !resolved.youtubeId && !isValidMediaUrl(mediaUrl)) return null;
+
       const startDate = String(post.startDate || post.date || '').trim();
       const endDate = String(post.endDate || post.startDate || post.date || '').trim();
-      const youtubeId = String(post.youtubeId || getYoutubeId(post.youtubeUrl || post.mediaUrl || '') || '').trim();
-
-      if (mediaType === 'video') {
-        if (!youtubeId && !isValidMediaUrl(post.mediaUrl)) return null;
-      } else {
-        if (!bestImageUrl) return null;
-      }
 
       return {
         id: String(post.id || Date.now()),
@@ -1326,11 +1313,9 @@
         author: String(post.author || '시민').trim(),
         description: String(post.description || post.content || '').trim(),
         mediaType,
-        mediaUrl: mediaType === 'video' ? normalizePossibleUrl(post.mediaUrl) : bestImageUrl,
-        imageUrl: bestImageUrl,
-        thumbnailUrl: normalizePossibleUrl(post.thumbnailUrl),
-        thumbUrl: normalizePossibleUrl(post.thumbUrl),
-        youtubeId,
+        mediaUrl,
+        imageUrl: resolved.imageUrl,
+        youtubeId: resolved.youtubeId,
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
         comments: Array.isArray(post.comments) ? post.comments : []
@@ -1495,25 +1480,6 @@ return uploadedUrl;
 
     function handleCardImageError(postId, el) {
       if (!el) return;
-
-      const candidates = (el.dataset.candidates || '')
-        .split('|')
-        .map(item => item.trim())
-        .filter(Boolean);
-
-      const tried = (el.dataset.tried || '')
-        .split('|')
-        .map(item => item.trim())
-        .filter(Boolean);
-
-      const next = candidates.find(item => !tried.includes(item));
-      if (next) {
-        tried.push(next);
-        el.dataset.tried = tried.join('|');
-        el.src = next;
-        return;
-      }
-
       el.onerror = null;
       el.src = getPlaceholderDataUrl('이미지를 불러올 수 없습니다');
       el.dataset.failed = 'true';
@@ -1522,21 +1488,21 @@ return uploadedUrl;
     window.handleCardImageError = handleCardImageError;
 
     function buildMedia(post) {
-      if (post.mediaType === 'video') {
-        if (!isValidMediaUrl(post.mediaUrl) && !post.youtubeId) {
+      const resolved = resolvePostMedia(post);
+
+      if (post.mediaType === 'video' || resolved.youtubeId) {
+        if (!resolved.youtubeId && !isValidMediaUrl(post.mediaUrl)) {
           return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
         }
-        return buildEventVideoHtml(post).replace('<video ', '<video preload="metadata" ');
+        return buildEventVideoHtml({ ...post, youtubeId: resolved.youtubeId || post.youtubeId }).replace('<video ', '<video preload="metadata" ');
       }
 
-      const candidates = getImageCandidates(post);
-      if (!candidates.length) {
+      const imgUrl = String(resolved.imageUrl || '').trim();
+      if (!isValidMediaUrl(imgUrl)) {
         return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
       }
 
-      const first = candidates[0];
-      const rest = candidates.slice(1);
-      return `<img src="${first}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" data-candidates="${escapeHtml(rest.join('|'))}" data-tried="${escapeHtml(first)}" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
     }
 
     async function currentFilteredPosts() {
@@ -1544,10 +1510,11 @@ return uploadedUrl;
       const keyword = searchInput.value.trim().toLowerCase();
 
       let posts = sortPosts(await getPosts()).filter(post => {
-        if (post.mediaType === 'video') {
-          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
+        const resolved = resolvePostMedia(post);
+        if ((post.mediaType === 'video') || resolved.youtubeId) {
+          return Boolean(resolved.youtubeId || isValidMediaUrl(post.mediaUrl));
         }
-        return getImageCandidates(post).length > 0;
+        return Boolean(resolved.imageUrl && isValidMediaUrl(resolved.imageUrl));
       });
 
       if (typeValue !== 'all') {
@@ -1667,7 +1634,10 @@ return uploadedUrl;
     }
 
     async function renderVideoList() {
-      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
+      const postVideos = sortPosts(await getPosts()).filter((post) => {
+        const resolved = resolvePostMedia(post);
+        return post.mediaType === 'video' || Boolean(resolved.youtubeId);
+      });
       const customVideos = getVideoItems();
 
       const merged = [
@@ -1736,6 +1706,39 @@ return uploadedUrl;
     }
 
     window.playCustomVideo = playCustomVideo;
+
+
+    async function syncLegacyVideoItemsToServer() {
+      const items = getVideoItems();
+      if (!items.length) return;
+
+      const syncKey = 'jeongeup-video-sync-complete-v1';
+      if (localStorage.getItem(syncKey) === 'done') return;
+
+      for (const item of items) {
+        try {
+          await savePost({
+            id: item.id || ('video-' + Date.now()),
+            title: item.title || '영상행사',
+            date: item.date || new Date().toISOString().slice(0, 10),
+            endDate: item.date || new Date().toISOString().slice(0, 10),
+            place: '영상행사',
+            author: '시민',
+            description: item.description || '',
+            mediaType: 'video',
+            mediaUrl: item.youtubeId ? `https://www.youtube.com/watch?v=${item.youtubeId}` : '',
+            youtubeId: item.youtubeId || '',
+            likes: 0,
+            views: 0,
+            comments: []
+          });
+        } catch (error) {
+          console.warn('기존 영상 서버 동기화 실패', error);
+        }
+      }
+
+      localStorage.setItem(syncKey, 'done');
+    }
 
     async function renderAll() {
       await renderPosts();
@@ -1941,14 +1944,10 @@ return uploadedUrl;
         <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
-      detailMedia.innerHTML = post.mediaType === 'video'
-        ? buildEventVideoHtml(post)
-        : (() => {
-            const candidates = getImageCandidates(post);
-            const first = candidates[0] || getPlaceholderDataUrl('이미지를 불러올 수 없습니다');
-            const rest = candidates.slice(1);
-            return `<img src="${first}" alt="${escapeHtml(post.title)}" data-candidates="${escapeHtml(rest.join('|'))}" data-tried="${escapeHtml(first)}" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
-          })();
+      const resolved = resolvePostMedia(post);
+      detailMedia.innerHTML = (post.mediaType === 'video' || resolved.youtubeId)
+        ? buildEventVideoHtml({ ...post, youtubeId: resolved.youtubeId || post.youtubeId })
+        : `<img src="${resolved.imageUrl || post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
 
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
@@ -2333,13 +2332,15 @@ ${shareUrl}`;
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    renderAll();
-    openPostFromHash();
+    syncLegacyVideoItemsToServer().finally(() => {
+      renderAll();
+      openPostFromHash();
+    });
 
     window.addEventListener('hashchange', openPostFromHash);
   
 
-    function addVideo() {
+    async function addVideo() {
       const titleEl = document.getElementById('videoTitle');
       const urlEl = document.getElementById('youtubeUrl');
       const descEl = document.getElementById('videoDesc');
@@ -2360,19 +2361,38 @@ ${shareUrl}`;
         return;
       }
 
-      const items = getVideoItems();
-
-      items.unshift({
+      const videoData = {
         id: 'video-' + Date.now(),
         title,
         description: desc,
         youtubeId: videoId,
         date: new Date().toISOString().slice(0, 10)
-      });
+      };
 
-      saveVideoItems(items);
-      renderVideoList();
-      playCustomVideo(items[0].id);
+      try {
+        await savePost({
+          id: videoData.id,
+          title: videoData.title,
+          date: videoData.date,
+          endDate: videoData.date,
+          place: '영상행사',
+          author: '시민',
+          description: videoData.description,
+          mediaType: 'video',
+          mediaUrl: `https://www.youtube.com/watch?v=${videoData.youtubeId}`,
+          youtubeId: videoData.youtubeId,
+          likes: 0,
+          views: 0,
+          comments: []
+        });
+      } catch (error) {
+        const items = getVideoItems();
+        items.unshift(videoData);
+        saveVideoItems(items);
+        console.warn('영상 서버 저장 실패, 로컬 저장으로 유지', error);
+      }
+
+      await renderVideoList();
 
       if (titleEl) titleEl.value = '';
       if (urlEl) urlEl.value = '';
