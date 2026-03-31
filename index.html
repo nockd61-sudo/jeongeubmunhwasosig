@@ -974,6 +974,7 @@
 
 
     const API_POSTS_ENDPOINT = '/api/posts';
+    const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
@@ -1187,6 +1188,125 @@
       saveStoredObject(POST_COMMENTS_KEY, value);
     }
 
+    function normalizeComment(comment) {
+      if (!comment || typeof comment !== 'object') return null;
+
+      const author = String(comment.author || '').trim();
+      const text = String(comment.text || '').trim();
+      const postId = String(comment.postId || '').trim();
+      if (!author || !text) return null;
+
+      return {
+        id: String(comment.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        postId,
+        author,
+        text,
+        date: String(comment.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
+        createdAt: String(comment.createdAt || new Date().toISOString())
+      };
+    }
+
+    function mergeCommentMaps(serverMap, localMap) {
+      const merged = {};
+      const postIds = new Set([
+        ...Object.keys(serverMap || {}),
+        ...Object.keys(localMap || {})
+      ]);
+
+      postIds.forEach((postId) => {
+        const bucket = [];
+        const seen = new Set();
+
+        const append = (items) => {
+          (Array.isArray(items) ? items : []).forEach((item) => {
+            const normalized = normalizeComment({ ...item, postId });
+            if (!normalized) return;
+            const key = normalized.id || `${normalized.author}|${normalized.text}|${normalized.date}`;
+            if (seen.has(key)) return;
+            seen.add(key);
+            bucket.push(normalized);
+          });
+        };
+
+        append(serverMap?.[postId]);
+        append(localMap?.[postId]);
+
+        bucket.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+        merged[postId] = bucket;
+      });
+
+      return merged;
+    }
+
+    async function getServerCommentsMap() {
+      try {
+        const response = await fetch(API_COMMENTS_ENDPOINT, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`댓글 불러오기 실패 (${response.status})`);
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          return data.reduce((acc, item) => {
+            const normalized = normalizeComment(item);
+            if (!normalized || !normalized.postId) return acc;
+            acc[normalized.postId] = acc[normalized.postId] || [];
+            acc[normalized.postId].push(normalized);
+            return acc;
+          }, {});
+        }
+
+        if (data && typeof data === 'object') {
+          return Object.entries(data).reduce((acc, [postId, items]) => {
+            acc[postId] = (Array.isArray(items) ? items : [])
+              .map((item) => normalizeComment({ ...item, postId }))
+              .filter(Boolean);
+            return acc;
+          }, {});
+        }
+
+        return {};
+      } catch (error) {
+        console.warn('서버 댓글 읽기 실패', error);
+        return {};
+      }
+    }
+
+    async function getMergedCommentsMap() {
+      const serverMap = await getServerCommentsMap();
+      const localMap = getPostCommentsMap();
+      return mergeCommentMaps(serverMap, localMap);
+    }
+
+    async function saveCommentToServer(postId, comment) {
+      const normalized = normalizeComment({ ...comment, postId });
+      if (!normalized) {
+        throw new Error('저장할 댓글 형식이 올바르지 않습니다.');
+      }
+
+      const response = await fetch(API_COMMENTS_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(normalized)
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '댓글 저장에 실패했습니다.');
+      }
+
+      return normalizeComment({ ...normalized, ...result, postId }) || normalized;
+    }
+
     async function getPosts() {
       try {
         const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
@@ -1197,7 +1317,7 @@
         const data = await response.json();
         const items = Array.isArray(data) ? data : [];
         const metaMap = getPostMetaMap();
-        const commentsMap = getPostCommentsMap();
+        const commentsMap = await getMergedCommentsMap();
 
         const normalized = items
           .map((item) => {
@@ -2004,7 +2124,7 @@ function updateTotalViews(posts) {
         <div>장소: ${escapeHtml(post.place)}</div>
         <div>작성자: ${escapeHtml(post.author)}</div>
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-       좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+        <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
       detailMedia.innerHTML = post.mediaType === 'video'
@@ -2363,17 +2483,26 @@ ${shareUrl}`;
       const textValue = document.getElementById('commentText').value.trim();
       if (!postId || !author || !textValue) return;
 
+      const newComment = normalizeComment({
+        id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        postId,
+        author,
+        text: textValue,
+        date: new Date().toISOString().slice(0, 10),
+        createdAt: new Date().toISOString()
+      });
+
       const commentsMap = getPostCommentsMap();
       const currentComments = Array.isArray(commentsMap[postId]) ? commentsMap[postId] : [];
-      commentsMap[postId] = [
-        {
-          author,
-          text: textValue,
-          date: new Date().toISOString().slice(0, 10)
-        },
-        ...currentComments
-      ];
+      commentsMap[postId] = [newComment, ...currentComments];
       savePostCommentsMap(commentsMap);
+
+      try {
+        await saveCommentToServer(postId, newComment);
+      } catch (error) {
+        console.error('댓글 서버 저장 실패', error);
+        alert('댓글은 내 기기에는 저장되었지만 서버 저장은 실패했습니다. Worker에 /api/comments 기능을 추가하면 모든 사람에게 보입니다.');
+      }
 
       commentForm.reset();
       await openDetail(postId, { incrementView: false });
