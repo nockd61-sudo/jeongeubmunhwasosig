@@ -193,6 +193,93 @@
       cursor: pointer;
     }
 
+
+    .ai-search-wrap {
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 18px;
+      border-radius: 20px;
+    }
+
+    .ai-search-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+
+    .ai-search-title {
+      margin: 0;
+      font-size: 1.28rem;
+      letter-spacing: -0.03em;
+    }
+
+    .ai-search-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--brand), #8c7bff);
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .ai-search-desc {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .ai-toolbar {
+      grid-template-columns: minmax(0, 1fr) 110px;
+      padding: 0;
+      border: 0;
+      margin-bottom: 0;
+      background: transparent;
+    }
+
+    .ai-toolbar .ai-hidden-select {
+      display: none;
+    }
+
+    .ai-keyword-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .ai-keyword-btn {
+      border: 1px solid #d9dce3;
+      background: #f8f9fb;
+      color: #333;
+      padding: 9px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .ai-keyword-btn:hover,
+    .ai-keyword-btn.active {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
+    .ai-search-result-text {
+      margin-top: 12px;
+      font-size: 0.92rem;
+      color: var(--brand-dark);
+      font-weight: 600;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -708,14 +795,29 @@
 
     <section id="board" class="wrap">
       <h2 class="section-title">가까운 날짜순 문화소식</h2>
-      <div class="toolbar">
-        <select id="filterType">
-          <option value="all">전체</option>
-          <option value="image">이미지</option>
-          <option value="video">영상</option>
-        </select>
-        <input id="searchInput" type="text" placeholder="제목 또는 장소 검색">
-        <button id="searchBtn" type="button">검색</button>
+      <div class="ai-search-wrap">
+        <div class="ai-search-title-row">
+          <h3 class="ai-search-title">AI 검색창</h3>
+          <span class="ai-search-badge">정읍행사</span>
+        </div>
+
+        <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 다양한 문화행사를 한 번에 통합검색합니다.</p>
+
+        <div class="toolbar ai-toolbar">
+          <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
+            <option value="all" selected>전체</option>
+            <option value="image">이미지</option>
+            <option value="video">영상</option>
+          </select>
+          <input id="searchInput" type="text" placeholder="정읍 행사명을 검색해보세요">
+          <button id="searchBtn" type="button">검색</button>
+        </div>
+
+        <div class="ai-keyword-row">
+          <button type="button" class="ai-keyword-btn" data-ai-keyword="정읍행사">정읍행사</button>
+        </div>
+
+        <div id="aiSearchResultText" class="ai-search-result-text">정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.</div>
       </div>
 
       <div class="cards" id="eventGrid"></div>
@@ -1100,6 +1202,8 @@
     const filterType = document.getElementById('filterType');
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.getElementById('searchBtn');
+    const aiSearchResultText = document.getElementById('aiSearchResultText');
+    const aiKeywordButtons = document.querySelectorAll('.ai-keyword-btn');
     const paginationInfo = document.getElementById('paginationInfo');
     const detailTitle = document.getElementById('detailTitle');
     const detailMeta = document.getElementById('detailMeta');
@@ -1662,16 +1766,40 @@ return uploadedUrl;
       }
 
       if (keyword) {
-        posts = posts.filter((post) =>
-          (post.title || '').toLowerCase().includes(keyword) ||
-          (post.place || '').toLowerCase().includes(keyword)
-        );
+        posts = posts.filter((post) => {
+          const searchHaystack = [
+            post.title || '',
+            post.place || '',
+            post.description || '',
+            post.author || '',
+            '정읍행사 축제 전시 공연 체험 문화행사'
+          ].join(' ').toLowerCase();
+
+          if (keyword === '정읍행사') {
+            return true;
+          }
+
+          return searchHaystack.includes(keyword);
+        });
       }
 
       return posts.slice(0, 8);
     } 
 
+    function updateAiSearchMessage() {
+      const keyword = (searchInput?.value || '').trim();
+      if (!aiSearchResultText) return;
+
+      if (!keyword) {
+        aiSearchResultText.textContent = '정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.';
+        return;
+      }
+
+      aiSearchResultText.textContent = `"${keyword}" 관련 정읍행사를 통합검색 중입니다.`;
+    }
+
     async function renderPosts() {
+      updateAiSearchMessage();
       const posts = await currentFilteredPosts();
 
       if (posts.length === 0) {
@@ -2356,11 +2484,20 @@ ${shareUrl}`;
     });
 
     searchBtn.addEventListener('click', renderPosts);
+    searchInput.addEventListener('input', updateAiSearchMessage);
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         renderPosts();
       }
+    });
+    aiKeywordButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        aiKeywordButtons.forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        searchInput.value = button.dataset.aiKeyword || '';
+        renderPosts();
+      });
     });
     filterType.addEventListener('change', renderPosts);
 
@@ -2627,7 +2764,8 @@ ${linkUrl}`);
     }
 
   
-</script>
+    updateAiSearchMessage();
+  </script>
 
   <div id="totalViewsBox" style="
   text-align:center;
