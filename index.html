@@ -1434,6 +1434,8 @@
               author: item.author || meta.author || '시민',
               likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
               views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              todayViews: Number.isFinite(Number(meta.todayViews)) ? Number(meta.todayViews) : Number(item.todayViews || 0),
+              todayViewsDate: String(meta.todayViewsDate || item.todayViewsDate || ''),
               lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
               comments
             });
@@ -1547,6 +1549,8 @@
         youtubeId: String(post.youtubeId || '').trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
+        todayViews: Number.isFinite(Number(post.todayViews)) ? Number(post.todayViews) : 0,
+        todayViewsDate: String(post.todayViewsDate || '').trim(),
         lastViewedAt: String(post.lastViewedAt || '').trim(),
         comments: Array.isArray(post.comments) ? post.comments : []
       };
@@ -1800,7 +1804,9 @@ return uploadedUrl;
 
     async function renderPosts() {
       updateAiSearchMessage();
+      const allPosts = await getPosts();
       const posts = await currentFilteredPosts();
+      updateTotalViews(allPosts);
 
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
@@ -1809,7 +1815,6 @@ return uploadedUrl;
       }
 
       paginationInfo.textContent = `가까운 날짜순 ${posts.length}개 노출`;
-updateTotalViews(posts);
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
           <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
@@ -1841,13 +1846,12 @@ function updateTotalViews(posts) {
   let todayTotal = 0;
   const today = getTodayString();
 
-  posts.forEach(post => {
-    const views = Number(post.views || 0);
-    total += views;
+  (Array.isArray(posts) ? posts : []).forEach(post => {
+    total += Number(post.views || 0);
 
-    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
-    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
-      todayTotal += views;
+    const todayViewsDate = String(post.todayViewsDate || '').slice(0, 10);
+    if (todayViewsDate === today) {
+      todayTotal += Number(post.todayViews || 0);
     }
   });
 
@@ -2121,24 +2125,47 @@ function updateTotalViews(posts) {
     }
 
     async function addView(id) {
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
+      const target = await findPostById(id);
       if (!target) return null;
 
       const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
-      metaMap[String(id)] = {
+      const key = String(id);
+      const today = getTodayString();
+      const nowIso = new Date().toISOString();
+      const currentMeta = metaMap[key] || {};
+
+      const currentViews = Number.isFinite(Number(currentMeta.views))
+        ? Number(currentMeta.views)
+        : Number(target.views || 0);
+
+      const savedTodayViewsDate = String(currentMeta.todayViewsDate || target.todayViewsDate || '').slice(0, 10);
+      const currentTodayViews = savedTodayViewsDate === today
+        ? (Number.isFinite(Number(currentMeta.todayViews))
+            ? Number(currentMeta.todayViews)
+            : Number(target.todayViews || 0))
+        : 0;
+
+      metaMap[key] = {
         ...currentMeta,
         author: currentMeta.author || target.author || '시민',
-        likes: Number(currentMeta.likes) || target.likes || 0,
-        views: nextViews,
-        lastViewedAt: new Date().toISOString()
+        likes: Number.isFinite(Number(currentMeta.likes))
+          ? Number(currentMeta.likes)
+          : Number(target.likes || 0),
+        views: currentViews + 1,
+        todayViews: currentTodayViews + 1,
+        todayViewsDate: today,
+        lastViewedAt: nowIso
       };
       savePostMetaMap(metaMap);
 
-      target.views = nextViews;
-      return target;
+      return normalizePost({
+        ...target,
+        likes: metaMap[key].likes,
+        views: metaMap[key].views,
+        todayViews: metaMap[key].todayViews,
+        todayViewsDate: metaMap[key].todayViewsDate,
+        lastViewedAt: metaMap[key].lastViewedAt
+      });
     }
 
     async function likePost(id) {
