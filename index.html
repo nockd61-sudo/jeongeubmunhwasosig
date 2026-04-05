@@ -1432,11 +1432,17 @@
             return normalizePost({
               ...item,
               author: item.author || meta.author || '시민',
-              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-              todayViews: Number.isFinite(Number(meta.todayViews)) ? Number(meta.todayViews) : Number(item.todayViews || 0),
-              todayViewsDate: String(meta.todayViewsDate || item.todayViewsDate || ''),
-              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
+              likes: Number.isFinite(Number(item.likes))
+                ? Number(item.likes)
+                : (Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : 0),
+              views: Number.isFinite(Number(item.views))
+                ? Number(item.views)
+                : (Number.isFinite(Number(meta.views)) ? Number(meta.views) : 0),
+              todayViews: Number.isFinite(Number(item.todayViews))
+                ? Number(item.todayViews)
+                : (Number.isFinite(Number(meta.todayViews)) ? Number(meta.todayViews) : 0),
+              todayViewsDate: String(item.todayViewsDate || meta.todayViewsDate || ''),
+              lastViewedAt: item.lastViewedAt || meta.lastViewedAt || '',
               comments
             });
           })
@@ -1495,6 +1501,52 @@
         ...normalized,
         id: String(result?.id || normalized.id)
       };
+    }
+
+    async function syncPostMetaToServer(post) {
+      if (!post || !post.id) return false;
+
+      const payload = {
+        id: String(post.id),
+        title: String(post.title || ''),
+        content: String(post.description || post.content || ''),
+        mediaType: String(post.mediaType || 'image'),
+        mediaUrl: String(post.mediaUrl || ''),
+        imageUrl: String(post.mediaUrl || ''),
+        startDate: String(post.date || post.startDate || ''),
+        date: String(post.date || post.startDate || ''),
+        endDate: String(post.endDate || post.date || post.startDate || ''),
+        place: String(post.place || ''),
+        author: String(post.author || '시민'),
+        likes: Number(post.likes || 0),
+        views: Number(post.views || 0),
+        todayViews: Number(post.todayViews || 0),
+        todayViewsDate: String(post.todayViewsDate || ''),
+        lastViewedAt: String(post.lastViewedAt || ''),
+        createdAt: String(post.createdAt || new Date().toISOString())
+      };
+
+      const attempts = [
+        { method: 'PATCH', body: JSON.stringify(payload) },
+        { method: 'PUT', body: JSON.stringify(payload) },
+        { method: 'POST', body: JSON.stringify({ ...payload, _action: 'updateMeta' }) },
+        { method: 'POST', body: JSON.stringify(payload) }
+      ];
+
+      for (const attempt of attempts) {
+        try {
+          const response = await fetch(API_POSTS_ENDPOINT, {
+            method: attempt.method,
+            headers: { 'Content-Type': 'application/json' },
+            body: attempt.body
+          });
+          if (response.ok) return true;
+        } catch (error) {
+          console.warn('조회수 서버 동기화 재시도', attempt.method, error);
+        }
+      }
+
+      return false;
     }
 
     function isValidMediaUrl(value) {
@@ -2134,38 +2186,54 @@ function updateTotalViews(posts) {
       const nowIso = new Date().toISOString();
       const currentMeta = metaMap[key] || {};
 
-      const currentViews = Number.isFinite(Number(currentMeta.views))
-        ? Number(currentMeta.views)
-        : Number(target.views || 0);
+      const baseViews = Number.isFinite(Number(target.views))
+        ? Number(target.views)
+        : (Number.isFinite(Number(currentMeta.views)) ? Number(currentMeta.views) : 0);
 
-      const savedTodayViewsDate = String(currentMeta.todayViewsDate || target.todayViewsDate || '').slice(0, 10);
-      const currentTodayViews = savedTodayViewsDate === today
-        ? (Number.isFinite(Number(currentMeta.todayViews))
-            ? Number(currentMeta.todayViews)
-            : Number(target.todayViews || 0))
+      const baseTodayViewsDate = String(target.todayViewsDate || currentMeta.todayViewsDate || '').slice(0, 10);
+      const baseTodayViews = baseTodayViewsDate === today
+        ? (Number.isFinite(Number(target.todayViews))
+            ? Number(target.todayViews)
+            : (Number.isFinite(Number(currentMeta.todayViews)) ? Number(currentMeta.todayViews) : 0))
         : 0;
 
-      metaMap[key] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: Number.isFinite(Number(currentMeta.likes))
-          ? Number(currentMeta.likes)
-          : Number(target.likes || 0),
-        views: currentViews + 1,
-        todayViews: currentTodayViews + 1,
+      const updatedPost = normalizePost({
+        ...target,
+        views: baseViews + 1,
+        todayViews: baseTodayViews + 1,
         todayViewsDate: today,
         lastViewedAt: nowIso
-      };
-      savePostMetaMap(metaMap);
-
-      return normalizePost({
-        ...target,
-        likes: metaMap[key].likes,
-        views: metaMap[key].views,
-        todayViews: metaMap[key].todayViews,
-        todayViewsDate: metaMap[key].todayViewsDate,
-        lastViewedAt: metaMap[key].lastViewedAt
       });
+
+      let synced = false;
+      try {
+        synced = await syncPostMetaToServer(updatedPost);
+      } catch (error) {
+        synced = false;
+      }
+
+      if (!synced) {
+        metaMap[key] = {
+          ...currentMeta,
+          author: currentMeta.author || target.author || '시민',
+          likes: Number.isFinite(Number(currentMeta.likes))
+            ? Number(currentMeta.likes)
+            : Number(target.likes || 0),
+          views: updatedPost.views,
+          todayViews: updatedPost.todayViews,
+          todayViewsDate: updatedPost.todayViewsDate,
+          lastViewedAt: updatedPost.lastViewedAt
+        };
+        savePostMetaMap(metaMap);
+      } else if (metaMap[key]) {
+        delete metaMap[key].views;
+        delete metaMap[key].todayViews;
+        delete metaMap[key].todayViewsDate;
+        delete metaMap[key].lastViewedAt;
+        savePostMetaMap(metaMap);
+      }
+
+      return updatedPost;
     }
 
     async function likePost(id) {
