@@ -1,23 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>정읍문화소식</title>
-
-  <meta name="description" content="정읍의 축제, 전시, 공연 등 문화소식을 시민이 직접 올리고 함께 보는 이미지 중심 플랫폼입니다.">
-  <meta name="keywords" content="정읍, 정읍문화소식, 정읍행사, 정읍축제, 정읍전시, 정읍공연">
-  <meta property="og:type" content="website">
-  <meta name="robots" content="index, follow">
-
-  <meta property="og:title" content="정읍문화소식">
-  <meta property="og:description" content="정읍 문화행사 통합 플랫폼">
-  <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg">
-  <meta property="og:url" content="https://jeongeup-art.com">
-
-  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
-
   <style>
     :root {
       --bg: #f4f4f4;
@@ -1112,7 +1099,7 @@
   <script>
 
 
-    const USE_API = false;
+    const API_POSTS_ENDPOINT = '/api/posts';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1451,65 +1438,40 @@
     }
 
     async function getPosts() {
-  if (!USE_API) {
-    const localPosts = getStored('jeongeup-posts', demoPosts);
-    const metaMap = getPostMetaMap();
-    const commentsMap = await getMergedCommentsMap();
+      try {
+        const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`게시글 불러오기 실패 (${response.status})`);
+        }
 
-    const normalized = localPosts
-      .map((item) => {
-        const id = String(item.id || '');
-        const meta = metaMap[id] || {};
-        const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
+        const data = await response.json();
+        const items = Array.isArray(data) ? data : [];
+        const metaMap = getPostMetaMap();
+        const commentsMap = await getMergedCommentsMap();
 
-        return normalizePost({
-          ...item,
-          author: item.author || meta.author || '시민',
-          likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-          views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-          lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
-          comments
-        });
-      })
-      .filter(Boolean);
+        const normalized = items
+          .map((item) => {
+            const id = String(item.id || '');
+            const meta = metaMap[id] || {};
+            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
 
-    return sortPosts(normalized);
-  }
+            return normalizePost({
+              ...item,
+              author: item.author || meta.author || '시민',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
+              comments
+            });
+          })
+          .filter(Boolean);
 
-  try {
-    const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`게시글 불러오기 실패 (${response.status})`);
+        return sortPosts(normalized);
+      } catch (error) {
+        console.error('서버 게시글 읽기 실패', error);
+        return [];
+      }
     }
-
-    const data = await response.json();
-    const items = Array.isArray(data) ? data : [];
-    const metaMap = getPostMetaMap();
-    const commentsMap = await getMergedCommentsMap();
-
-    const normalized = items
-      .map((item) => {
-        const id = String(item.id || '');
-        const meta = metaMap[id] || {};
-        const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-        return normalizePost({
-          ...item,
-          author: item.author || meta.author || '시민',
-          likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-          views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-          lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
-          comments
-        });
-      })
-      .filter(Boolean);
-
-    return sortPosts(normalized);
-  } catch (error) {
-    console.error('서버 게시글 읽기 실패', error);
-    return [];
-  }
-}
 
     async function savePost(post) {
       const normalized = normalizePost(post);
