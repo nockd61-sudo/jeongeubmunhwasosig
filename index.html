@@ -1388,54 +1388,54 @@
     }
 
     async function getServerCommentsMap() {
-  if (!USE_API) {
-    return {};
-  }
+      if (!USE_API) {
+        return {};
+      }
 
-  try {
-    const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
-      cache: 'no-store'
-    });
+      try {
+        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
+          cache: 'no-store'
+        });
 
-    const contentType = response.headers.get('content-type') || '';
+        const contentType = response.headers.get('content-type') || '';
 
-    if (!response.ok) {
-      throw new Error(`댓글 불러오기 실패 (${response.status})`);
+        if (!response.ok) {
+          throw new Error(`댓글 불러오기 실패 (${response.status})`);
+        }
+
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          return data.reduce((acc, item) => {
+            const normalized = normalizeComment(item);
+            if (!normalized || !normalized.postId) return acc;
+            acc[normalized.postId] = acc[normalized.postId] || [];
+            acc[normalized.postId].push(normalized);
+            return acc;
+          }, {});
+        }
+
+        if (data && typeof data === 'object') {
+          return Object.entries(data).reduce((acc, [postId, items]) => {
+            acc[postId] = (Array.isArray(items) ? items : [])
+              .map((item) => normalizeComment({ ...item, postId }))
+              .filter(Boolean);
+            return acc;
+          }, {});
+        }
+
+        return {};
+      } catch (error) {
+        console.warn('서버 댓글 읽기 실패', error);
+        return {};
+      }
     }
-
-    if (!contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-      throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
-    }
-
-    const data = await response.json();
-
-    if (Array.isArray(data)) {
-      return data.reduce((acc, item) => {
-        const normalized = normalizeComment(item);
-        if (!normalized || !normalized.postId) return acc;
-        acc[normalized.postId] = acc[normalized.postId] || [];
-        acc[normalized.postId].push(normalized);
-        return acc;
-      }, {});
-    }
-
-    if (data && typeof data === 'object') {
-      return Object.entries(data).reduce((acc, [postId, items]) => {
-        acc[postId] = (Array.isArray(items) ? items : [])
-          .map((item) => normalizeComment({ ...item, postId }))
-          .filter(Boolean);
-        return acc;
-      }, {});
-    }
-
-    return {};
-  } catch (error) {
-    console.warn('서버 댓글 읽기 실패', error);
-    return {};
-  }
-}
 
     async function getMergedCommentsMap() {
       const serverMap = await getServerCommentsMap();
@@ -1482,123 +1482,52 @@
     }
 
     async function getPosts() {
-  const metaMap = getPostMetaMap();
-  const commentsMap = await getMergedCommentsMap();
+      const metaMap = getPostMetaMap();
+      const commentsMap = await getMergedCommentsMap();
 
-  if (!USE_API) {
-    const localItems = getStored(LOCAL_POSTS_KEY, demoPosts);
+      if (!USE_API) {
+        const localItems = getStored(LOCAL_POSTS_KEY, demoPosts);
 
-    const normalizedLocal = localItems
-      .map((item) => {
-        const id = String(item.id || '');
-        const meta = metaMap[id] || {};
-        const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
+        const normalizedLocal = localItems
+          .map((item) => {
+            const id = String(item.id || '');
+            const meta = metaMap[id] || {};
+            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
 
-        return normalizePost({
-          ...item,
-          date: item.date || item.startDate || item.createdAt || item.created_at || '',
-          endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
-          place: item.place || meta.place || '',
-          author: item.author || meta.author || '시민',
-          likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-          views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-          lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
-          comments
+            return normalizePost({
+              ...item,
+              date: item.date || item.startDate || item.createdAt || item.created_at || '',
+              endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
+              place: item.place || meta.place || '',
+              author: item.author || meta.author || '시민',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
+              comments
+            });
+          })
+          .filter(Boolean);
+
+        return sortPosts(normalizedLocal);
+      }
+
+      try {
+        const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
+          cache: 'no-store'
         });
-      })
-      .filter(Boolean);
 
-    return sortPosts(normalizedLocal);
-  }
+        const contentType = response.headers.get('content-type') || '';
 
-  try {
-    const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-      cache: 'no-store'
-    });
+        if (!response.ok) {
+          throw new Error(`게시글 불러오기 실패 (${response.status})`);
+        }
 
-    const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
+        }
 
-    if (!response.ok) {
-      throw new Error(`게시글 불러오기 실패 (${response.status})`);
-    }
-
-    if (!contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-      throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
-    }
-
-    const data = await response.json();
-    const items = Array.isArray(data)
-      ? data
-      : Array.isArray(data?.results)
-        ? data.results
-        : [];
-
-    const normalized = items
-      .map((item) => {
-        const id = String(item.id || '');
-        const meta = metaMap[id] || {};
-        const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-        return normalizePost({
-          ...item,
-          date: item.date || item.startDate || item.createdAt || item.created_at || '',
-          endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
-          place: item.place || meta.place || '',
-          author: item.author || meta.author || '시민',
-          likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-          views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-          lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
-          comments
-        });
-      })
-      .filter(Boolean);
-
-    return sortPosts(normalized);
-  } catch (error) {
-    console.error('서버 게시글 읽기 실패', error);
-
-    const fallbackItems = getStored(LOCAL_POSTS_KEY, demoPosts);
-    const normalizedFallback = fallbackItems
-      .map((item) => {
-        const id = String(item.id || '');
-        const meta = metaMap[id] || {};
-        const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-        return normalizePost({
-          ...item,
-          author: item.author || meta.author || '시민',
-          likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-          views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-          lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
-          comments
-        });
-      })
-      .filter(Boolean);
-
-    return sortPosts(normalizedFallback);
-  }
-}
-
-     try {
-  const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-    cache: 'no-store'
-  });
-
-  const contentType = response.headers.get('content-type') || '';
-
-  if (!response.ok) {
-    throw new Error(`게시글 불러오기 실패 (${response.status})`);
-  }
-
-  if (!contentType.includes('application/json')) {
-    const text = await response.text();
-    console.error('JSON 대신 받은 응답:', text.slice(0, 300));
-    throw new Error('API가 JSON이 아니라 HTML을 반환했습니다.');
-  }
-
-  const apiPosts = await response.json();
         const data = await response.json();
         const items = Array.isArray(data)
           ? data
