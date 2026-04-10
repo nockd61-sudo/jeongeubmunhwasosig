@@ -196,7 +196,6 @@
       cursor: pointer;
     }
 
-
     .ai-search-wrap {
       background: #fff;
       border: 1px solid var(--line);
@@ -777,7 +776,7 @@
   
     .board-tab-content { display: none; }
     .board-tab-content.active { display: block; }
-</style>
+  </style>
 </head>
 <body>
 <header>
@@ -896,9 +895,6 @@
     </div>
   </div>
 
- 
-
-  
   <div class="modal-backdrop" id="boardModal">
     <div class="modal">
       <div class="modal-head">
@@ -942,7 +938,7 @@
     </div>
   </div>
 
-<div class="modal-backdrop" id="videoModal">
+  <div class="modal-backdrop" id="videoModal">
     <div class="modal">
       <div class="modal-head">
         <h3>영상행사</h3>
@@ -954,30 +950,29 @@
           <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
         </div>
         <div class="panel" style="margin-top:0;">
-  <div id="videoViewPanel">
-    <h3>등록된 영상 목록</h3>
-    <div id="videoPlayer" style="margin-bottom:20px;"></div>
-    <div class="video-list" id="videoList"></div>
-  </div>
+          <div id="videoViewPanel">
+            <h3>등록된 영상 목록</h3>
+            <div id="videoPlayer" style="margin-bottom:20px;"></div>
+            <div class="video-list" id="videoList"></div>
+          </div>
   
-  <div id="videoWritePanel" style="display:none;">
-    <h3>유튜브 영상 등록</h3>
+          <div id="videoWritePanel" style="display:none;">
+            <h3>유튜브 영상 등록</h3>
 
-    <input type="text" id="videoTitle" placeholder="영상 제목"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <input type="text" id="videoTitle" placeholder="영상 제목"
+              style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
 
-    <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
+              style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
 
-    <textarea id="videoDesc" placeholder="영상 설명"
-      style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
+            <textarea id="videoDesc" placeholder="영상 설명"
+              style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
 
-    <button type="button" onclick="addVideo()"
-      style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
-      영상 등록
-    </button>
-  </div>
-</div>
+            <button type="button" onclick="addVideo()"
+              style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
+              영상 등록
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1103,10 +1098,8 @@
   </footer>
 
   <script>
-
-
-   const API_POSTS_ENDPOINT = '/api/posts';
-    const API_VERSION = '20260410-shared-sync-fix2';
+    const API_POSTS_ENDPOINT = '/api/posts';
+    const API_VERSION = '20260410-shared-sync';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1114,7 +1107,7 @@
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
-  const R2_UPLOAD_ENDPOINT = '/api/upload';
+    const R2_UPLOAD_ENDPOINT = '/api/upload';
     const USE_API = true;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
@@ -1182,7 +1175,6 @@
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
     let visiblePostCount = 8;
-
 
     function getHiddenBrokenPostIds() {
       const raw = localStorage.getItem(HIDDEN_BROKEN_POST_IDS_KEY);
@@ -1695,6 +1687,7 @@
     function saveNotices(notices) {
       saveStored(NOTICES_KEY, notices);
     }
+
     function getVideoItems() {
       const raw = localStorage.getItem(VIDEO_ITEMS_KEY);
       if (!raw) return [];
@@ -1745,104 +1738,103 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-async function uploadFileToWorker(file, mediaType) {
-  if (!file) {
-    throw new Error('업로드할 파일이 없습니다.');
-  }
+    async function uploadFileToWorker(file, mediaType) {
+      if (!file) {
+        throw new Error('업로드할 파일이 없습니다.');
+      }
 
-  if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
-  }
+      if (mediaType === 'video') {
+        throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+      }
 
-  const imageMaxBytes = 10 * 1024 * 1024;
-  if (file.size > imageMaxBytes) {
-    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
-  }
+      const imageMaxBytes = 10 * 1024 * 1024;
+      if (file.size > imageMaxBytes) {
+        throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
+      }
 
-  if (!USE_API) {
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      if (!USE_API) {
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
 
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            const maxWidth = 1400;
-            const maxHeight = 1800;
-            let { width, height } = img;
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              try {
+                const maxWidth = 1400;
+                const maxHeight = 1800;
+                let { width, height } = img;
 
-            const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-            width = Math.max(1, Math.round(width * ratio));
-            height = Math.max(1, Math.round(height * ratio));
+                const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+                width = Math.max(1, Math.round(width * ratio));
+                height = Math.max(1, Math.round(height * ratio));
 
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-              reject(new Error('이미지 변환 준비에 실패했습니다.'));
-              return;
-            }
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                  reject(new Error('이미지 변환 준비에 실패했습니다.'));
+                  return;
+                }
 
-            ctx.drawImage(img, 0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
 
-            let quality = 0.82;
-            let result = canvas.toDataURL('image/jpeg', quality);
+                let quality = 0.82;
+                let result = canvas.toDataURL('image/jpeg', quality);
 
-            while (result.length > 1_600_000 && quality > 0.45) {
-              quality -= 0.08;
-              result = canvas.toDataURL('image/jpeg', quality);
-            }
+                while (result.length > 1600000 && quality > 0.45) {
+                  quality -= 0.08;
+                  result = canvas.toDataURL('image/jpeg', quality);
+                }
 
-            if (!result.startsWith('data:image/')) {
-              reject(new Error('이미지 변환에 실패했습니다.'));
-              return;
-            }
+                if (!result.startsWith('data:image/')) {
+                  reject(new Error('이미지 변환에 실패했습니다.'));
+                  return;
+                }
 
-            resolve(result);
-          } catch (error) {
-            reject(new Error('이미지 압축 중 오류가 발생했습니다.'));
-          }
-        };
+                resolve(result);
+              } catch (error) {
+                reject(new Error('이미지 압축 중 오류가 발생했습니다.'));
+              }
+            };
 
-        img.onerror = () => {
-          reject(new Error('이미지 읽기에 실패했습니다.'));
-        };
+            img.onerror = () => {
+              reject(new Error('이미지 읽기에 실패했습니다.'));
+            };
 
-        img.src = String(reader.result || '');
-      };
+            img.src = String(reader.result || '');
+          };
 
-      reader.onerror = () => {
-        reject(new Error('파일 읽기 실패'));
-      };
+          reader.onerror = () => {
+            reject(new Error('파일 읽기 실패'));
+          };
 
-      reader.readAsDataURL(file);
-    });
-  }
+          reader.readAsDataURL(file);
+        });
+      }
 
-  const formData = new FormData();
-  formData.append('file', file);
+      const formData = new FormData();
+      formData.append('file', file);
 
-  const response = await fetch(R2_UPLOAD_ENDPOINT, {
-    method: 'POST',
-    body: formData
-  });
+      const response = await fetch(R2_UPLOAD_ENDPOINT, {
+        method: 'POST',
+        body: formData
+      });
 
-  let data = null;
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-  }
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+      }
 
-  if (!response.ok || !data?.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 실패');
-  }
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || data?.detail || '업로드 실패');
+      }
 
-  return data.url;
-}
-
+      return data.url;
+    }
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1982,8 +1974,8 @@ async function uploadFileToWorker(file, mediaType) {
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
-        updateTotalViews([]);
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        updateTotalViews([]);
         return;
       }
 
@@ -2017,7 +2009,7 @@ async function uploadFileToWorker(file, mediaType) {
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
               <span>조회수 ${post.views || 0}</span>
-              <span>좋아요 ${(post.likes || 0)}</span>
+              <span>좋아요 ${post.likes || 0}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
           </div>
@@ -2031,26 +2023,28 @@ async function uploadFileToWorker(file, mediaType) {
         </article>
       `).join('');
     }
-function updateTotalViews(posts) {
-  let total = 0;
-  let todayTotal = 0;
-  const today = getTodayString();
 
-  posts.forEach(post => {
-    const views = Number(post.views || 0);
-    total += views;
+    function updateTotalViews(posts) {
+      let total = 0;
+      let todayTotal = 0;
+      const today = getTodayString();
 
-    const lastViewedDate = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
-    if (lastViewedDate === today) {
-      todayTotal += views;
+      posts.forEach(post => {
+        const views = Number(post.views || 0);
+        total += views;
+
+        const updatedAt = String(post.lastViewedAt || '').slice(0, 10);
+        if (updatedAt === today) {
+          todayTotal += 1;
+        }
+      });
+
+      const el = document.getElementById('totalViewsBox');
+      if (el) {
+        el.innerText = `총 조회수: ${total} | 오늘 조회수: ${todayTotal}`;
+      }
     }
-  });
 
-  const el = document.getElementById('totalViewsBox');
-  if (el) {
-    el.innerText = `총 조회수: ${total} | 오늘 조회수: ${todayTotal}`;
-  }
-}
     function renderNotices() {
       const notices = [...getNotices()].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -2138,7 +2132,7 @@ function updateTotalViews(posts) {
                 <strong>${escapeHtml(item.title)}</strong>
                 <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
               </div>
-              <span>${formatDate(item.date)}</span>
+              <span>유튜브 링크 등록</span>
             </div>
           `;
         }
@@ -2147,434 +2141,46 @@ function updateTotalViews(posts) {
           <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
             <div>
               <strong>${escapeHtml(item.title)}</strong>
-              <span>${escapeHtml(item.place)} · ${escapeHtml(item.author)}</span>
+              <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
             </div>
             <span>${formatDate(item.date)}</span>
           </div>
         `;
       }).join('');
 
-      const latestCustom = customVideos[0];
-      if (latestCustom) {
-        playCustomVideo(latestCustom.id, false);
+      const firstCustom = merged.find(item => item.isCustomVideoItem);
+      if (firstCustom) {
+        playCustomVideo(firstCustom.id);
+      } else {
+        document.getElementById('videoPlayer').innerHTML = '';
       }
     }
 
-    function playCustomVideo(id, switchToView = true) {
+    function playCustomVideo(id) {
       const items = getVideoItems();
-      const target = items.find(item => item.id === id);
-      if (!target) return;
+      const item = items.find(v => String(v.id) === String(id));
+      if (!item) return;
 
-      const iframe = `
-        <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+      const youtubeId = getYoutubeId(item.url);
+      if (!youtubeId) {
+        alert('유효한 유튜브 링크가 아닙니다.');
+        return;
+      }
+
+      document.getElementById('videoPlayer').innerHTML = `
+        <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:14px;background:#000;">
           <iframe
-            src="https://www.youtube.com/embed/${target.youtubeId}"
+            src="https://www.youtube.com/embed/${youtubeId}"
             style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
             allowfullscreen
             loading="lazy">
           </iframe>
         </div>
-      `;
-
-      document.getElementById('videoPlayer').innerHTML = iframe;
-
-      if (switchToView) {
-        document.getElementById('videoViewPanel').style.display = 'block';
-        document.getElementById('videoWritePanel').style.display = 'none';
-      }
-    }
-
-    window.playCustomVideo = playCustomVideo;
-
-    async function renderAll() {
-      await renderPosts();
-      renderNotices();
-      await renderBoardList();
-      await renderVideoList();
-    }
-
-    function renderPreview(file, mediaType) {
-      if (!file) {
-        uploadPreview.className = 'upload-preview';
-        uploadPreview.innerHTML = '';
-        return;
-      }
-
-      const url = URL.createObjectURL(file);
-      uploadPreview.innerHTML = mediaType === 'video'
-        ? `<video src="${url}" controls muted playsinline preload="metadata"></video>`
-        : `<img src="${url}" alt="업로드 미리보기">`;
-      uploadPreview.className = 'upload-preview show';
-
-      const mediaEl = uploadPreview.querySelector('img, video');
-      if (mediaEl) {
-        mediaEl.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
-        mediaEl.addEventListener('loadeddata', () => URL.revokeObjectURL(url), { once: true });
-        mediaEl.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
-      }
-    }
-
-    function openModal(id) {
-      document.getElementById(id)?.classList.add('show');
-      document.body.style.overflow = 'hidden';
-
-      if (id === 'noticeModal') {
-        showNoticeList();
-      }
-      if (id === 'boardModal') {
-        showBoardList();
-      }
-    }
-
-    function closeModal(id) {
-      document.getElementById(id)?.classList.remove('show');
-      if (!document.querySelector('.modal-backdrop.show')) {
-        document.body.style.overflow = '';
-      }
-    }
-
-    function showNoticeList() {
-      noticeListPanel.style.display = 'block';
-      noticeWritePanel.style.display = 'none';
-      noticeViewTab.className = 'submit';
-      noticeWriteTab.className = 'reset';
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-    }
-
-    function showNoticeWrite() {
-      if (!isAdminLoggedIn) {
-        const password = prompt('관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 접근 가능합니다');
-          return;
-        }
-        setAdminMode(true);
-      }
-
-      noticeListPanel.style.display = 'none';
-      noticeWritePanel.style.display = 'block';
-      noticeViewTab.className = 'reset';
-      noticeWriteTab.className = 'submit';
-    }
-
-    function showBoardList() {
-      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('[data-board-tab="list"]')?.classList.add('active');
-      document.getElementById('boardListTab')?.classList.add('active');
-      document.getElementById('boardWriteTab')?.classList.remove('active');
-      document.getElementById('boardWriteForm')?.reset();
-    }
-
-    function showBoardWrite() {
-      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('[data-board-tab="write"]')?.classList.add('active');
-      document.getElementById('boardWriteTab')?.classList.add('active');
-      document.getElementById('boardListTab')?.classList.remove('active');
-    }
-
-    function setAdminMode(enabled) {
-      isAdminLoggedIn = enabled;
-      document.body.classList.toggle('admin-mode', enabled);
-      adminLoginBtn.textContent = enabled ? '관리자 로그아웃' : '관리자 로그인';
-      renderAll();
-    }
-
-    function editNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 수정 가능합니다');
-        return;
-      }
-
-      const notices = getNotices();
-      const target = notices.find((item) => item.id === id);
-      if (!target) return;
-
-      openModal('noticeModal');
-      showNoticeWrite();
-      document.getElementById('noticeTitle').value = target.title;
-      document.getElementById('noticeContent').value = target.content;
-      noticeForm.dataset.editId = id;
-    }
-
-    function deleteNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-
-      if (!confirm('이 공지를 삭제하시겠습니까?')) return;
-
-      const notices = getNotices().filter((item) => item.id !== id);
-      saveNotices(notices);
-      renderNotices();
-    }
-
-    async function findPostById(id) {
-      const posts = await getPosts();
-      return posts.find((post) => String(post.id) === String(id));
-    }
-
-    async function addView(id) {
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      if (!USE_API) {
-        const metaMap = getPostMetaMap();
-        const currentMeta = metaMap[String(id)] || {};
-        const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
-        metaMap[String(id)] = {
-          ...currentMeta,
-          author: currentMeta.author || target.author || '시민',
-          likes: Number(currentMeta.likes) || target.likes || 0,
-          views: nextViews,
-          lastViewedAt: new Date().toISOString()
-        };
-        savePostMetaMap(metaMap);
-        target.views = nextViews;
-        return target;
-      }
-
-      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: String(id), action: 'view' })
-      });
-
-      let result = {};
-      try {
-        result = await response.json();
-      } catch (error) {
-        result = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(result?.error || result?.detail || '조회수 반영 실패');
-      }
-
-      target.views = Number(result?.views || target.views || 0);
-      target.lastViewedAt = result?.lastViewedAt || new Date().toISOString();
-      return target;
-    }
-
-    async function likePost(id) {
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      if (!USE_API) {
-        const metaMap = getPostMetaMap();
-        const currentMeta = metaMap[String(id)] || {};
-        const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
-        metaMap[String(id)] = {
-          ...currentMeta,
-          author: currentMeta.author || target.author || '시민',
-          likes: nextLikes,
-          views: Number(currentMeta.views) || target.views || 0
-        };
-        savePostMetaMap(metaMap);
-        target.likes = nextLikes;
-        return target;
-      }
-
-      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: String(id), action: 'like' })
-      });
-
-      let result = {};
-      try {
-        result = await response.json();
-      } catch (error) {
-        result = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(result?.error || result?.detail || '좋아요 반영 실패');
-      }
-
-      target.likes = Number(result?.likes || target.likes || 0);
-      return target;
-    }
-
-    async function deletePost(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제할 수 있습니다.');
-        return;
-      }
-
-      if (!id) {
-        alert('삭제할 게시글 ID를 찾지 못했습니다.');
-        return;
-      }
-
-      if (!confirm('이 게시글을 삭제하시겠습니까?')) {
-        return;
-      }
-
-      try {
-        const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
-
-        let response = await fetch(buildApiUrl(deleteUrl), {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: String(id) })
-          });
-        }
-
-        let result = {};
-        try {
-          result = await response.json();
-        } catch (error) {
-          result = {};
-        }
-
-        if (!response.ok) {
-          throw new Error(result?.error || result?.detail || `삭제 실패 (${response.status})`);
-        }
-
-        const metaMap = getPostMetaMap();
-        delete metaMap[String(id)];
-        savePostMetaMap(metaMap);
-
-        const commentsMap = getPostCommentsMap();
-        delete commentsMap[String(id)];
-        savePostCommentsMap(commentsMap);
-
-        closeModal('detailModal');
-        await renderAll();
-        alert('게시글이 삭제되었습니다.');
-      } catch (error) {
-        console.error('게시글 삭제 실패', error);
-        alert('게시글 삭제에 실패했습니다.\n현재 Worker/API에 DELETE 기능이 없거나 삭제 방식이 다를 수 있습니다.');
-      }
-    }
-
-    function renderComments(post) {
-      const list = document.getElementById('commentList');
-
-      if (!post.comments || post.comments.length === 0) {
-        list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
-        return;
-      }
-
-      list.innerHTML = post.comments.map(c => `
-        <div class="comment-item">
-          <strong>${escapeHtml(c.author)}</strong>
-          <div>${escapeHtml(c.text)}</div>
-          <span>${formatDate(c.date)}</span>
+        <div style="margin-top:12px;">
+          <strong>${escapeHtml(item.title)}</strong>
+          <div style="margin-top:6px; color:#6b7280;">${escapeHtml(item.description || '')}</div>
         </div>
-      `).join('');
-    }
-
-    async function openDetail(id, options = {}) {
-      const { incrementView = true } = options;
-      const post = incrementView ? await addView(id) : await findPostById(id);
-      if (!post) return;
-
-      detailTitle.textContent = post.title;
-      detailMeta.innerHTML = `
-        <div>행사일: ${formatDate(post.date)}</div>
-        <div>장소: ${escapeHtml(post.place)}</div>
-        <div>작성자: ${escapeHtml(post.author)}</div>
-        <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
-
-      detailMedia.innerHTML = post.mediaType === 'video'
-        ? buildEventVideoHtml(post)
-        : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
-
-      detailDescription.textContent = post.description || '';
-      detailShareBtn.onclick = () => sharePost(id);
-      detailLikeBtn.onclick = async () => {
-        const updated = await likePost(id);
-        if (!updated) return;
-        await openDetail(id, { incrementView: false });
-        await renderAll();
-      };
-      detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
-      detailDeleteBtn.onclick = () => deletePost(id);
-
-      commentForm.dataset.postId = String(id);
-      renderComments(post);
-      openModal('detailModal');
-      await renderAll();
-    }
-
-    async function sharePost(id) {
-      const post = await findPostById(id);
-      if (!post) {
-        alert('공유할 글을 찾지 못했습니다.');
-        return;
-      }
-
-      const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
-      const shareTitle = `[정읍문화소식] ${post.title}`;
-      const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-      const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-      const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
-
-      if (window.Kakao && window.Kakao.Share) {
-        try {
-          if (!window.Kakao.isInitialized()) {
-            window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-          }
-          window.Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: shareTitle,
-              description: shareDesc,
-              imageUrl: shareImage,
-              link: {
-                mobileWebUrl: shareUrl,
-                webUrl: shareUrl,
-              },
-            },
-            buttons: [
-              {
-                title: '자세히 보기',
-                link: {
-                  mobileWebUrl: shareUrl,
-                  webUrl: shareUrl,
-                },
-              },
-            ],
-          });
-          return;
-        } catch (error) {
-          console.error('카카오 공유 실패', error);
-        }
-      }
-
-      const fullText = `${shareTitle}
-${shareDesc}
-${shareUrl}`;
-      fallbackShare(fullText);
-    }
-
-    function fallbackShare(fullText) {
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(fullText).then(() => {
-          alert('공유용 링크를 복사했습니다.');
-        }).catch(() => {
-          window.prompt('아래 내용을 복사해 공유하세요.', fullText);
-        });
-      } else {
-        window.prompt('아래 내용을 복사해 공유하세요.', fullText);
-      }
     }
 
     function escapeHtml(value) {
@@ -2583,29 +2189,225 @@ ${shareUrl}`;
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/'/g, '&#39;');
+    }
+
+    function setAdminMode(active) {
+      isAdminLoggedIn = Boolean(active);
+      document.body.classList.toggle('admin-mode', isAdminLoggedIn);
+      adminLoginBtn.textContent = isAdminLoggedIn ? '관리자 로그아웃' : '관리자 로그인';
+      renderAll();
     }
 
     adminLoginBtn.addEventListener('click', () => {
       if (isAdminLoggedIn) {
         setAdminMode(false);
-        alert('관리자 로그아웃 되었습니다.');
         return;
       }
 
       const password = prompt('관리자 비밀번호를 입력하세요');
       if (password === ADMIN_PASSWORD) {
         setAdminMode(true);
-        alert('관리자 로그인 완료');
-      } else {
-        alert('비밀번호가 올바르지 않습니다');
+        alert('관리자 로그인되었습니다.');
+      } else if (password !== null) {
+        alert('비밀번호가 올바르지 않습니다.');
       }
     });
 
-    noticeViewTab.addEventListener('click', showNoticeList);
-    noticeWriteTab.addEventListener('click', showNoticeWrite);
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('show');
+    }
 
-    document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('show');
+    }
+
+    document.querySelectorAll('[data-open]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget.getAttribute('data-open');
+        openModal(target);
+      });
+    });
+
+    document.querySelectorAll('[data-close]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const target = e.currentTarget.getAttribute('data-close');
+        closeModal(target);
+      });
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.classList.remove('show');
+      });
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files?.[0];
+      if (!file) {
+        uploadPreview.classList.remove('show');
+        uploadPreview.innerHTML = '';
+        return;
+      }
+
+      const fileType = mediaTypeSelect.value;
+      const url = URL.createObjectURL(file);
+
+      uploadPreview.classList.add('show');
+      if (fileType === 'video') {
+        uploadPreview.innerHTML = `<video src="${url}" controls muted playsinline></video>`;
+      } else {
+        uploadPreview.innerHTML = `<img src="${url}" alt="미리보기">`;
+      }
+    });
+
+    mediaTypeSelect.addEventListener('change', () => {
+      uploadPreview.classList.remove('show');
+      uploadPreview.innerHTML = '';
+      fileInput.value = '';
+    });
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const place = document.getElementById('place').value.trim();
+      const author = document.getElementById('author').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const mediaType = mediaTypeSelect.value;
+      const file = fileInput.files?.[0];
+
+      if (!title || !startDate || !endDate || !place || !author || !description || !file) {
+        alert('모든 항목을 입력해주세요.');
+        return;
+      }
+
+      try {
+        const mediaUrl = await uploadFileToWorker(file, mediaType);
+
+        await savePost({
+          id: `${Date.now()}`,
+          title,
+          date: startDate,
+          endDate,
+          place,
+          author,
+          description,
+          mediaType,
+          mediaUrl,
+          likes: 0,
+          views: 0,
+          comments: []
+        });
+
+        uploadForm.reset();
+        uploadPreview.classList.remove('show');
+        uploadPreview.innerHTML = '';
+        resetVisiblePostCount();
+        await renderAll();
+        closeModal('uploadModal');
+        alert('게시글이 등록되었습니다.');
+      } catch (error) {
+        console.error(error);
+        alert(error.message || '게시글 등록 중 오류가 발생했습니다.');
+      }
+    });
+
+    noticeViewTab.addEventListener('click', () => {
+      noticeListPanel.style.display = 'block';
+      noticeWritePanel.style.display = 'none';
+    });
+
+    noticeWriteTab.addEventListener('click', () => {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 공지를 작성할 수 있습니다.');
+        return;
+      }
+      noticeListPanel.style.display = 'none';
+      noticeWritePanel.style.display = 'block';
+    });
+
+    noticeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!isAdminLoggedIn) {
+        alert('관리자만 공지를 등록할 수 있습니다.');
+        return;
+      }
+
+      const title = document.getElementById('noticeTitle').value.trim();
+      const content = document.getElementById('noticeContent').value.trim();
+
+      if (!title || !content) {
+        alert('제목과 내용을 입력해주세요.');
+        return;
+      }
+
+      const notices = getNotices();
+      notices.unshift({
+        id: `${Date.now()}`,
+        title,
+        content,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      saveNotices(notices);
+
+      noticeForm.reset();
+      renderNotices();
+      noticeListPanel.style.display = 'block';
+      noticeWritePanel.style.display = 'none';
+      alert('공지사항이 등록되었습니다.');
+    });
+
+    window.editNotice = function (noticeId) {
+      if (!isAdminLoggedIn) return;
+
+      const notices = getNotices();
+      const notice = notices.find((item) => String(item.id) === String(noticeId));
+      if (!notice) return;
+
+      const nextTitle = prompt('공지 제목 수정', notice.title);
+      if (nextTitle === null) return;
+
+      const nextContent = prompt('공지 내용 수정', notice.content);
+      if (nextContent === null) return;
+
+      notice.title = nextTitle.trim() || notice.title;
+      notice.content = nextContent.trim() || notice.content;
+      saveNotices(notices);
+      renderNotices();
+    };
+
+    window.deleteNotice = function (noticeId) {
+      if (!isAdminLoggedIn) return;
+      if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+
+      const notices = getNotices().filter((item) => String(item.id) !== String(noticeId));
+      saveNotices(notices);
+      renderNotices();
+    };
+
+    document.querySelectorAll('[data-board-tab]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-board-tab]').forEach((b) => {
+          b.classList.remove('active', 'submit');
+          b.classList.add('reset');
+        });
+
+        btn.classList.add('active', 'submit');
+        btn.classList.remove('reset');
+
+        const tab = btn.getAttribute('data-board-tab');
+        document.getElementById('boardListTab').classList.toggle('active', tab === 'list');
+        document.getElementById('boardWriteTab').classList.toggle('active', tab === 'write');
+      });
+    });
+
+    document.getElementById('boardWriteForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const title = document.getElementById('boardTitle').value.trim();
@@ -2617,381 +2419,425 @@ ${shareUrl}`;
       }
 
       await savePost({
-        id: String(Date.now()),
+        id: `${Date.now()}`,
         title,
         date: new Date().toISOString().slice(0, 10),
         endDate: new Date().toISOString().slice(0, 10),
-        place: '시민 문화이야기',
+        place: '문화이야기',
         author: '시민',
         description: content,
         mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+        mediaUrl: getPlaceholderDataUrl('문화이야기'),
         likes: 0,
         views: 0,
         comments: []
       });
 
-      this.reset();
+      document.getElementById('boardWriteForm').reset();
       await renderAll();
-      showBoardList();
-      alert('문화이야기가 등록되었습니다.');
+
+      document.querySelector('[data-board-tab="list"]').click();
+      alert('게시글이 등록되었습니다.');
     });
 
-   
-    document.querySelectorAll('[data-open]').forEach((button) => {
-      button.addEventListener('click', () => {
-        document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
-        const openId = button.dataset.open;
-        const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
-        if (linkedTop) linkedTop.classList.add('active');
-        openModal(openId);
-      });
-    });
+    async function deletePost(postId) {
+      if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
 
-    document.addEventListener('click', (event) => {
-      const tabBtn = event.target.closest('[data-board-tab]');
-      if (tabBtn) {
-        const tab = tabBtn.getAttribute('data-board-tab');
-        if (tab === 'list') showBoardList();
-        if (tab === 'write') showBoardWrite();
-        return;
-      }
+      try {
+        if (USE_API) {
+          const response = await fetch(buildApiUrl(`${API_POSTS_ENDPOINT}/${postId}`), {
+            method: 'DELETE',
+            cache: 'no-store'
+          });
 
-      const detailBtn = event.target.closest('.detail-btn');
-      if (detailBtn) {
-        openDetail(detailBtn.dataset.postId);
-        return;
-      }
-
-      const thumbClick = event.target.closest('.thumb-click');
-      if (thumbClick) {
-        openDetail(thumbClick.dataset.postId);
-        return;
-      }
-
-      const shareBtn = event.target.closest('.share-btn');
-      if (shareBtn) {
-        sharePost(shareBtn.dataset.postId);
-        return;
-      }
-      const boardItem = event.target.closest('.board-item-click');
-     if (boardItem) {
-     const id = boardItem.dataset.postId;
-     openDetail(id);
-     return;
-     }
-
-      const deletePostBtn = event.target.closest('.delete-post-btn');
-      if (deletePostBtn) {
-        deletePost(deletePostBtn.dataset.postId);
-      }
-    });
-
-    eventGrid.addEventListener('keydown', (event) => {
-      const thumbClick = event.target.closest('.thumb-click');
-      if (!thumbClick) return;
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openDetail(thumbClick.dataset.postId);
-      }
-    });
-
-    document.querySelectorAll('[data-close]').forEach((button) => {
-      button.addEventListener('click', () => closeModal(button.dataset.close));
-    });
-
-    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-      backdrop.addEventListener('click', (event) => {
-        if (event.target === backdrop) {
-          backdrop.classList.remove('show');
-          if (!document.querySelector('.modal-backdrop.show')) {
-            document.body.style.overflow = '';
+          if (!response.ok) {
+            let errorMessage = '게시글 삭제에 실패했습니다.';
+            try {
+              const data = await response.json();
+              errorMessage = data?.error || data?.detail || errorMessage;
+            } catch (error) {}
+            throw new Error(errorMessage);
           }
+        } else {
+          const posts = getStored(LOCAL_POSTS_KEY, demoPosts).filter((item) => String(item.id) !== String(postId));
+          saveStored(LOCAL_POSTS_KEY, posts);
         }
-      });
+
+        const metaMap = getPostMetaMap();
+        delete metaMap[String(postId)];
+        savePostMetaMap(metaMap);
+
+        const commentsMap = getPostCommentsMap();
+        delete commentsMap[String(postId)];
+        savePostCommentsMap(commentsMap);
+
+        hideBrokenPostId(postId);
+        await renderAll();
+        closeModal('detailModal');
+      } catch (error) {
+        console.error(error);
+        alert(error.message || '게시글 삭제 중 오류가 발생했습니다.');
+      }
+    }
+
+    document.addEventListener('click', async (e) => {
+      const detailBtn = e.target.closest('.detail-btn');
+      const shareBtn = e.target.closest('.share-btn');
+      const thumbBtn = e.target.closest('.thumb-click');
+      const deleteBtn = e.target.closest('.delete-post-btn');
+      const boardDeleteBtn = e.target.closest('.board-delete-btn');
+      const boardItemClick = e.target.closest('.board-item-click');
+
+      if (detailBtn) {
+        const postId = detailBtn.getAttribute('data-post-id');
+        openDetail(postId);
+        return;
+      }
+
+      if (shareBtn) {
+        const postId = shareBtn.getAttribute('data-post-id');
+        const posts = await getPosts();
+        const post = posts.find((item) => String(item.id) === String(postId));
+        if (!post) return;
+        sharePost(post);
+        return;
+      }
+
+      if (thumbBtn) {
+        const postId = thumbBtn.getAttribute('data-post-id');
+        openDetail(postId);
+        return;
+      }
+
+      if (deleteBtn && isAdminLoggedIn) {
+        const postId = deleteBtn.getAttribute('data-post-id');
+        deletePost(postId);
+        return;
+      }
+
+      if (boardDeleteBtn && isAdminLoggedIn) {
+        const postId = boardDeleteBtn.getAttribute('data-post-id');
+        deletePost(postId);
+        return;
+      }
+
+      if (boardItemClick) {
+        const postId = boardItemClick.getAttribute('data-post-id');
+        openDetail(postId);
+      }
     });
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
+    document.addEventListener('keydown', (e) => {
+      const thumbBtn = e.target.closest('.thumb-click');
+      if (thumbBtn && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        const postId = thumbBtn.getAttribute('data-post-id');
+        openDetail(postId);
+      }
     });
 
-    mediaTypeSelect.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    searchBtn.addEventListener('click', () => {
+    searchBtn.addEventListener('click', async () => {
       resetVisiblePostCount();
-      renderPosts();
+      await renderPosts();
     });
-    searchInput.addEventListener('input', updateAiSearchMessage);
-    searchInput.addEventListener('keydown', (e) => {
+
+    searchInput.addEventListener('keydown', async (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         resetVisiblePostCount();
-        renderPosts();
+        await renderPosts();
       }
     });
-    aiKeywordButtons.forEach((button) => {
-      button.addEventListener('click', () => {
+
+    aiKeywordButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
         aiKeywordButtons.forEach((item) => item.classList.remove('active'));
-        button.classList.add('active');
-        searchInput.value = button.dataset.aiKeyword || '';
+        btn.classList.add('active');
+        searchInput.value = btn.getAttribute('data-ai-keyword') || '';
         resetVisiblePostCount();
-        renderPosts();
+        await renderPosts();
       });
-    });
-    filterType.addEventListener('change', () => {
-      resetVisiblePostCount();
-      renderPosts();
     });
 
     if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', () => {
+      loadMoreBtn.addEventListener('click', async () => {
         visiblePostCount += 8;
-        renderPosts();
+        await renderPosts();
       });
     }
 
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    let currentDetailPostId = null;
 
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('이미지 또는 영상을 선택해 주세요.');
-        return;
-      }
+    async function bumpPostView(postId) {
+      const posts = await getPosts();
+      const post = posts.find((item) => String(item.id) === String(postId));
+      if (!post) return null;
 
-      const titleValue = document.getElementById('title').value.trim();
-      const placeValue = document.getElementById('place').value.trim();
-      const authorValue = document.getElementById('author').value.trim();
-      const descriptionValue = document.getElementById('description').value.trim();
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
+      const nextViews = Number(post.views || 0) + 1;
+      const nowIso = new Date().toISOString();
 
-      if (!titleValue || !placeValue || !authorValue || !descriptionValue) {
-        alert('제목, 장소, 작성자, 설명을 모두 입력해 주세요.');
-        return;
-      }
+      if (USE_API) {
+        try {
+          const response = await fetch(buildApiUrl(`${API_POSTS_ENDPOINT}/${postId}`), {
+            method: 'PATCH',
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              views: nextViews,
+              lastViewedAt: nowIso
+            })
+          });
 
-      if (!startDate || !endDate) {
-        alert('행사 기간을 입력해 주세요.');
-        return;
-      }
-
-      if (startDate > endDate) {
-        alert('종료일이 시작일보다 빠를 수 없습니다.');
-        return;
-      }
-
-      const submitBtn = uploadForm.querySelector('.submit');
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '업로드 중...';
-
-        const uploadedUrl = await uploadFileToWorker(file, mediaTypeSelect.value);
-
-        await savePost({
-          id: String(Date.now()),
-          title: titleValue,
-          date: startDate,
-          endDate,
-          place: placeValue,
-          author: authorValue,
-          description: descriptionValue,
-          mediaType: mediaTypeSelect.value,
-          mediaUrl: uploadedUrl,
-          likes: 0,
-          views: 0,
-          comments: []
-        });
-        uploadForm.reset();
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-        await renderAll();
-        alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
-        closeModal('uploadModal');
-      } catch (error) {
-        console.error(error);
-        alert('업로드 실패: ' + (error && error.message ? error.message : '알 수 없는 오류'));
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '게시글 등록';
-      }
-    });
-
-    uploadForm.addEventListener('reset', () => {
-      setTimeout(() => {
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-      }, 0);
-    });
-
-    noticeForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      if (!isAdminLoggedIn) {
-        const password = prompt('공지 등록을 위해 관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 등록 가능합니다');
-          return;
+          if (response.ok) {
+            post.views = nextViews;
+            post.lastViewedAt = nowIso;
+          }
+        } catch (error) {
+          console.warn('조회수 서버 반영 실패', error);
         }
-        setAdminMode(true);
       }
 
-      const notices = getNotices();
-      const editId = noticeForm.dataset.editId;
-
-      const payload = {
-        id: editId || String(Date.now()),
-        title: document.getElementById('noticeTitle').value.trim(),
-        content: document.getElementById('noticeContent').value.trim(),
-        date: new Date().toISOString().slice(0, 10)
+      const metaMap = getPostMetaMap();
+      metaMap[String(postId)] = {
+        ...(metaMap[String(postId)] || {}),
+        author: post.author,
+        place: post.place,
+        likes: Number(metaMap[String(postId)]?.likes ?? post.likes ?? 0),
+        views: nextViews,
+        lastViewedAt: nowIso
       };
+      savePostMetaMap(metaMap);
 
-      let next;
-      if (editId) {
-        next = notices.map((item) => item.id === editId ? payload : item);
-      } else {
-        next = [payload, ...notices];
+      post.views = nextViews;
+      post.lastViewedAt = nowIso;
+      return post;
+    }
+
+    async function openDetail(postId) {
+      let post = await bumpPostView(postId);
+      if (!post) {
+        const posts = await getPosts();
+        post = posts.find((item) => String(item.id) === String(postId));
+      }
+      if (!post) return;
+
+      currentDetailPostId = String(post.id);
+      detailTitle.textContent = post.title;
+      detailMeta.innerHTML = `
+        <div>행사일: ${formatDate(post.date)} ~ ${formatDate(post.endDate)}</div>
+        <div>장소: ${escapeHtml(post.place)}</div>
+        <div>작성자: ${escapeHtml(post.author)}</div>
+        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+      `;
+      detailMedia.innerHTML = buildMedia(post);
+      detailDescription.textContent = post.description || '';
+      detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-flex' : 'none';
+      renderComments(post);
+      openModal('detailModal');
+      await renderPosts();
+    }
+
+    function renderComments(post) {
+      const commentList = document.getElementById('commentList');
+      const comments = Array.isArray(post.comments) ? post.comments : [];
+
+      if (!comments.length) {
+        commentList.innerHTML = '<div class="comment-empty">아직 댓글이 없습니다.</div>';
+        return;
       }
 
-      saveNotices(next);
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-      renderNotices();
-      showNoticeList();
-      alert(editId ? '공지 수정 완료' : '공지 등록 완료');
-    });
+      commentList.innerHTML = comments.map((comment) => `
+        <div class="comment-item">
+          <strong>${escapeHtml(comment.author)}</strong>
+          <div>${escapeHtml(comment.text)}</div>
+          <div style="margin-top:6px; font-size:0.82rem; color:#6b7280;">${formatDate(comment.date)}</div>
+        </div>
+      `).join('');
+    }
 
     commentForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const postId = commentForm.dataset.postId;
+
+      if (!currentDetailPostId) return;
+
       const author = document.getElementById('commentAuthor').value.trim();
-      const textValue = document.getElementById('commentText').value.trim();
-      if (!postId || !author || !textValue) return;
+      const text = document.getElementById('commentText').value.trim();
 
-      const newComment = normalizeComment({
-        id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        postId,
-        author,
-        text: textValue,
-        date: new Date().toISOString().slice(0, 10),
-        createdAt: new Date().toISOString()
-      });
-
-      const commentsMap = getPostCommentsMap();
-      const currentComments = Array.isArray(commentsMap[postId]) ? commentsMap[postId] : [];
-      commentsMap[postId] = [newComment, ...currentComments];
-      savePostCommentsMap(commentsMap);
+      if (!author || !text) {
+        alert('작성자와 댓글 내용을 입력해주세요.');
+        return;
+      }
 
       try {
-        await saveCommentToServer(postId, newComment);
-      } catch (error) {
-        console.error('댓글 서버 저장 실패', error);
-        alert('댓글은 내 기기에는 저장되었지만 서버 저장은 실패했습니다. Worker에 /api/comments 기능을 추가하면 모든 사람에게 보입니다.');
-      }
+        await saveCommentToServer(currentDetailPostId, {
+          author,
+          text,
+          date: new Date().toISOString().slice(0, 10),
+          createdAt: new Date().toISOString()
+        });
 
-      commentForm.reset();
-      await openDetail(postId, { incrementView: false });
-      await renderAll();
+        commentForm.reset();
+
+        const posts = await getPosts();
+        const post = posts.find((item) => String(item.id) === String(currentDetailPostId));
+        if (post) {
+          renderComments(post);
+        }
+        await renderPosts();
+      } catch (error) {
+        console.error(error);
+        alert(error.message || '댓글 등록 중 오류가 발생했습니다.');
+      }
     });
 
-    async function openPostFromHash() {
-      const hash = window.location.hash || '';
-      if (!hash.startsWith('#post-')) return;
+    detailLikeBtn.addEventListener('click', async () => {
+      if (!currentDetailPostId) return;
 
-      const id = hash.replace('#post-', '');
-      const post = await findPostById(id);
-      if (post) {
-        openDetail(id);
+      const posts = await getPosts();
+      const post = posts.find((item) => String(item.id) === String(currentDetailPostId));
+      if (!post) return;
+
+      const nextLikes = Number(post.likes || 0) + 1;
+
+      if (USE_API) {
+        try {
+          await fetch(buildApiUrl(`${API_POSTS_ENDPOINT}/${currentDetailPostId}`), {
+            method: 'PATCH',
+            cache: 'no-store',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              likes: nextLikes
+            })
+          });
+        } catch (error) {
+          console.warn('좋아요 서버 반영 실패', error);
+        }
       }
+
+      const metaMap = getPostMetaMap();
+      metaMap[String(currentDetailPostId)] = {
+        ...(metaMap[String(currentDetailPostId)] || {}),
+        author: post.author,
+        place: post.place,
+        likes: nextLikes,
+        views: Number(metaMap[String(currentDetailPostId)]?.views ?? post.views ?? 0),
+        lastViewedAt: metaMap[String(currentDetailPostId)]?.lastViewedAt || post.lastViewedAt || ''
+      };
+      savePostMetaMap(metaMap);
+
+      await openDetail(currentDetailPostId);
+      await renderPosts();
+    });
+
+    detailShareBtn.addEventListener('click', async () => {
+      if (!currentDetailPostId) return;
+
+      const posts = await getPosts();
+      const post = posts.find((item) => String(item.id) === String(currentDetailPostId));
+      if (!post) return;
+
+      sharePost(post);
+    });
+
+    detailDeleteBtn.addEventListener('click', async () => {
+      if (!currentDetailPostId || !isAdminLoggedIn) return;
+      await deletePost(currentDetailPostId);
+    });
+
+    function fallbackShare(text) {
+      if (navigator.share) {
+        navigator.share({ text }).catch(() => {});
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(() => alert('공유 내용이 복사되었습니다.'))
+          .catch(() => prompt('아래 내용을 복사하세요', text));
+        return;
+      }
+
+      prompt('아래 내용을 복사하세요', text);
     }
 
-    window.editNotice = editNotice;
-    window.deleteNotice = deleteNotice;
+    function sharePost(post) {
+      const pageUrl = window.location.href.split('#')[0];
+      const shareText = `${post.title}\n${post.place}\n${pageUrl}`;
 
-    (async () => {
-      await renderAll();
-      await openPostFromHash();
-    })();
+      if (window.Kakao && window.Kakao.Share) {
+        shareKakao(
+          post.title,
+          `${post.place} · ${formatDate(post.date)}`,
+          isValidMediaUrl(post.mediaUrl) ? post.mediaUrl : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1200&q=80',
+          pageUrl
+        );
+        return;
+      }
 
-    window.addEventListener('hashchange', openPostFromHash);
-  
+      fallbackShare(shareText);
+    }
 
-    function addVideo() {
-      const titleEl = document.getElementById('videoTitle');
-      const urlEl = document.getElementById('youtubeUrl');
-      const descEl = document.getElementById('videoDesc');
-
-      const title = titleEl ? titleEl.value.trim() : '';
-      const url = urlEl ? urlEl.value.trim() : '';
-      const desc = descEl ? descEl.value.trim() : '';
+    window.addVideo = function () {
+      const title = document.getElementById('videoTitle').value.trim();
+      const url = document.getElementById('youtubeUrl').value.trim();
+      const description = document.getElementById('videoDesc').value.trim();
 
       if (!title || !url) {
         alert('영상 제목과 유튜브 링크를 입력해주세요.');
         return;
       }
 
-      const videoId = getYoutubeId(url);
-
-      if (!videoId || videoId.length < 5) {
-        alert('유튜브 링크를 다시 확인해주세요.');
+      const youtubeId = getYoutubeId(url);
+      if (!youtubeId) {
+        alert('유효한 유튜브 링크를 입력해주세요.');
         return;
       }
 
       const items = getVideoItems();
-
       items.unshift({
-        id: 'video-' + Date.now(),
+        id: `${Date.now()}`,
         title,
-        description: desc,
-        youtubeId: videoId,
-        date: new Date().toISOString().slice(0, 10)
+        url,
+        description
       });
-
       saveVideoItems(items);
+
+      document.getElementById('videoTitle').value = '';
+      document.getElementById('youtubeUrl').value = '';
+      document.getElementById('videoDesc').value = '';
       renderVideoList();
-      playCustomVideo(items[0].id);
-
-      if (titleEl) titleEl.value = '';
-      if (urlEl) urlEl.value = '';
-      if (descEl) descEl.value = '';
-
-      document.getElementById('videoViewPanel').style.display = 'block';
-      document.getElementById('videoWritePanel').style.display = 'none';
       alert('영상이 등록되었습니다.');
-    }
+    };
 
-    window.addVideo = addVideo;
-
-    const videoViewTab = document.getElementById('videoViewTab');
-    const videoWriteTabOnly = document.getElementById('videoWriteTab');
     const videoViewPanel = document.getElementById('videoViewPanel');
     const videoWritePanel = document.getElementById('videoWritePanel');
+    const videoViewTab = document.getElementById('videoViewTab');
 
-    videoViewTab.addEventListener('click', () => {
+    videoViewTab.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       videoViewPanel.style.display = 'block';
       videoWritePanel.style.display = 'none';
     });
 
-    videoWriteTabOnly.addEventListener('click', (e) => {
+    videoWriteTab.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       videoViewPanel.style.display = 'none';
       videoWritePanel.style.display = 'block';
     });
+
     if (window.Kakao && !window.Kakao.isInitialized()) {
       window.Kakao.init('1c0147d8515c426787e201fbb816958c');
     }
 
     function shareKakao(title, desc, imageUrl, linkUrl) {
       if (!(window.Kakao && window.Kakao.Share)) {
-        fallbackShare(`${title}
-${desc}
-${linkUrl}`);
+        fallbackShare(`${title}\n${desc}\n${linkUrl}`);
         return;
       }
 
@@ -3018,8 +2864,15 @@ ${linkUrl}`);
       });
     }
 
-  
+    async function renderAll() {
+      await renderPosts();
+      renderNotices();
+      await renderBoardList();
+      await renderVideoList();
+    }
+
     updateAiSearchMessage();
+    renderAll();
   </script>
 </body>
 </html>
