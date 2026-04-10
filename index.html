@@ -5,10 +5,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정읍문화소식</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     :root {
       --bg: #f4f4f4;
-      --paper: #ffffff;
+      --paper: #ffffff; 
       --text: #1f1f1f;
       --muted: #6b7280;
       --line: #dddddd;
@@ -1103,7 +1106,7 @@
 
 
    const API_POSTS_ENDPOINT = '/api/posts';
-    const API_VERSION = '20260408-mobile-fix';
+    const API_VERSION = '20260410-shared-sync-fix2';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1112,7 +1115,7 @@
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
   const R2_UPLOAD_ENDPOINT = '/api/upload';
-    const USE_API = false;
+    const USE_API = true;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
     function buildApiUrl(endpoint) {
@@ -1128,99 +1131,7 @@
       }
     });
 
-    const demoPosts = [
-      {
-        id: '1',
-        title: '정읍 봄 전시회',
-        date: '2026-03-20',
-        place: '정읍문화원',
-        author: '정읍문화원',
-        description: '정읍의 봄 풍경과 작가들의 전시를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '2',
-        title: '생활문화 공연마당',
-        date: '2026-03-21',
-        place: '정읍예술회관',
-        author: '생활문화동아리',
-        description: '시민과 함께하는 열린 공연입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '3',
-        title: '가족 체험 프로그램',
-        date: '2026-03-22',
-        place: '문화창작소',
-        author: '시민기획팀',
-        description: '아이와 함께 만드는 즐거운 체험 시간입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '4',
-        title: '청년 문화 토크',
-        date: '2026-03-23',
-        place: '공유문화라운지',
-        author: '청년기획단',
-        description: '청년 문화기획자가 함께 이야기합니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '5',
-        title: '갤러리 오픈데이',
-        date: '2026-03-24',
-        place: '정읍 시내 갤러리',
-        author: '지역 작가회',
-        description: '지역 갤러리와 작가를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '6',
-        title: '야외 음악회',
-        date: '2026-03-25',
-        place: '정읍천 광장',
-        author: '정읍음악협회',
-        description: '야외에서 즐기는 시민 음악회입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '7',
-        title: '문화 영상 아카이브',
-        date: '2026-03-29',
-        place: '온라인 공유',
-        author: '시민제보',
-        description: '정읍 문화행사 현장을 담은 짧은 기록 영상입니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-        likes: 0,
-        views: 0,
-        comments: []
-      }
-    ];
+    const demoPosts = [];
 
     const demoNotices = [
       {
@@ -1766,7 +1677,15 @@
     }
 
     function saveStored(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        const message = String(error && error.message ? error.message : error);
+        if (message.toLowerCase().includes('quota')) {
+          throw new Error('브라우저 저장공간이 부족합니다. 더 작은 이미지로 올려주세요.');
+        }
+        throw error;
+      }
     }
 
     function getNotices() {
@@ -1845,16 +1764,57 @@ async function uploadFileToWorker(file, mediaType) {
       const reader = new FileReader();
 
       reader.onload = () => {
-        const result = String(reader.result || '').trim();
-        if (!result.startsWith('data:image/')) {
-          reject(new Error('이미지 변환에 실패했습니다.'));
-          return;
-        }
-        resolve(result);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxWidth = 1400;
+            const maxHeight = 1800;
+            let { width, height } = img;
+
+            const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('이미지 변환 준비에 실패했습니다.'));
+              return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.82;
+            let result = canvas.toDataURL('image/jpeg', quality);
+
+            while (result.length > 1_600_000 && quality > 0.45) {
+              quality -= 0.08;
+              result = canvas.toDataURL('image/jpeg', quality);
+            }
+
+            if (!result.startsWith('data:image/')) {
+              reject(new Error('이미지 변환에 실패했습니다.'));
+              return;
+            }
+
+            resolve(result);
+          } catch (error) {
+            reject(new Error('이미지 압축 중 오류가 발생했습니다.'));
+          }
+        };
+
+        img.onerror = () => {
+          reject(new Error('이미지 읽기에 실패했습니다.'));
+        };
+
+        img.src = String(reader.result || '');
       };
 
       reader.onerror = () => {
-        reject(new Error('이미지 읽기에 실패했습니다.'));
+        reject(new Error('파일 읽기 실패'));
       };
 
       reader.readAsDataURL(file);
@@ -1877,16 +1837,12 @@ async function uploadFileToWorker(file, mediaType) {
   }
 
   if (!response.ok || !data?.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+    throw new Error(data?.error || data?.detail || '업로드 실패');
   }
 
-  const uploadedUrl = String(data?.url || '').trim();
-  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-    throw new Error('업로드 주소를 받지 못했습니다.');
-  }
-
-  return uploadedUrl;
+  return data.url;
 }
+
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -2026,6 +1982,7 @@ async function uploadFileToWorker(file, mediaType) {
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        updateTotalViews([]);
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
@@ -2059,7 +2016,7 @@ async function uploadFileToWorker(file, mediaType) {
             <div class="title">${escapeHtml(post.title)}</div>
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
-
+              <span>조회수 ${post.views || 0}</span>
               <span>좋아요 ${(post.likes || 0)}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
@@ -2083,8 +2040,8 @@ function updateTotalViews(posts) {
     const views = Number(post.views || 0);
     total += views;
 
-    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
-    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
+    const lastViewedDate = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
+    if (lastViewedDate === today) {
       todayTotal += views;
     }
   });
@@ -2363,19 +2320,41 @@ function updateTotalViews(posts) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
 
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: Number(currentMeta.likes) || target.likes || 0,
-        views: nextViews,
-        lastViewedAt: new Date().toISOString()
-      };
-      savePostMetaMap(metaMap);
+      if (!USE_API) {
+        const metaMap = getPostMetaMap();
+        const currentMeta = metaMap[String(id)] || {};
+        const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
+        metaMap[String(id)] = {
+          ...currentMeta,
+          author: currentMeta.author || target.author || '시민',
+          likes: Number(currentMeta.likes) || target.likes || 0,
+          views: nextViews,
+          lastViewedAt: new Date().toISOString()
+        };
+        savePostMetaMap(metaMap);
+        target.views = nextViews;
+        return target;
+      }
 
-      target.views = nextViews;
+      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: String(id), action: 'view' })
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '조회수 반영 실패');
+      }
+
+      target.views = Number(result?.views || target.views || 0);
+      target.lastViewedAt = result?.lastViewedAt || new Date().toISOString();
       return target;
     }
 
@@ -2384,18 +2363,39 @@ function updateTotalViews(posts) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
 
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: nextLikes,
-        views: Number(currentMeta.views) || target.views || 0
-      };
-      savePostMetaMap(metaMap);
+      if (!USE_API) {
+        const metaMap = getPostMetaMap();
+        const currentMeta = metaMap[String(id)] || {};
+        const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
+        metaMap[String(id)] = {
+          ...currentMeta,
+          author: currentMeta.author || target.author || '시민',
+          likes: nextLikes,
+          views: Number(currentMeta.views) || target.views || 0
+        };
+        savePostMetaMap(metaMap);
+        target.likes = nextLikes;
+        return target;
+      }
 
-      target.likes = nextLikes;
+      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: String(id), action: 'like' })
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '좋아요 반영 실패');
+      }
+
+      target.likes = Number(result?.likes || target.likes || 0);
       return target;
     }
 
@@ -2417,7 +2417,7 @@ function updateTotalViews(posts) {
       try {
         const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
 
-        let response = await fetch(deleteUrl, {
+        let response = await fetch(buildApiUrl(deleteUrl), {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json'
@@ -2425,7 +2425,7 @@ function updateTotalViews(posts) {
         });
 
         if (!response.ok) {
-          response = await fetch(API_POSTS_ENDPOINT, {
+          response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json'
@@ -2490,7 +2490,7 @@ function updateTotalViews(posts) {
         <div>장소: ${escapeHtml(post.place)}</div>
         <div>작성자: ${escapeHtml(post.author)}</div>
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
       detailMedia.innerHTML = post.mediaType === 'video'
@@ -2913,8 +2913,10 @@ ${shareUrl}`;
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    renderAll();
-    openPostFromHash();
+    (async () => {
+      await renderAll();
+      await openPostFromHash();
+    })();
 
     window.addEventListener('hashchange', openPostFromHash);
   
@@ -3019,14 +3021,5 @@ ${linkUrl}`);
   
     updateAiSearchMessage();
   </script>
-
-  <div id="totalViewsBox" style="
-  text-align:center;
-  margin:40px 0;
-  font-size:16px;
-  color:#666;
-">
-  총 조회수: 0 | 오늘 조회수: 0
-</div>
 </body>
 </html>
