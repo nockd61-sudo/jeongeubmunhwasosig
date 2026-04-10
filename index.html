@@ -1102,7 +1102,7 @@
   <script>
 
 
-    const API_POSTS_ENDPOINT = '/api/posts';
+   const API_POSTS_ENDPOINT = '/api/posts';
     const API_VERSION = '20260408-mobile-fix';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
@@ -1111,8 +1111,8 @@
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
-   const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
-    const USE_API = true;
+  const R2_UPLOAD_ENDPOINT = '/api/upload';
+    const USE_API = false;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
     function buildApiUrl(endpoint) {
@@ -1393,9 +1393,20 @@
       }
 
       try {
-        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), { cache: 'no-store' });
+        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
+          cache: 'no-store'
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+
         if (!response.ok) {
           throw new Error(`댓글 불러오기 실패 (${response.status})`);
+        }
+
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
         }
 
         const data = await response.json();
@@ -1504,8 +1515,17 @@
         const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
           cache: 'no-store'
         });
+
+        const contentType = response.headers.get('content-type') || '';
+
         if (!response.ok) {
           throw new Error(`게시글 불러오기 실패 (${response.status})`);
+        }
+
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
         }
 
         const data = await response.json();
@@ -1746,7 +1766,15 @@
     }
 
     function saveStored(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        const message = String(error && error.message ? error.message : error);
+        if (message.toLowerCase().includes('quota')) {
+          throw new Error('브라우저 저장공간이 부족합니다. 더 작은 이미지로 올려주세요.');
+        }
+        throw error;
+      }
     }
 
     function getNotices() {
@@ -1820,33 +1848,88 @@ async function uploadFileToWorker(file, mediaType) {
     throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
+  if (!USE_API) {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxWidth = 1400;
+            const maxHeight = 1800;
+            let { width, height } = img;
+
+            const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('이미지 변환 준비에 실패했습니다.'));
+              return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.82;
+            let result = canvas.toDataURL('image/jpeg', quality);
+
+            while (result.length > 1_600_000 && quality > 0.45) {
+              quality -= 0.08;
+              result = canvas.toDataURL('image/jpeg', quality);
+            }
+
+            if (!result.startsWith('data:image/')) {
+              reject(new Error('이미지 변환에 실패했습니다.'));
+              return;
+            }
+
+            resolve(result);
+          } catch (error) {
+            reject(new Error('이미지 압축 중 오류가 발생했습니다.'));
+          }
+        };
+
+        img.onerror = () => {
+          reject(new Error('이미지 읽기에 실패했습니다.'));
+        };
+
+        img.src = String(reader.result || '');
+      };
+
+      reader.onerror = () => {
+        reject(new Error('파일 읽기 실패'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
   const formData = new FormData();
   formData.append('file', file);
 
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    body: formData
+  });
 
-const response = await fetch(R2_UPLOAD_ENDPOINT, {
-  method: "POST",
-  body: formData
-});
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+  }
 
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || data?.detail || '업로드 실패');
+  }
 
-let data = null;
-try {
-  data = await response.json();
-} catch (error) {
-  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-}
-
-if (!response.ok || !data?.ok) {
-  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-}
-
-const uploadedUrl = String(data?.url || '').trim();
-if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-  throw new Error('업로드 주소를 받지 못했습니다.');
-}
-
-return uploadedUrl;
+  return data.url;
 }
 
 
