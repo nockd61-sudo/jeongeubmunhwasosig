@@ -1832,41 +1832,33 @@ async function uploadFileToWorker(file, mediaType) {
   }
 
   if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다.');
   }
 
-  const imageMaxBytes = 10 * 1024 * 1024;
-  if (file.size > imageMaxBytes) {
-    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
+  if (!USE_API) {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('파일 읽기 실패'));
+      reader.readAsDataURL(file);
+    });
   }
 
   const formData = new FormData();
   formData.append('file', file);
 
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
+    method: "POST",
+    body: formData
+  });
 
-const response = await fetch(R2_UPLOAD_ENDPOINT, {
-  method: "POST",
-  body: formData
-});
+  const data = await response.json();
 
+  if (!response.ok || !data?.ok) {
+    throw new Error('업로드 실패');
+  }
 
-let data = null;
-try {
-  data = await response.json();
-} catch (error) {
-  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-}
-
-if (!response.ok || !data?.ok) {
-  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-}
-
-const uploadedUrl = String(data?.url || '').trim();
-if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-  throw new Error('업로드 주소를 받지 못했습니다.');
-}
-
-return uploadedUrl;
+  return data.url;
 }
 
 
