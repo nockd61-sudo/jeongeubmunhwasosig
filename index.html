@@ -1112,7 +1112,7 @@
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
   const R2_UPLOAD_ENDPOINT = '/api/upload';
-   const USE_API = false;
+    const USE_API = false;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
     function buildApiUrl(endpoint) {
@@ -1826,7 +1826,6 @@
       return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
     }
 
-
 async function uploadFileToWorker(file, mediaType) {
   if (!file) {
     throw new Error('업로드할 파일이 없습니다.');
@@ -1841,54 +1840,33 @@ async function uploadFileToWorker(file, mediaType) {
     throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
-  // API 미사용 시: 브라우저 내부 base64로 저장
-  if (!USE_API) {
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const result = String(reader.result || '').trim();
-        if (!result.startsWith('data:image/')) {
-          reject(new Error('이미지 변환에 실패했습니다.'));
-          return;
-        }
-        resolve(result);
-      };
-
-      reader.onerror = () => {
-        reject(new Error('이미지 읽기에 실패했습니다.'));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  }
-
-  // API 사용 시: 서버 업로드
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(R2_UPLOAD_ENDPOINT, {
-    method: 'POST',
-    body: formData
-  });
 
-  let data = null;
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-  }
+const response = await fetch(R2_UPLOAD_ENDPOINT, {
+  method: "POST",
+  body: formData
+});
 
-  if (!response.ok || !data?.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-  }
 
-  const uploadedUrl = String(data?.url || '').trim();
-  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-    throw new Error('업로드 주소를 받지 못했습니다.');
-  }
+let data = null;
+try {
+  data = await response.json();
+} catch (error) {
+  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+}
 
-  return uploadedUrl;
+if (!response.ok || !data?.ok) {
+  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+}
+
+const uploadedUrl = String(data?.url || '').trim();
+if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+  throw new Error('업로드 주소를 받지 못했습니다.');
+}
+
+return uploadedUrl;
 }
 
 
