@@ -5,6 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정읍문화소식</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     :root {
       --bg: #f4f4f4;
@@ -1103,7 +1106,7 @@
 
 
    const API_POSTS_ENDPOINT = '/api/posts';
-    const API_VERSION = '20260410-shared-sync';
+    const API_VERSION = '20260410-shared-sync-fix2';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1979,6 +1982,7 @@ async function uploadFileToWorker(file, mediaType) {
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        updateTotalViews([]);
         if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
@@ -2012,7 +2016,7 @@ async function uploadFileToWorker(file, mediaType) {
             <div class="title">${escapeHtml(post.title)}</div>
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
-
+              <span>조회수 ${post.views || 0}</span>
               <span>좋아요 ${(post.likes || 0)}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
@@ -2036,8 +2040,8 @@ function updateTotalViews(posts) {
     const views = Number(post.views || 0);
     total += views;
 
-    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
-    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
+    const lastViewedDate = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
+    if (lastViewedDate === today) {
       todayTotal += views;
     }
   });
@@ -2332,7 +2336,7 @@ function updateTotalViews(posts) {
         return target;
       }
 
-      const response = await fetch(API_POSTS_ENDPOINT, {
+      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: String(id), action: 'view' })
@@ -2374,7 +2378,7 @@ function updateTotalViews(posts) {
         return target;
       }
 
-      const response = await fetch(API_POSTS_ENDPOINT, {
+      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: String(id), action: 'like' })
@@ -2413,7 +2417,7 @@ function updateTotalViews(posts) {
       try {
         const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
 
-        let response = await fetch(deleteUrl, {
+        let response = await fetch(buildApiUrl(deleteUrl), {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json'
@@ -2421,7 +2425,7 @@ function updateTotalViews(posts) {
         });
 
         if (!response.ok) {
-          response = await fetch(API_POSTS_ENDPOINT, {
+          response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json'
@@ -2486,7 +2490,7 @@ function updateTotalViews(posts) {
         <div>장소: ${escapeHtml(post.place)}</div>
         <div>작성자: ${escapeHtml(post.author)}</div>
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
 
       detailMedia.innerHTML = post.mediaType === 'video'
@@ -2909,8 +2913,10 @@ ${shareUrl}`;
     window.editNotice = editNotice;
     window.deleteNotice = deleteNotice;
 
-    renderAll();
-    openPostFromHash();
+    (async () => {
+      await renderAll();
+      await openPostFromHash();
+    })();
 
     window.addEventListener('hashchange', openPostFromHash);
   
@@ -3015,14 +3021,5 @@ ${linkUrl}`);
   
     updateAiSearchMessage();
   </script>
-
-  <div id="totalViewsBox" style="
-  text-align:center;
-  margin:40px 0;
-  font-size:16px;
-  color:#666;
-">
-  총 조회수: 0 | 오늘 조회수: 0
-</div>
 </body>
 </html>
