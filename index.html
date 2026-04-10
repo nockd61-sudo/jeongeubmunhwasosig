@@ -1103,7 +1103,7 @@
 
 
    const API_POSTS_ENDPOINT = '/api/posts';
-    const API_VERSION = '20260408-mobile-fix';
+    const API_VERSION = '20260410-shared-sync';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1112,7 +1112,7 @@
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
   const R2_UPLOAD_ENDPOINT = '/api/upload';
-    const USE_API = false;
+    const USE_API = true;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
     function buildApiUrl(endpoint) {
@@ -1128,8 +1128,8 @@
       }
     });
 
-  const demoPosts = [];
-   
+    const demoPosts = [];
+
     const demoNotices = [
       {
         id: 'n1',
@@ -2316,19 +2316,41 @@ function updateTotalViews(posts) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
 
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: Number(currentMeta.likes) || target.likes || 0,
-        views: nextViews,
-        lastViewedAt: new Date().toISOString()
-      };
-      savePostMetaMap(metaMap);
+      if (!USE_API) {
+        const metaMap = getPostMetaMap();
+        const currentMeta = metaMap[String(id)] || {};
+        const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
+        metaMap[String(id)] = {
+          ...currentMeta,
+          author: currentMeta.author || target.author || '시민',
+          likes: Number(currentMeta.likes) || target.likes || 0,
+          views: nextViews,
+          lastViewedAt: new Date().toISOString()
+        };
+        savePostMetaMap(metaMap);
+        target.views = nextViews;
+        return target;
+      }
 
-      target.views = nextViews;
+      const response = await fetch(API_POSTS_ENDPOINT, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: String(id), action: 'view' })
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '조회수 반영 실패');
+      }
+
+      target.views = Number(result?.views || target.views || 0);
+      target.lastViewedAt = result?.lastViewedAt || new Date().toISOString();
       return target;
     }
 
@@ -2337,49 +2359,105 @@ function updateTotalViews(posts) {
       const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
 
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: nextLikes,
-        views: Number(currentMeta.views) || target.views || 0
-      };
-      savePostMetaMap(metaMap);
+      if (!USE_API) {
+        const metaMap = getPostMetaMap();
+        const currentMeta = metaMap[String(id)] || {};
+        const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
+        metaMap[String(id)] = {
+          ...currentMeta,
+          author: currentMeta.author || target.author || '시민',
+          likes: nextLikes,
+          views: Number(currentMeta.views) || target.views || 0
+        };
+        savePostMetaMap(metaMap);
+        target.likes = nextLikes;
+        return target;
+      }
 
-      target.likes = nextLikes;
+      const response = await fetch(API_POSTS_ENDPOINT, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: String(id), action: 'like' })
+      });
+
+      let result = {};
+      try {
+        result = await response.json();
+      } catch (error) {
+        result = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.detail || '좋아요 반영 실패');
+      }
+
+      target.likes = Number(result?.likes || target.likes || 0);
       return target;
     }
 
-   async function deletePost(id) {
-  if (!isAdminLoggedIn) {
-    alert('관리자만 삭제할 수 있습니다.');
-    return;
-  }
+    async function deletePost(id) {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 삭제할 수 있습니다.');
+        return;
+      }
 
-  if (!confirm('삭제하시겠습니까?')) return;
+      if (!id) {
+        alert('삭제할 게시글 ID를 찾지 못했습니다.');
+        return;
+      }
 
-  // 로컬 삭제
-  const posts = getStored(LOCAL_POSTS_KEY, demoPosts).filter(
-    (item) => String(item.id) !== String(id)
-  );
+      if (!confirm('이 게시글을 삭제하시겠습니까?')) {
+        return;
+      }
 
-  saveStored(LOCAL_POSTS_KEY, posts);
+      try {
+        const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
 
-  const metaMap = getPostMetaMap();
-  delete metaMap[String(id)];
-  savePostMetaMap(metaMap);
+        let response = await fetch(deleteUrl, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
 
-  const commentsMap = getPostCommentsMap();
-  delete commentsMap[String(id)];
-  savePostCommentsMap(commentsMap);
+        if (!response.ok) {
+          response = await fetch(API_POSTS_ENDPOINT, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ id: String(id) })
+          });
+        }
 
-  await renderAll();
-  closeModal('detailModal');
+        let result = {};
+        try {
+          result = await response.json();
+        } catch (error) {
+          result = {};
+        }
 
-  alert('삭제 완료');
-}
+        if (!response.ok) {
+          throw new Error(result?.error || result?.detail || `삭제 실패 (${response.status})`);
+        }
+
+        const metaMap = getPostMetaMap();
+        delete metaMap[String(id)];
+        savePostMetaMap(metaMap);
+
+        const commentsMap = getPostCommentsMap();
+        delete commentsMap[String(id)];
+        savePostCommentsMap(commentsMap);
+
+        closeModal('detailModal');
+        await renderAll();
+        alert('게시글이 삭제되었습니다.');
+      } catch (error) {
+        console.error('게시글 삭제 실패', error);
+        alert('게시글 삭제에 실패했습니다.\n현재 Worker/API에 DELETE 기능이 없거나 삭제 방식이 다를 수 있습니다.');
+      }
+    }
+
     function renderComments(post) {
       const list = document.getElementById('commentList');
 
