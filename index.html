@@ -1102,7 +1102,7 @@
   <script>
 
 
-   const API_POSTS_ENDPOINT = '/api/posts';
+    const API_POSTS_ENDPOINT = '/api/posts';
     const API_VERSION = '20260408-mobile-fix';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
@@ -1111,8 +1111,8 @@
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
-  const R2_UPLOAD_ENDPOINT = '/api/upload';
-    const USE_API = false;
+   const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
+    const USE_API = true;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
 
     function buildApiUrl(endpoint) {
@@ -1393,20 +1393,9 @@
       }
 
       try {
-        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
-          cache: 'no-store'
-        });
-
-        const contentType = response.headers.get('content-type') || '';
-
+        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), { cache: 'no-store' });
         if (!response.ok) {
           throw new Error(`댓글 불러오기 실패 (${response.status})`);
-        }
-
-        if (!contentType.includes('application/json')) {
-          const text = await response.text();
-          console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-          throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
         }
 
         const data = await response.json();
@@ -1515,17 +1504,8 @@
         const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
           cache: 'no-store'
         });
-
-        const contentType = response.headers.get('content-type') || '';
-
         if (!response.ok) {
           throw new Error(`게시글 불러오기 실패 (${response.status})`);
-        }
-
-        if (!contentType.includes('application/json')) {
-          const text = await response.text();
-          console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-          throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
         }
 
         const data = await response.json();
@@ -1832,33 +1812,41 @@ async function uploadFileToWorker(file, mediaType) {
   }
 
   if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다.');
+    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
   }
 
-  if (!USE_API) {
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('파일 읽기 실패'));
-      reader.readAsDataURL(file);
-    });
+  const imageMaxBytes = 10 * 1024 * 1024;
+  if (file.size > imageMaxBytes) {
+    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await fetch(R2_UPLOAD_ENDPOINT, {
-    method: "POST",
-    body: formData
-  });
 
-  const data = await response.json();
+const response = await fetch(R2_UPLOAD_ENDPOINT, {
+  method: "POST",
+  body: formData
+});
 
-  if (!response.ok || !data?.ok) {
-    throw new Error('업로드 실패');
-  }
 
-  return data.url;
+let data = null;
+try {
+  data = await response.json();
+} catch (error) {
+  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+}
+
+if (!response.ok || !data?.ok) {
+  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+}
+
+const uploadedUrl = String(data?.url || '').trim();
+if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+  throw new Error('업로드 주소를 받지 못했습니다.');
+}
+
+return uploadedUrl;
 }
 
 
