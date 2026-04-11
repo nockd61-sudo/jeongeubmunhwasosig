@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<!-- Fixed version: USE_API=false localStorage fallback to avoid /api/posts 500 -->
 <html lang="ko">
 <head>
-  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>정읍문화소식</title>
+  <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
   <style>
     :root {
       --bg: #f4f4f4;
@@ -148,6 +147,7 @@
       padding: 14px 10px;
       font-size: 0.95rem;
       cursor: pointer;
+      border-radius: 18px;
     }
 
     .quick-row button:hover,
@@ -185,6 +185,7 @@
       background: #fff;
       padding: 10px 12px;
       color: #222;
+      border-radius: 10px;
     }
 
     .toolbar button {
@@ -192,8 +193,8 @@
       color: #fff;
       border: 0;
       cursor: pointer;
+      border-radius: 10px;
     }
-
 
     .ai-search-wrap {
       background: #fff;
@@ -293,26 +294,7 @@
       box-shadow: var(--shadow);
       padding: 12px;
       position: relative;
-    }
-
-    .post-admin-actions {
-      display: none;
-      gap: 8px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-
-    body.admin-mode .post-admin-actions {
-      display: flex;
-    }
-
-    .stat-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 0.82rem;
-      margin-top: 2px;
+      border-radius: 18px;
     }
 
     .thumb {
@@ -321,12 +303,16 @@
       overflow: hidden;
       position: relative;
       cursor: pointer;
+      border-radius: 14px;
     }
 
     .thumb img,
-    .thumb video {
+    .thumb video,
+    .thumb iframe {
+      width: 100%;
       height: 100%;
       object-fit: cover;
+      border: 0;
     }
 
     .type-badge {
@@ -357,6 +343,8 @@
       font-weight: 700;
       line-height: 1.4;
       min-height: 2.8em;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
     }
 
     .meta .place {
@@ -364,44 +352,91 @@
       color: var(--muted);
     }
 
-    .actions {
+    .stat-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 2px;
+    }
+
+    .actions,
+    .detail-actions,
+    .form-actions,
+    .tab-row {
       display: flex;
       gap: 8px;
       margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .actions button,
+    .detail-actions button,
+    .form-actions button,
+    .submit,
+    .reset,
+    .mini-btn,
+    .load-more-btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 10px;
     }
 
     .actions button {
       flex: 1;
-      border: 0;
       background: #8b8b8b;
       color: #fff;
       padding: 8px 10px;
       font-size: 0.8rem;
-      cursor: pointer;
-      border-radius: 6px;
     }
 
-    .actions button:last-child {
+    .actions button:last-child,
+    .submit {
       background: var(--brand);
+      color: #fff;
     }
 
-    .panel {
+    .reset {
+      background: #e5e7eb;
+      color: #222;
+      padding: 12px 18px;
+    }
+
+    .submit {
+      padding: 12px 18px;
+      font-weight: 700;
+    }
+
+    .mini-btn {
+      border: 1px solid var(--line);
+      background: #f3f4f6;
+      color: #222;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .mini-btn.danger {
+      background: #ef4444;
+      border-color: #ef4444;
+      color: #fff;
+    }
+
+    .panel,
+    .upload-box {
       background: #fff;
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
       padding: 22px;
       margin-top: 24px;
-    }
-
-    .panel h3 {
-      margin: 0 0 14px;
-      font-size: 1.25rem;
-      letter-spacing: -0.03em;
+      border-radius: 20px;
     }
 
     .notice-list,
     .board-list,
-    .video-list {
+    .video-list,
+    .comment-list {
       display: grid;
       gap: 12px;
     }
@@ -417,6 +452,12 @@
       align-items: start;
     }
 
+    .notice-item:last-child,
+    .board-item:last-child,
+    .video-item:last-child {
+      border-bottom: 0;
+    }
+
     .notice-main {
       flex: 1;
       display: grid;
@@ -428,68 +469,8 @@
       gap: 10px;
       align-items: center;
       flex-wrap: wrap;
-    }
-
-    .notice-admin-actions {
-      display: none;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
-
-    body.admin-mode .notice-admin-actions {
-      display: flex;
-    }
-
-    .mini-btn {
-      border: 1px solid var(--line);
-      background: #f3f4f6;
-      color: #222;
-      padding: 6px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.82rem;
-      font-weight: 600;
-    }
-
-    .mini-btn.danger {
-      background: #ef4444;
-      border-color: #ef4444;
-      color: #fff;
-    }
-
-    .notice-item:last-child,
-    .board-item:last-child,
-    .video-item:last-child { border-bottom: 0; }
-
-    .notice-item span,
-    .board-item span,
-    .video-item span { color: var(--muted); font-size: 0.9rem; }
-
-    .upload-box {
-      background: #fff;
-      border: 1px solid var(--line);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-top: 24px;
-    }
-
-    .upload-box h3 {
-      margin: 0 0 8px;
-      font-size: 1.4rem;
-      letter-spacing: -0.03em;
-    }
-
-    .upload-box p {
-      margin: 0 0 18px;
       color: var(--muted);
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-      align-items: start;
+      font-size: 0.9rem;
     }
 
     .field {
@@ -498,7 +479,16 @@
       align-content: start;
     }
 
-    .field.full { grid-column: 1 / -1; }
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
 
     label {
       font-size: 0.92rem;
@@ -527,35 +517,11 @@
       border: 1px solid var(--line);
       overflow: hidden;
       border-radius: 10px;
+      background: #f7f7f7;
     }
 
-    .upload-preview.show { display: block; }
-
-    .form-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-      flex-wrap: wrap;
-    }
-
-    .form-actions button,
-    .submit,
-    .reset {
-      border: 0;
-      padding: 12px 18px;
-      cursor: pointer;
-      font-weight: 700;
-      border-radius: 8px;
-    }
-
-    .submit {
-      background: var(--brand);
-      color: #fff;
-    }
-
-    .reset {
-      background: #e5e7eb;
-      color: #222;
+    .upload-preview.show {
+      display: block;
     }
 
     .pagination {
@@ -578,91 +544,15 @@
       background: #fff;
       color: #222;
       padding: 12px 20px;
-      border-radius: 999px;
-      cursor: pointer;
       font-weight: 700;
       box-shadow: var(--shadow);
+      border-radius: 999px;
     }
 
     .load-more-btn:hover {
       background: var(--brand);
       border-color: var(--brand);
       color: #fff;
-    }
-
-    .detail-meta {
-      display: grid;
-      gap: 8px;
-      margin-bottom: 18px;
-      color: var(--muted);
-      font-size: 0.95rem;
-    }
-
-    .detail-media {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      overflow: hidden;
-      background: #f1f3f5;
-      margin-bottom: 18px;
-    }
-
-    .detail-media img,
-    .detail-media video {
-      max-height: 460px;
-      object-fit: cover;
-    }
-
-    .detail-description {
-      line-height: 1.7;
-      font-size: 1rem;
-      color: #333;
-      white-space: pre-wrap;
-    }
-
-    .detail-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .detail-actions button {
-      border: 0;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 700;
-      background: var(--brand);
-      color: #fff;
-    }
-
-    .comment-box {
-      margin-top: 24px;
-      border-top: 1px solid var(--line);
-      padding-top: 20px;
-    }
-
-    .comment-list {
-      display: grid;
-      gap: 12px;
-      margin-top: 14px;
-    }
-
-    .comment-item {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      background: #fafafa;
-    }
-
-    .comment-item strong {
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .comment-empty {
-      color: var(--muted);
-      font-size: 0.92rem;
     }
 
     .modal-backdrop {
@@ -703,11 +593,6 @@
       z-index: 2;
     }
 
-    .modal-head h3 {
-      margin: 0;
-      font-size: 1.2rem;
-    }
-
     .close-btn {
       border: 0;
       background: #efefef;
@@ -721,6 +606,81 @@
 
     .modal-body {
       padding: 22px;
+    }
+
+    .board-tab-content,
+    .video-tab-content,
+    .notice-tab-content {
+      display: none;
+    }
+
+    .board-tab-content.active,
+    .video-tab-content.active,
+    .notice-tab-content.active {
+      display: block;
+    }
+
+    .detail-meta {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .detail-media {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #f1f3f5;
+      margin-bottom: 18px;
+      min-height: 120px;
+    }
+
+    .detail-media img,
+    .detail-media video,
+    .detail-media iframe {
+      max-height: 460px;
+      width: 100%;
+      border: 0;
+      object-fit: cover;
+    }
+
+    .detail-description {
+      line-height: 1.7;
+      font-size: 1rem;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .comment-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fafafa;
+    }
+
+    .comment-item strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .comment-empty {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .post-admin-actions,
+    .notice-admin-actions {
+      display: none;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    body.admin-mode .post-admin-actions,
+    body.admin-mode .notice-admin-actions {
+      display: flex;
     }
 
     footer {
@@ -749,7 +709,6 @@
     }
 
     @media (max-width: 820px) {
-      .topbar,
       .footer-inner,
       .form-grid,
       .toolbar,
@@ -759,7 +718,7 @@
       }
 
       .cards { grid-template-columns: repeat(2, 1fr); }
-      .topbar { display: flex; flex-direction: column; align-items: start; }
+      .topbar { flex-direction: column; align-items: flex-start; }
       .hero-box { height: 280px; }
       .menu { width: 100%; }
     }
@@ -772,13 +731,10 @@
       .hero-overlay h1 { font-size: 1.8rem; }
       .modal-body, .modal-head { padding: 16px; }
     }
-  
-    .board-tab-content { display: none; }
-    .board-tab-content.active { display: block; }
-</style>
+  </style>
 </head>
 <body>
-<header>
+  <header>
     <div class="wrap topbar">
       <a href="#top" class="brand">
         <strong>정읍문화소식</strong>
@@ -801,8 +757,7 @@
         <div class="hero-overlay">
           <div>
             <h1>정읍문화소식</h1>
-            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기
-            </p>
+            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기</p>
           </div>
         </div>
       </div>
@@ -846,7 +801,9 @@
 
       <div class="cards" id="eventGrid"></div>
       <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
-      <div class="load-more-wrap"><button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button></div>
+      <div class="load-more-wrap">
+        <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button>
+      </div>
     </section>
 
     <section id="noticePreview" class="wrap panel">
@@ -862,41 +819,42 @@
         <button class="close-btn" type="button" data-close="noticeModal">✕</button>
       </div>
       <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="tab-row">
           <button class="submit" type="button" id="noticeViewTab">공지 보기</button>
           <button class="reset" type="button" id="noticeWriteTab">공지 쓰기</button>
         </div>
 
-        <div class="panel" id="noticeWritePanel" style="margin-top:0; padding:0; border:0; box-shadow:none; display:none;">
-          <h3>관리자 글쓰기</h3>
-          <form id="noticeForm">
-            <div class="form-grid">
-              <div class="field full">
-                <label for="noticeTitle">제목</label>
-                <input id="noticeTitle" type="text" required>
-              </div>
-              <div class="field full">
-                <label for="noticeContent">내용</label>
-                <textarea id="noticeContent" required></textarea>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="submit" type="submit">공지 등록</button>
-            </div>
-          </form>
+        <div class="notice-tab-content active" id="noticeListPanel">
+          <div class="panel" style="margin-top:0;">
+            <h3>등록된 공지</h3>
+            <div class="notice-list" id="noticeList"></div>
+          </div>
         </div>
 
-        <div class="panel" id="noticeListPanel">
-          <h3>등록된 공지</h3>
-          <div class="notice-list" id="noticeList"></div>
+        <div class="notice-tab-content" id="noticeWritePanel">
+          <div class="panel" style="margin-top:0;">
+            <h3>관리자 글쓰기</h3>
+            <form id="noticeForm">
+              <div class="form-grid">
+                <div class="field full">
+                  <label for="noticeTitle">제목</label>
+                  <input id="noticeTitle" type="text" required>
+                </div>
+                <div class="field full">
+                  <label for="noticeContent">내용</label>
+                  <textarea id="noticeContent" required></textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button class="submit" type="submit">공지 등록</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
- 
-
-  
   <div class="modal-backdrop" id="boardModal">
     <div class="modal">
       <div class="modal-head">
@@ -904,7 +862,7 @@
         <button class="close-btn" type="button" data-close="boardModal">✕</button>
       </div>
       <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="tab-row">
           <button type="button" class="submit active" data-board-tab="list">게시글 보기</button>
           <button type="button" class="reset" data-board-tab="write">글 쓰기</button>
         </div>
@@ -940,42 +898,34 @@
     </div>
   </div>
 
-<div class="modal-backdrop" id="videoModal">
+  <div class="modal-backdrop" id="videoModal">
     <div class="modal">
       <div class="modal-head">
         <h3>영상행사</h3>
         <button class="close-btn" type="button" data-close="videoModal">✕</button>
       </div>
       <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <div class="tab-row">
           <button class="submit" type="button" id="videoViewTab">영상 보기</button>
           <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
         </div>
-        <div class="panel" style="margin-top:0;">
-  <div id="videoViewPanel">
-    <h3>등록된 영상 목록</h3>
-    <div id="videoPlayer" style="margin-bottom:20px;"></div>
-    <div class="video-list" id="videoList"></div>
-  </div>
-  
-  <div id="videoWritePanel" style="display:none;">
-    <h3>유튜브 영상 등록</h3>
 
-    <input type="text" id="videoTitle" placeholder="영상 제목"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+        <div class="video-tab-content active" id="videoViewPanel">
+          <div class="panel" style="margin-top:0;">
+            <h3>등록된 영상 목록</h3>
+            <div id="videoPlayer" style="margin-bottom:20px;"></div>
+            <div class="video-list" id="videoList"></div>
+          </div>
+        </div>
 
-    <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
-
-    <textarea id="videoDesc" placeholder="영상 설명"
-      style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
-
-    <button type="button" onclick="addVideo()"
-      style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
-      영상 등록
-    </button>
-  </div>
-</div>
+        <div class="video-tab-content" id="videoWritePanel">
+          <div class="panel" style="margin-top:0;">
+            <h3>유튜브 영상 등록</h3>
+            <input type="text" id="videoTitle" placeholder="영상 제목" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+            <textarea id="videoDesc" placeholder="영상 설명" style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
+            <button type="button" id="addVideoBtn" class="submit">영상 등록</button>
+          </div>
         </div>
       </div>
     </div>
@@ -996,6 +946,7 @@
           <button type="button" id="detailShareBtn">공유하기</button>
           <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
         </div>
+
         <div class="comment-box">
           <h4>댓글</h4>
           <form id="commentForm">
@@ -1035,7 +986,6 @@
                 <label for="title">행사 제목</label>
                 <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
               </div>
-
               <div class="field">
                 <label>행사 기간</label>
                 <div class="date-range" style="display:flex; gap:8px; align-items:center;">
@@ -1044,17 +994,14 @@
                   <input id="endDate" type="date" required>
                 </div>
               </div>
-
               <div class="field">
                 <label for="place">장소</label>
                 <input id="place" type="text" placeholder="예: 정읍문화원" required>
               </div>
-
               <div class="field">
                 <label for="author">작성자</label>
                 <input id="author" type="text" placeholder="예: 시민 제보자" required>
               </div>
-
               <div class="field">
                 <label for="mediaType">올릴 파일 종류</label>
                 <select id="mediaType">
@@ -1062,19 +1009,16 @@
                   <option value="video">영상</option>
                 </select>
               </div>
-
               <div class="field">
                 <label for="fileInput">파일 업로드</label>
                 <input id="fileInput" type="file" accept="image/*,video/*" required>
                 <div class="upload-preview" id="uploadPreview"></div>
               </div>
-
               <div class="field full">
                 <label for="description">설명</label>
                 <textarea id="description" placeholder="행사 설명, 시간, 참가 방법 등을 적어주세요." required></textarea>
               </div>
             </div>
-
             <div class="form-actions">
               <button class="submit" type="submit">게시글 등록</button>
               <button class="reset" type="reset">다시쓰기</button>
@@ -1101,141 +1045,23 @@
   </footer>
 
   <script>
-
-
-   const API_POSTS_ENDPOINT = '/api/posts';
-    const API_VERSION = '20260408-mobile-fix';
-    const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
     const NOTICES_KEY = 'jeongeup-culture-notices-v1';
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
-    const ADMIN_PASSWORD = '1234';
-  const R2_UPLOAD_ENDPOINT = '/api/upload';
-    const USE_API = false;
     const LOCAL_POSTS_KEY = 'jeongeup-posts';
-
-    function buildApiUrl(endpoint) {
-      const separator = endpoint.includes('?') ? '&' : '?';
-      return `${endpoint}${separator}v=${encodeURIComponent(API_VERSION)}&t=${Date.now()}`;
-    }
-
-    window.addEventListener('load', () => {
-      if ('caches' in window) {
-        caches.keys().then((keys) => {
-          keys.forEach((key) => caches.delete(key));
-        }).catch(() => {});
-      }
-    });
+    const ADMIN_PASSWORD = '1234';
 
     const demoPosts = [
-      {
-        id: '1',
-        title: '정읍 봄 전시회',
-        date: '2026-03-20',
-        place: '정읍문화원',
-        author: '정읍문화원',
-        description: '정읍의 봄 풍경과 작가들의 전시를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '2',
-        title: '생활문화 공연마당',
-        date: '2026-03-21',
-        place: '정읍예술회관',
-        author: '생활문화동아리',
-        description: '시민과 함께하는 열린 공연입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '3',
-        title: '가족 체험 프로그램',
-        date: '2026-03-22',
-        place: '문화창작소',
-        author: '시민기획팀',
-        description: '아이와 함께 만드는 즐거운 체험 시간입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '4',
-        title: '청년 문화 토크',
-        date: '2026-03-23',
-        place: '공유문화라운지',
-        author: '청년기획단',
-        description: '청년 문화기획자가 함께 이야기합니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '5',
-        title: '갤러리 오픈데이',
-        date: '2026-03-24',
-        place: '정읍 시내 갤러리',
-        author: '지역 작가회',
-        description: '지역 갤러리와 작가를 소개합니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '6',
-        title: '야외 음악회',
-        date: '2026-03-25',
-        place: '정읍천 광장',
-        author: '정읍음악협회',
-        description: '야외에서 즐기는 시민 음악회입니다.',
-        mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1200&q=80',
-        likes: 0,
-        views: 0,
-        comments: []
-      },
-      {
-        id: '7',
-        title: '문화 영상 아카이브',
-        date: '2026-03-29',
-        place: '온라인 공유',
-        author: '시민제보',
-        description: '정읍 문화행사 현장을 담은 짧은 기록 영상입니다.',
-        mediaType: 'video',
-        mediaUrl: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm',
-        likes: 0,
-        views: 0,
-        comments: []
-      }
+      { id: '1', title: '정읍 봄 전시회', date: '2026-03-20', endDate: '2026-03-20', place: '정읍문화원', author: '정읍문화원', description: '정읍의 봄 풍경과 작가들의 전시를 소개합니다.', mediaType: 'image', mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80', likes: 0, views: 0, comments: [] },
+      { id: '2', title: '생활문화 공연마당', date: '2026-03-21', endDate: '2026-03-21', place: '정읍예술회관', author: '생활문화동아리', description: '시민과 함께하는 열린 공연입니다.', mediaType: 'image', mediaUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80', likes: 0, views: 0, comments: [] },
+      { id: '3', title: '가족 체험 프로그램', date: '2026-03-22', endDate: '2026-03-22', place: '문화창작소', author: '시민기획팀', description: '아이와 함께 만드는 즐거운 체험 시간입니다.', mediaType: 'image', mediaUrl: 'https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80', likes: 0, views: 0, comments: [] }
     ];
 
     const demoNotices = [
-      {
-        id: 'n1',
-        title: '정읍문화소식 오픈 안내',
-        content: '정읍문화소식이 새롭게 열렸습니다. 시민 누구나 문화행사 정보를 올릴 수 있습니다.',
-        date: '2026-03-19'
-      },
-      {
-        id: 'n2',
-        title: '가까운 날짜순 자동 노출',
-        content: '첫 화면에는 가까운 날짜 행사 6개가 자동 정렬되어 표시됩니다.',
-        date: '2026-03-19'
-      }
+      { id: 'n1', title: '정읍문화소식 오픈 안내', content: '정읍문화소식이 새롭게 열렸습니다. 시민 누구나 문화행사 정보를 올릴 수 있습니다.', date: '2026-03-19' },
+      { id: 'n2', title: '가까운 날짜순 자동 노출', content: '첫 화면에는 가까운 날짜 행사 8개가 자동 정렬되어 표시됩니다.', date: '2026-03-19' }
     ];
 
     const eventGrid = document.getElementById('eventGrid');
@@ -1258,497 +1084,24 @@
     const detailLikeBtn = document.getElementById('detailLikeBtn');
     const detailDeleteBtn = document.getElementById('detailDeleteBtn');
     const noticeForm = document.getElementById('noticeForm');
-    const noticeViewTab = document.getElementById('noticeViewTab');
-    const noticeWriteTab = document.getElementById('noticeWriteTab');
-    const noticeListPanel = document.getElementById('noticeListPanel');
-    const noticeWritePanel = document.getElementById('noticeWritePanel');
-    const boardWriteTabBtn = document.querySelector('[data-board-tab="write"]');
-    const videoWriteTab = document.getElementById('videoWriteTab');
     const noticeList = document.getElementById('noticeList');
-    const adminLoginBtn = document.getElementById('adminLoginBtn');
     const noticePreviewList = document.getElementById('noticePreviewList');
     const boardPostList = document.getElementById('boardPostList');
     const videoList = document.getElementById('videoList');
+    const videoPlayer = document.getElementById('videoPlayer');
     const commentForm = document.getElementById('commentForm');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+
     let isAdminLoggedIn = false;
     let visiblePostCount = 8;
 
-
-    function getHiddenBrokenPostIds() {
-      const raw = localStorage.getItem(HIDDEN_BROKEN_POST_IDS_KEY);
-      if (!raw) return [];
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed.map(String) : [];
-      } catch (error) {
-        localStorage.removeItem(HIDDEN_BROKEN_POST_IDS_KEY);
-        return [];
-      }
-    }
-
-    function saveHiddenBrokenPostIds(ids) {
-      localStorage.setItem(HIDDEN_BROKEN_POST_IDS_KEY, JSON.stringify(Array.from(new Set((ids || []).map(String)))));
-    }
-
-    function hideBrokenPostId(postId) {
-      const id = String(postId || '').trim();
-      if (!id) return;
-      const ids = getHiddenBrokenPostIds();
-      if (!ids.includes(id)) {
-        ids.push(id);
-        saveHiddenBrokenPostIds(ids);
-      }
-    }
-
-    function unhideBrokenPostId(postId) {
-      const id = String(postId || '').trim();
-      if (!id) return;
-      saveHiddenBrokenPostIds(getHiddenBrokenPostIds().filter(item => item !== id));
-    }
-
-    function getStoredObject(key) {
-      const raw = localStorage.getItem(key);
-      if (!raw) return {};
-      try {
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' ? parsed : {};
-      } catch (error) {
-        console.error('저장 데이터 읽기 실패', key, error);
-        return {};
-      }
-    }
-
-    function saveStoredObject(key, value) {
-      localStorage.setItem(key, JSON.stringify(value || {}));
-    }
-
-    function getPostMetaMap() {
-      return getStoredObject(POST_META_KEY);
-    }
-
-    function savePostMetaMap(value) {
-      saveStoredObject(POST_META_KEY, value);
-    }
-
-    function getPostCommentsMap() {
-      return getStoredObject(POST_COMMENTS_KEY);
-    }
-
-    function savePostCommentsMap(value) {
-      saveStoredObject(POST_COMMENTS_KEY, value);
-    }
-
-    function normalizeComment(comment) {
-      if (!comment || typeof comment !== 'object') return null;
-
-      const author = String(comment.author || '').trim();
-      const text = String(comment.text || '').trim();
-      const postId = String(comment.postId || '').trim();
-      if (!author || !text) return null;
-
-      return {
-        id: String(comment.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-        postId,
-        author,
-        text,
-        date: String(comment.date || new Date().toISOString().slice(0, 10)).slice(0, 10),
-        createdAt: String(comment.createdAt || new Date().toISOString())
-      };
-    }
-
-    function mergeCommentMaps(serverMap, localMap) {
-      const merged = {};
-      const postIds = new Set([
-        ...Object.keys(serverMap || {}),
-        ...Object.keys(localMap || {})
-      ]);
-
-      postIds.forEach((postId) => {
-        const bucket = [];
-        const seen = new Set();
-
-        const append = (items) => {
-          (Array.isArray(items) ? items : []).forEach((item) => {
-            const normalized = normalizeComment({ ...item, postId });
-            if (!normalized) return;
-            const key = normalized.id || `${normalized.author}|${normalized.text}|${normalized.date}`;
-            if (seen.has(key)) return;
-            seen.add(key);
-            bucket.push(normalized);
-          });
-        };
-
-        append(serverMap?.[postId]);
-        append(localMap?.[postId]);
-
-        bucket.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
-        merged[postId] = bucket;
-      });
-
-      return merged;
-    }
-
-    async function getServerCommentsMap() {
-      if (!USE_API) {
-        return {};
-      }
-
-      try {
-        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
-          cache: 'no-store'
-        });
-
-        const contentType = response.headers.get('content-type') || '';
-
-        if (!response.ok) {
-          throw new Error(`댓글 불러오기 실패 (${response.status})`);
-        }
-
-        if (!contentType.includes('application/json')) {
-          const text = await response.text();
-          console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-          throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
-        }
-
-        const data = await response.json();
-
-        if (Array.isArray(data)) {
-          return data.reduce((acc, item) => {
-            const normalized = normalizeComment(item);
-            if (!normalized || !normalized.postId) return acc;
-            acc[normalized.postId] = acc[normalized.postId] || [];
-            acc[normalized.postId].push(normalized);
-            return acc;
-          }, {});
-        }
-
-        if (data && typeof data === 'object') {
-          return Object.entries(data).reduce((acc, [postId, items]) => {
-            acc[postId] = (Array.isArray(items) ? items : [])
-              .map((item) => normalizeComment({ ...item, postId }))
-              .filter(Boolean);
-            return acc;
-          }, {});
-        }
-
-        return {};
-      } catch (error) {
-        console.warn('서버 댓글 읽기 실패', error);
-        return {};
-      }
-    }
-
-    async function getMergedCommentsMap() {
-      const serverMap = await getServerCommentsMap();
-      const localMap = getPostCommentsMap();
-      return mergeCommentMaps(serverMap, localMap);
-    }
-
-    async function saveCommentToServer(postId, comment) {
-      const normalized = normalizeComment({ ...comment, postId });
-      if (!normalized) {
-        throw new Error('저장할 댓글 형식이 올바르지 않습니다.');
-      }
-
-      if (!USE_API) {
-        const commentsMap = getPostCommentsMap();
-        commentsMap[String(postId)] = Array.isArray(commentsMap[String(postId)])
-          ? commentsMap[String(postId)]
-          : [];
-        commentsMap[String(postId)].push(normalized);
-        savePostCommentsMap(commentsMap);
-        return normalized;
-      }
-
-      const response = await fetch(API_COMMENTS_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(normalized)
-      });
-
-      let result = {};
-      try {
-        result = await response.json();
-      } catch (error) {
-        result = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(result?.error || result?.detail || '댓글 저장에 실패했습니다.');
-      }
-
-      return normalizeComment({ ...normalized, ...result, postId }) || normalized;
-    }
-
-    async function getPosts() {
-      const metaMap = getPostMetaMap();
-      const commentsMap = await getMergedCommentsMap();
-
-      if (!USE_API) {
-        const localItems = getStored(LOCAL_POSTS_KEY, demoPosts);
-
-        const normalizedLocal = localItems
-          .map((item) => {
-            const id = String(item.id || '');
-            const meta = metaMap[id] || {};
-            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-            return normalizePost({
-              ...item,
-              date: item.date || item.startDate || item.createdAt || item.created_at || '',
-              endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
-              place: item.place || meta.place || '',
-              author: item.author || meta.author || '시민',
-              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
-              comments
-            });
-          })
-          .filter(Boolean);
-
-        return sortPosts(normalizedLocal);
-      }
-
-      try {
-        const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-          cache: 'no-store'
-        });
-
-        const contentType = response.headers.get('content-type') || '';
-
-        if (!response.ok) {
-          throw new Error(`게시글 불러오기 실패 (${response.status})`);
-        }
-
-        if (!contentType.includes('application/json')) {
-          const text = await response.text();
-          console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
-          throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
-        }
-
-        const data = await response.json();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-            ? data.results
-            : [];
-
-        const normalized = items
-          .map((item) => {
-            const id = String(item.id || '');
-            const meta = metaMap[id] || {};
-            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-            return normalizePost({
-              ...item,
-              date: item.date || item.startDate || item.createdAt || item.created_at || '',
-              endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
-              place: item.place || meta.place || '',
-              author: item.author || meta.author || '시민',
-              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
-              comments
-            });
-          })
-          .filter(Boolean);
-
-        return sortPosts(normalized);
-      } catch (error) {
-        console.error('서버 게시글 읽기 실패', error);
-
-        const fallbackItems = getStored(LOCAL_POSTS_KEY, demoPosts);
-        const normalizedFallback = fallbackItems
-          .map((item) => {
-            const id = String(item.id || '');
-            const meta = metaMap[id] || {};
-            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
-
-            return normalizePost({
-              ...item,
-              author: item.author || meta.author || '시민',
-              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
-              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
-              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
-              comments
-            });
-          })
-          .filter(Boolean);
-
-        return sortPosts(normalizedFallback);
-      }
-    }
-
-    async function savePost(post) {
-      const normalized = normalizePost(post);
-      if (!normalized) {
-        throw new Error('저장할 게시글 형식이 올바르지 않습니다.');
-      }
-
-      unhideBrokenPostId(normalized.id);
-
-      if (!USE_API) {
-        const posts = getStored(LOCAL_POSTS_KEY, demoPosts);
-
-        const nextPosts = [
-          {
-            id: String(normalized.id),
-            title: normalized.title,
-            date: normalized.date,
-            endDate: normalized.endDate,
-            place: normalized.place,
-            author: normalized.author,
-            description: normalized.description,
-            mediaType: normalized.mediaType,
-            mediaUrl: normalized.mediaUrl,
-            likes: Number(normalized.likes || 0),
-            views: Number(normalized.views || 0),
-            comments: Array.isArray(normalized.comments) ? normalized.comments : [],
-            createdAt: new Date().toISOString()
-          },
-          ...posts.filter((item) => String(item.id) !== String(normalized.id))
-        ];
-
-        saveStored(LOCAL_POSTS_KEY, nextPosts);
-
-        const metaMap = getPostMetaMap();
-        metaMap[String(normalized.id)] = {
-          ...(metaMap[String(normalized.id)] || {}),
-          author: normalized.author,
-          place: normalized.place,
-          likes: Number(metaMap[String(normalized.id)]?.likes || 0),
-          views: Number(metaMap[String(normalized.id)]?.views || 0),
-          lastViewedAt: metaMap[String(normalized.id)]?.lastViewedAt || ''
-        };
-        savePostMetaMap(metaMap);
-
-        return normalized;
-      }
-
-      const payload = {
-        id: String(normalized.id),
-        title: normalized.title,
-        content: normalized.description,
-        mediaType: normalized.mediaType,
-        mediaUrl: normalized.mediaUrl,
-        imageUrl: normalized.mediaUrl,
-        startDate: normalized.date,
-        date: normalized.date,
-        endDate: normalized.endDate,
-        place: normalized.place,
-        author: normalized.author,
-        createdAt: new Date().toISOString()
-      };
-
-      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
-        method: 'POST',
-        cache: 'no-store',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      let result = {};
-      try {
-        result = await response.json();
-      } catch (error) {
-        result = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(result?.error || result?.detail || '게시글 저장에 실패했습니다.');
-      }
-
-      const metaMap = getPostMetaMap();
-      metaMap[String(normalized.id)] = {
-        ...(metaMap[String(normalized.id)] || {}),
-        author: normalized.author,
-        place: normalized.place,
-        likes: Number(metaMap[String(normalized.id)]?.likes || 0),
-        views: Number(metaMap[String(normalized.id)]?.views || 0),
-        lastViewedAt: metaMap[String(normalized.id)]?.lastViewedAt || ''
-      };
-      savePostMetaMap(metaMap);
-
-      return {
-        ...normalized,
-        id: String(result?.id || normalized.id)
-      };
-    }
-
-    function isValidMediaUrl(value) {
-      if (typeof value !== 'string') return false;
-      const trimmed = value.trim();
-      if (!trimmed) return false;
-
-      if (/^data:(image|video)\//i.test(trimmed)) return true;
-      if (/^https?:\/\//i.test(trimmed)) {
-        try {
-          new URL(trimmed);
-          return true;
-        } catch (error) {
-          return false;
-        }
-      }
-
-      return false;
-    }
-
-    function normalizeMediaType(value) {
-      return value === 'video' ? 'video' : 'image';
-    }
-
-    function normalizePost(post) {
-      if (!post || typeof post !== 'object') return null;
-
-      const mediaUrl = String(
-        post.mediaUrl ||
-        post.imageUrl ||
-        post.url ||
-        post.image ||
-        ''
-      ).trim();
-
-      const mediaType = normalizeMediaType(post.mediaType);
-      if (!isValidMediaUrl(mediaUrl)) return null;
-
-      const startDate = String(
-        post.startDate ||
-        post.date ||
-        post.createdAt ||
-        post.created_at ||
-        ''
-      ).trim().slice(0, 10);
-
-      const endDate = String(
-        post.endDate ||
-        post.startDate ||
-        post.date ||
-        post.createdAt ||
-        post.created_at ||
-        ''
-      ).trim().slice(0, 10);
-
-      return {
-        id: String(post.id || Date.now()),
-        title: String(post.title || '제목 없음').trim(),
-        date: startDate,
-        endDate,
-        place: String(post.place || '').trim(),
-        author: String(post.author || '시민').trim(),
-        description: String(post.description || post.content || '').trim(),
-        mediaType,
-        mediaUrl,
-        youtubeId: String(post.youtubeId || '').trim(),
-        likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
-        views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
-        lastViewedAt: String(post.lastViewedAt || post.createdAt || post.created_at || '').trim(),
-        comments: Array.isArray(post.comments) ? post.comments : []
-      };
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
     }
 
     function getStored(key, fallback) {
@@ -1757,10 +1110,9 @@
         localStorage.setItem(key, JSON.stringify(fallback));
         return JSON.parse(JSON.stringify(fallback));
       }
-
       try {
         return JSON.parse(raw);
-      } catch (e) {
+      } catch (error) {
         localStorage.setItem(key, JSON.stringify(fallback));
         return JSON.parse(JSON.stringify(fallback));
       }
@@ -1770,6 +1122,154 @@
       localStorage.setItem(key, JSON.stringify(value));
     }
 
+    function getTodayString() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return '';
+      const d = new Date(`${String(dateString).slice(0,10)}T00:00:00`);
+      if (Number.isNaN(d.getTime())) return String(dateString).slice(0,10);
+      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function normalizeMediaType(value) {
+      return value === 'video' ? 'video' : 'image';
+    }
+
+    function isValidMediaUrl(value) {
+      if (typeof value !== 'string') return false;
+      const trimmed = value.trim();
+      if (!trimmed) return false;
+      if (/^data:(image|video)\//i.test(trimmed)) return true;
+      if (/^https?:\/\//i.test(trimmed)) {
+        try {
+          new URL(trimmed);
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+      return false;
+    }
+
+    function getYoutubeId(url) {
+      if (!url) return '';
+      let videoId = '';
+      if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1];
+      else if (url.includes('shorts/')) videoId = url.split('shorts/')[1];
+      else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1];
+      if (videoId.includes('&')) videoId = videoId.split('&')[0];
+      if (videoId.includes('?')) videoId = videoId.split('?')[0];
+      return videoId.trim();
+    }
+
+    function buildEventVideoHtml(post) {
+      if (post.youtubeId) {
+        return `
+          <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;border-radius:12px;">
+            <iframe
+              src="https://www.youtube.com/embed/${post.youtubeId}"
+              style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+              allowfullscreen
+              loading="lazy"></iframe>
+          </div>
+        `;
+      }
+      return `<video src="${post.mediaUrl}" controls muted playsinline preload="metadata"></video>`;
+    }
+
+    function getHiddenBrokenPostIds() {
+      return getStored(HIDDEN_BROKEN_POST_IDS_KEY, []);
+    }
+
+    function saveHiddenBrokenPostIds(ids) {
+      saveStored(HIDDEN_BROKEN_POST_IDS_KEY, Array.from(new Set((ids || []).map(String))));
+    }
+
+    function hideBrokenPostId(postId) {
+      const ids = getHiddenBrokenPostIds();
+      const id = String(postId || '').trim();
+      if (!id || ids.includes(id)) return;
+      ids.push(id);
+      saveHiddenBrokenPostIds(ids);
+    }
+
+    function unhideBrokenPostId(postId) {
+      saveHiddenBrokenPostIds(getHiddenBrokenPostIds().filter(item => item !== String(postId)));
+    }
+
+    function normalizePost(post) {
+      if (!post || typeof post !== 'object') return null;
+      const mediaType = normalizeMediaType(post.mediaType);
+      const youtubeId = String(post.youtubeId || '').trim();
+      const mediaUrl = String(post.mediaUrl || '').trim();
+
+      if (mediaType === 'video') {
+        if (!youtubeId && !isValidMediaUrl(mediaUrl)) return null;
+      } else if (!isValidMediaUrl(mediaUrl)) {
+        return null;
+      }
+
+      return {
+        id: String(post.id || Date.now()),
+        title: String(post.title || '제목 없음').trim(),
+        date: String(post.date || post.startDate || getTodayString()).slice(0, 10),
+        endDate: String(post.endDate || post.date || post.startDate || getTodayString()).slice(0, 10),
+        place: String(post.place || '').trim(),
+        author: String(post.author || '시민').trim(),
+        description: String(post.description || post.content || '').trim(),
+        mediaType,
+        mediaUrl,
+        youtubeId,
+        likes: Number(post.likes || 0),
+        views: Number(post.views || 0),
+        lastViewedAt: String(post.lastViewedAt || ''),
+        comments: Array.isArray(post.comments) ? post.comments : []
+      };
+    }
+
+    function getPostMetaMap() {
+      return getStored(POST_META_KEY, {});
+    }
+
+    function savePostMetaMap(value) {
+      saveStored(POST_META_KEY, value || {});
+    }
+
+    function getPostCommentsMap() {
+      return getStored(POST_COMMENTS_KEY, {});
+    }
+
+    function savePostCommentsMap(value) {
+      saveStored(POST_COMMENTS_KEY, value || {});
+    }
+
+    function getPosts() {
+      const metaMap = getPostMetaMap();
+      const commentsMap = getPostCommentsMap();
+      return getStored(LOCAL_POSTS_KEY, demoPosts)
+        .map(item => {
+          const normalized = normalizePost(item);
+          if (!normalized) return null;
+          const meta = metaMap[normalized.id] || {};
+          normalized.likes = Number(meta.likes ?? normalized.likes ?? 0);
+          normalized.views = Number(meta.views ?? normalized.views ?? 0);
+          normalized.lastViewedAt = String(meta.lastViewedAt || normalized.lastViewedAt || '');
+          normalized.comments = Array.isArray(commentsMap[normalized.id]) ? commentsMap[normalized.id] : [];
+          return normalized;
+        })
+        .filter(Boolean);
+    }
+
+    function savePosts(posts) {
+      saveStored(LOCAL_POSTS_KEY, posts);
+    }
+
     function getNotices() {
       return getStored(NOTICES_KEY, demoNotices);
     }
@@ -1777,218 +1277,50 @@
     function saveNotices(notices) {
       saveStored(NOTICES_KEY, notices);
     }
+
     function getVideoItems() {
-      const raw = localStorage.getItem(VIDEO_ITEMS_KEY);
-      if (!raw) return [];
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        localStorage.removeItem(VIDEO_ITEMS_KEY);
-        return [];
-      }
+      return getStored(VIDEO_ITEMS_KEY, []);
     }
 
     function saveVideoItems(items) {
-      localStorage.setItem(VIDEO_ITEMS_KEY, JSON.stringify(items));
-    }
-
-    function getYoutubeId(url) {
-      if (!url) return '';
-
-      let videoId = '';
-      if (url.includes('watch?v=')) {
-        videoId = url.split('watch?v=')[1];
-      } else if (url.includes('shorts/')) {
-        videoId = url.split('shorts/')[1];
-      } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1];
-      }
-
-      if (videoId.includes('&')) videoId = videoId.split('&')[0];
-      if (videoId.includes('?')) videoId = videoId.split('?')[0];
-
-      return videoId.trim();
-    }
-
-    function buildEventVideoHtml(post) {
-      if (post.youtubeId) {
-        return `
-          <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;">
-            <iframe
-              src="https://www.youtube.com/embed/${post.youtubeId}"
-              style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-              allowfullscreen
-              loading="lazy">
-            </iframe>
-          </div>
-        `;
-      }
-
-      return `<video src="${post.mediaUrl}" controls muted playsinline></video>`;
-    }
-
-async function uploadFileToWorker(file, mediaType) {
-  if (!file) {
-    throw new Error('업로드할 파일이 없습니다.');
-  }
-
-  if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
-  }
-
-  const imageMaxBytes = 10 * 1024 * 1024;
-  if (file.size > imageMaxBytes) {
-    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
-  }
-
-  if (!USE_API) {
-    return await new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const result = String(reader.result || '').trim();
-        if (!result.startsWith('data:image/')) {
-          reject(new Error('이미지 변환에 실패했습니다.'));
-          return;
-        }
-        resolve(result);
-      };
-
-      reader.onerror = () => {
-        reject(new Error('이미지 읽기에 실패했습니다.'));
-      };
-
-      reader.readAsDataURL(file);
-    });
-  }
-
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await fetch(R2_UPLOAD_ENDPOINT, {
-    method: 'POST',
-    body: formData
-  });
-
-  let data = null;
-  try {
-    data = await response.json();
-  } catch (error) {
-    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
-  }
-
-  if (!response.ok || !data?.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-  }
-
-  const uploadedUrl = String(data?.url || '').trim();
-  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-    throw new Error('업로드 주소를 받지 못했습니다.');
-  }
-
-  return uploadedUrl;
-}
-
-    function formatDate(dateString) {
-      const d = new Date(dateString + 'T00:00:00');
-      if (Number.isNaN(d.getTime())) return dateString;
-      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-    }
-
-    function getTodayString() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      saveStored(VIDEO_ITEMS_KEY, items);
     }
 
     function sortPosts(posts) {
       const today = getTodayString();
-
       return [...posts].sort((a, b) => {
         const aFuture = a.date >= today ? 0 : 1;
         const bFuture = b.date >= today ? 0 : 1;
-
         if (aFuture !== bFuture) return aFuture - bFuture;
         return new Date(a.date) - new Date(b.date);
       });
     }
 
-    function resetVisiblePostCount() {
-      visiblePostCount = 8;
+    function updateAiSearchMessage() {
+      const keyword = searchInput.value.trim();
+      aiSearchResultText.textContent = keyword
+        ? `"${keyword}" 관련 정읍행사를 통합검색 중입니다.`
+        : '정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.';
     }
 
-    function getPlaceholderDataUrl(label) {
-      const text = encodeURIComponent(label || '이미지를 불러올 수 없습니다');
-      return `data:image/svg+xml;charset=UTF-8,` +
-        `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'>` +
-        `<rect width='100%' height='100%' fill='%23e5e7eb'/>` +
-        `<text x='50%' y='48%' text-anchor='middle' fill='%236b7280' font-size='24' font-family='Arial, sans-serif'>${text}</text>` +
-        `<text x='50%' y='54%' text-anchor='middle' fill='%239ca3af' font-size='18' font-family='Arial, sans-serif'>정읍문화소식</text>` +
-        `</svg>`;
-    }
-
-    function handleCardImageError(postId, el) {
-      const id = String(postId || '').trim();
-      if (id) {
-        hideBrokenPostId(id);
-      }
-
-      const card = el ? el.closest('.card') : document.getElementById(`post-${id}`);
-      if (card) {
-        card.remove();
-      }
-
-      const remainingCards = eventGrid.querySelectorAll('.card').length;
-      paginationInfo.textContent = remainingCards > 0
-        ? `가까운 날짜순 ${remainingCards}개 노출`
-        : '표시할 문화소식이 없습니다.';
-
-      if (remainingCards === 0) {
-        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
-      }
-    }
-
-    window.handleCardImageError = handleCardImageError;
-
-    function buildMedia(post) {
-      if (post.mediaType === 'video') {
-        if (!isValidMediaUrl(post.mediaUrl) && !post.youtubeId) {
-          return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
-        }
-        return buildEventVideoHtml(post).replace('<video ', '<video preload="metadata" ');
-      }
-
-      const imgUrl = String(post.mediaUrl || post.url || post.image || '').trim();
-      if (!isValidMediaUrl(imgUrl)) {
-        return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
-      }
-
-      return `<img src="${imgUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
-    }
-
-    async function currentFilteredPosts() {
+    function currentFilteredPosts() {
       const typeValue = filterType.value;
       const keyword = searchInput.value.trim().toLowerCase();
       const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
-      let posts = sortPosts(await getPosts()).filter(post => {
+      let posts = sortPosts(getPosts()).filter(post => {
         if (hiddenBrokenIds.has(String(post.id))) return false;
-
-        if (post.mediaType === 'video') {
-          return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
-        }
+        if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
         return isValidMediaUrl(post.mediaUrl);
       });
 
       if (typeValue !== 'all') {
-        posts = posts.filter((post) => post.mediaType === typeValue);
+        posts = posts.filter(post => post.mediaType === typeValue);
       }
 
       if (keyword) {
-        posts = posts.filter((post) => {
-          const searchHaystack = [
+        posts = posts.filter(post => {
+          const haystack = [
             post.title || '',
             post.place || '',
             post.description || '',
@@ -1996,60 +1328,70 @@ async function uploadFileToWorker(file, mediaType) {
             '정읍행사 축제 전시 공연 체험 문화행사'
           ].join(' ').toLowerCase();
 
-          if (keyword === '정읍행사') {
-            return true;
-          }
-
-          return searchHaystack.includes(keyword);
+          if (keyword === '정읍행사') return true;
+          return haystack.includes(keyword);
         });
       }
 
       return posts;
-    } 
-
-    function updateAiSearchMessage() {
-      const keyword = (searchInput?.value || '').trim();
-      if (!aiSearchResultText) return;
-
-      if (!keyword) {
-        aiSearchResultText.textContent = '정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.';
-        return;
-      }
-
-      aiSearchResultText.textContent = `"${keyword}" 관련 정읍행사를 통합검색 중입니다.`;
     }
 
-    async function renderPosts() {
+    function updateTotalViews(posts) {
+      let total = 0;
+      let todayTotal = 0;
+      const today = getTodayString();
+      posts.forEach(post => {
+        const views = Number(post.views || 0);
+        total += views;
+        const viewed = String(post.lastViewedAt || '').slice(0, 10);
+        if (viewed === today) todayTotal += views;
+      });
+      const el = document.getElementById('totalViewsBox');
+      if (el) el.innerText = `총 조회수: ${total} | 오늘 조회수: ${todayTotal}`;
+    }
+
+    function handleCardImageError(postId, el) {
+      hideBrokenPostId(postId);
+      const card = el ? el.closest('.card') : document.getElementById(`post-${postId}`);
+      if (card) card.remove();
+      if (!eventGrid.querySelector('.card')) {
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
+      }
+    }
+    window.handleCardImageError = handleCardImageError;
+
+    function buildMedia(post) {
+      if (post.mediaType === 'video') {
+        return buildEventVideoHtml(post);
+      }
+      return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+    }
+
+    function renderPosts() {
       updateAiSearchMessage();
-      const allFilteredPosts = await currentFilteredPosts();
+      const allFilteredPosts = currentFilteredPosts();
       const posts = allFilteredPosts.slice(0, visiblePostCount);
 
       if (posts.length === 0) {
         eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
-        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        loadMoreBtn.style.display = 'none';
+        updateTotalViews([]);
         return;
       }
 
       const shownCount = posts.length;
       const totalCount = allFilteredPosts.length;
-
       paginationInfo.textContent = totalCount > shownCount
         ? `가까운 날짜순 ${shownCount}개 표시 / 전체 ${totalCount}개`
         : `가까운 날짜순 ${shownCount}개 노출`;
 
+      loadMoreBtn.style.display = totalCount > shownCount ? 'inline-flex' : 'none';
+      if (totalCount > shownCount) loadMoreBtn.textContent = `더보기 (${totalCount - shownCount}개 남음)`;
+
       updateTotalViews(allFilteredPosts);
 
-      if (loadMoreBtn) {
-        if (totalCount > shownCount) {
-          loadMoreBtn.style.display = 'inline-flex';
-          loadMoreBtn.textContent = `더보기 (${totalCount - shownCount}개 남음)`;
-        } else {
-          loadMoreBtn.style.display = 'none';
-        }
-      }
-
-      eventGrid.innerHTML = posts.map((post) => `
+      eventGrid.innerHTML = posts.map(post => `
         <article class="card" id="post-${post.id}">
           <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
             <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
@@ -2060,8 +1402,8 @@ async function uploadFileToWorker(file, mediaType) {
             <div class="title">${escapeHtml(post.title)}</div>
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
-
-              <span>좋아요 ${(post.likes || 0)}</span>
+              <span>조회수 ${post.views || 0}</span>
+              <span>좋아요 ${post.likes || 0}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
           </div>
@@ -2075,402 +1417,79 @@ async function uploadFileToWorker(file, mediaType) {
         </article>
       `).join('');
     }
-function updateTotalViews(posts) {
-  let total = 0;
-  let todayTotal = 0;
-  const today = getTodayString();
 
-  posts.forEach(post => {
-    const views = Number(post.views || 0);
-    total += views;
-
-    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
-    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
-      todayTotal += views;
-    }
-  });
-
-  const el = document.getElementById('totalViewsBox');
-  if (el) {
-    el.innerText = `총 조회수: ${total} | 오늘 조회수: ${todayTotal}`;
-  }
-}
     function renderNotices() {
       const notices = [...getNotices()].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-      const makeNoticeHtml = (notice) => `
-        <div class="notice-item">
-          <div class="notice-main">
-            <strong>${escapeHtml(notice.title)}</strong>
-            <span>${escapeHtml(notice.content)}</span>
-            <div class="notice-meta">
-              <span>${formatDate(notice.date)}</span>
-            </div>
-            <div class="notice-admin-actions">
-              <button class="mini-btn" type="button" onclick="editNotice('${notice.id}')">수정</button>
-              <button class="mini-btn danger" type="button" onclick="deleteNotice('${notice.id}')">삭제</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      noticeList.innerHTML = notices.length
-        ? notices.map(makeNoticeHtml).join('')
-        : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
-
-      noticePreviewList.innerHTML = notices.length
-        ? notices.slice(0, 3).map(makeNoticeHtml).join('')
-        : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
-    }
-
-    async function renderBoardList() {
-      const posts = sortPosts(await getPosts());
-
-      if (!posts.length) {
-        boardPostList.innerHTML = '<li style="padding:14px 0; border-bottom:1px solid #e5e7eb;"><strong>등록된 게시글이 없습니다.</strong></li>';
-        return;
-      }
-
-      boardPostList.innerHTML = posts.map((post) => `
-        <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
-          <div style="display:flex; justify-content:space-between; gap:20px; align-items:flex-start;">
-            <div
-              data-post-id="${post.id}"
-              class="board-item-click"
-              style="flex:1; cursor:pointer;"
-            >
-              <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-              <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">
-                ${formatDate(post.date)}
+      const html = notices.length
+        ? notices.map(notice => `
+          <div class="notice-item">
+            <div class="notice-main">
+              <strong>${escapeHtml(notice.title)}</strong>
+              <span>${escapeHtml(notice.content)}</span>
+              <div class="notice-meta">
+                <span>${formatDate(notice.date)}</span>
+              </div>
+              <div class="notice-admin-actions">
+                <button class="mini-btn" type="button" onclick="editNotice('${notice.id}')">수정</button>
+                <button class="mini-btn danger" type="button" onclick="deleteNotice('${notice.id}')">삭제</button>
               </div>
             </div>
-
-            ${isAdminLoggedIn ? `
-              <button
-                class="mini-btn danger board-delete-btn"
-                type="button"
-                data-post-id="${post.id}"
-              >
-                삭제
-              </button>
-            ` : ''}
           </div>
-        </li>
-      `).join('');
+        `).join('')
+        : '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
+
+      noticeList.innerHTML = html;
+      noticePreviewList.innerHTML = html;
     }
 
-    async function renderVideoList() {
-      const postVideos = sortPosts(await getPosts()).filter((post) => post.mediaType === 'video');
-      const customVideos = getVideoItems();
-
-      const merged = [
-        ...customVideos.map(item => ({ ...item, isCustomVideoItem: true })),
-        ...postVideos.map(item => ({ ...item, isCustomVideoItem: false }))
-      ];
-
-      if (merged.length === 0) {
-        videoList.innerHTML = '<div class="video-item"><div><strong>등록된 영상이 없습니다.</strong><span>영상행사 등록 후 이곳에 표시됩니다.</span></div></div>';
-        document.getElementById('videoPlayer').innerHTML = '';
-        return;
-      }
-
-      videoList.innerHTML = merged.map((item) => {
-        if (item.isCustomVideoItem) {
-          return `
-            <div class="video-item" style="cursor:pointer;" onclick="playCustomVideo('${item.id}')">
-              <div>
-                <strong>${escapeHtml(item.title)}</strong>
-                <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
+    function renderBoardPosts() {
+      const posts = sortPosts(getPosts());
+      boardPostList.innerHTML = posts.length
+        ? posts.map(post => `
+          <li class="board-item">
+            <div class="notice-main">
+              <strong>${escapeHtml(post.title)}</strong>
+              <span>${escapeHtml(post.description || '')}</span>
+              <div class="notice-meta">
+                <span>${formatDate(post.date)}</span>
+                <span>${escapeHtml(post.place)}</span>
+                <span>${escapeHtml(post.author)}</span>
               </div>
-              <span>${formatDate(item.date)}</span>
             </div>
-          `;
-        }
-
-        return `
-          <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
-            <div>
-              <strong>${escapeHtml(item.title)}</strong>
-              <span>${escapeHtml(item.place)} · ${escapeHtml(item.author)}</span>
-            </div>
-            <span>${formatDate(item.date)}</span>
-          </div>
-        `;
-      }).join('');
-
-      const latestCustom = customVideos[0];
-      if (latestCustom) {
-        playCustomVideo(latestCustom.id, false);
-      }
+            <button class="mini-btn" type="button" onclick="openDetail('${post.id}')">보기</button>
+          </li>
+        `).join('')
+        : '<li class="board-item"><div class="notice-main"><strong>등록된 게시글이 없습니다.</strong></div></li>';
     }
 
-    function playCustomVideo(id, switchToView = true) {
+    function renderVideoList() {
       const items = getVideoItems();
-      const target = items.find(item => item.id === id);
-      if (!target) return;
+      videoList.innerHTML = items.length
+        ? items.map(item => `
+          <div class="video-item">
+            <div class="notice-main">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(item.description || '')}</span>
+              <div class="notice-meta">
+                <span>${formatDate(item.date)}</span>
+              </div>
+            </div>
+            <button class="mini-btn" type="button" onclick="playVideo('${item.id}')">재생</button>
+          </div>
+        `).join('')
+        : '<div class="video-item"><div class="notice-main"><strong>등록된 영상이 없습니다.</strong></div></div>';
 
-      const iframe = `
-        <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
-          <iframe
-            src="https://www.youtube.com/embed/${target.youtubeId}"
-            style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-            allowfullscreen
-            loading="lazy">
-          </iframe>
-        </div>
-      `;
-
-      document.getElementById('videoPlayer').innerHTML = iframe;
-
-      if (switchToView) {
-        document.getElementById('videoViewPanel').style.display = 'block';
-        document.getElementById('videoWritePanel').style.display = 'none';
-      }
-    }
-
-    window.playCustomVideo = playCustomVideo;
-
-    async function renderAll() {
-      await renderPosts();
-      renderNotices();
-      await renderBoardList();
-      await renderVideoList();
-    }
-
-    function renderPreview(file, mediaType) {
-      if (!file) {
-        uploadPreview.className = 'upload-preview';
-        uploadPreview.innerHTML = '';
-        return;
-      }
-
-      const url = URL.createObjectURL(file);
-      uploadPreview.innerHTML = mediaType === 'video'
-        ? `<video src="${url}" controls muted playsinline preload="metadata"></video>`
-        : `<img src="${url}" alt="업로드 미리보기">`;
-      uploadPreview.className = 'upload-preview show';
-
-      const mediaEl = uploadPreview.querySelector('img, video');
-      if (mediaEl) {
-        mediaEl.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
-        mediaEl.addEventListener('loadeddata', () => URL.revokeObjectURL(url), { once: true });
-        mediaEl.addEventListener('error', () => URL.revokeObjectURL(url), { once: true });
-      }
-    }
-
-    function openModal(id) {
-      document.getElementById(id)?.classList.add('show');
-      document.body.style.overflow = 'hidden';
-
-      if (id === 'noticeModal') {
-        showNoticeList();
-      }
-      if (id === 'boardModal') {
-        showBoardList();
-      }
-    }
-
-    function closeModal(id) {
-      document.getElementById(id)?.classList.remove('show');
-      if (!document.querySelector('.modal-backdrop.show')) {
-        document.body.style.overflow = '';
-      }
-    }
-
-    function showNoticeList() {
-      noticeListPanel.style.display = 'block';
-      noticeWritePanel.style.display = 'none';
-      noticeViewTab.className = 'submit';
-      noticeWriteTab.className = 'reset';
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-    }
-
-    function showNoticeWrite() {
-      if (!isAdminLoggedIn) {
-        const password = prompt('관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 접근 가능합니다');
-          return;
-        }
-        setAdminMode(true);
-      }
-
-      noticeListPanel.style.display = 'none';
-      noticeWritePanel.style.display = 'block';
-      noticeViewTab.className = 'reset';
-      noticeWriteTab.className = 'submit';
-    }
-
-    function showBoardList() {
-      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('[data-board-tab="list"]')?.classList.add('active');
-      document.getElementById('boardListTab')?.classList.add('active');
-      document.getElementById('boardWriteTab')?.classList.remove('active');
-      document.getElementById('boardWriteForm')?.reset();
-    }
-
-    function showBoardWrite() {
-      document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
-      document.querySelector('[data-board-tab="write"]')?.classList.add('active');
-      document.getElementById('boardWriteTab')?.classList.add('active');
-      document.getElementById('boardListTab')?.classList.remove('active');
-    }
-
-    function setAdminMode(enabled) {
-      isAdminLoggedIn = enabled;
-      document.body.classList.toggle('admin-mode', enabled);
-      adminLoginBtn.textContent = enabled ? '관리자 로그아웃' : '관리자 로그인';
-      renderAll();
-    }
-
-    function editNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 수정 가능합니다');
-        return;
-      }
-
-      const notices = getNotices();
-      const target = notices.find((item) => item.id === id);
-      if (!target) return;
-
-      openModal('noticeModal');
-      showNoticeWrite();
-      document.getElementById('noticeTitle').value = target.title;
-      document.getElementById('noticeContent').value = target.content;
-      noticeForm.dataset.editId = id;
-    }
-
-    function deleteNotice(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제 가능합니다');
-        return;
-      }
-
-      if (!confirm('이 공지를 삭제하시겠습니까?')) return;
-
-      const notices = getNotices().filter((item) => item.id !== id);
-      saveNotices(notices);
-      renderNotices();
-    }
-
-    async function findPostById(id) {
-      const posts = await getPosts();
-      return posts.find((post) => String(post.id) === String(id));
-    }
-
-    async function addView(id) {
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: Number(currentMeta.likes) || target.likes || 0,
-        views: nextViews,
-        lastViewedAt: new Date().toISOString()
-      };
-      savePostMetaMap(metaMap);
-
-      target.views = nextViews;
-      return target;
-    }
-
-    async function likePost(id) {
-      const posts = await getPosts();
-      const target = posts.find(p => String(p.id) === String(id));
-      if (!target) return null;
-
-      const metaMap = getPostMetaMap();
-      const currentMeta = metaMap[String(id)] || {};
-      const nextLikes = (Number(currentMeta.likes) || target.likes || 0) + 1;
-      metaMap[String(id)] = {
-        ...currentMeta,
-        author: currentMeta.author || target.author || '시민',
-        likes: nextLikes,
-        views: Number(currentMeta.views) || target.views || 0
-      };
-      savePostMetaMap(metaMap);
-
-      target.likes = nextLikes;
-      return target;
-    }
-
-    async function deletePost(id) {
-      if (!isAdminLoggedIn) {
-        alert('관리자만 삭제할 수 있습니다.');
-        return;
-      }
-
-      if (!id) {
-        alert('삭제할 게시글 ID를 찾지 못했습니다.');
-        return;
-      }
-
-      if (!confirm('이 게시글을 삭제하시겠습니까?')) {
-        return;
-      }
-
-      try {
-        const deleteUrl = `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`;
-
-        let response = await fetch(deleteUrl, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          response = await fetch(API_POSTS_ENDPOINT, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ id: String(id) })
-          });
-        }
-
-        let result = {};
-        try {
-          result = await response.json();
-        } catch (error) {
-          result = {};
-        }
-
-        if (!response.ok) {
-          throw new Error(result?.error || result?.detail || `삭제 실패 (${response.status})`);
-        }
-
-        const metaMap = getPostMetaMap();
-        delete metaMap[String(id)];
-        savePostMetaMap(metaMap);
-
-        const commentsMap = getPostCommentsMap();
-        delete commentsMap[String(id)];
-        savePostCommentsMap(commentsMap);
-
-        closeModal('detailModal');
-        await renderAll();
-        alert('게시글이 삭제되었습니다.');
-      } catch (error) {
-        console.error('게시글 삭제 실패', error);
-        alert('게시글 삭제에 실패했습니다.\n현재 Worker/API에 DELETE 기능이 없거나 삭제 방식이 다를 수 있습니다.');
+      if (!items.length) {
+        videoPlayer.innerHTML = '';
       }
     }
 
     function renderComments(post) {
       const list = document.getElementById('commentList');
-
       if (!post.comments || post.comments.length === 0) {
         list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
         return;
       }
-
       list.innerHTML = post.comments.map(c => `
         <div class="comment-item">
           <strong>${escapeHtml(c.author)}</strong>
@@ -2480,43 +1499,140 @@ function updateTotalViews(posts) {
       `).join('');
     }
 
+    function setNoticeTab(mode) {
+      const listPanel = document.getElementById('noticeListPanel');
+      const writePanel = document.getElementById('noticeWritePanel');
+      document.getElementById('noticeViewTab').className = mode === 'list' ? 'submit' : 'reset';
+      document.getElementById('noticeWriteTab').className = mode === 'write' ? 'submit' : 'reset';
+      listPanel.classList.toggle('active', mode === 'list');
+      writePanel.classList.toggle('active', mode === 'write');
+    }
+
+    function setBoardTab(mode) {
+      document.querySelectorAll('[data-board-tab]').forEach(btn => {
+        btn.className = btn.dataset.boardTab === mode ? 'submit active' : 'reset';
+      });
+      document.getElementById('boardListTab').classList.toggle('active', mode === 'list');
+      document.getElementById('boardWriteTab').classList.toggle('active', mode === 'write');
+    }
+
+    function setVideoTab(mode) {
+      document.getElementById('videoViewTab').className = mode === 'list' ? 'submit' : 'reset';
+      document.getElementById('videoWriteTab').className = mode === 'write' ? 'submit' : 'reset';
+      document.getElementById('videoViewPanel').classList.toggle('active', mode === 'list');
+      document.getElementById('videoWritePanel').classList.toggle('active', mode === 'write');
+    }
+
+    function openModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('show');
+    }
+
+    function closeModal(id) {
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('show');
+    }
+
+    function closeAllModals() {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.classList.remove('show'));
+    }
+
+    function findPostById(id) {
+      return getPosts().find(post => String(post.id) === String(id)) || null;
+    }
+
+    function savePost(post) {
+      const normalized = normalizePost(post);
+      if (!normalized) throw new Error('저장할 게시글 형식이 올바르지 않습니다.');
+      const posts = getPosts().filter(item => String(item.id) !== String(normalized.id));
+      posts.unshift(normalized);
+      savePosts(posts);
+      unhideBrokenPostId(normalized.id);
+      return normalized;
+    }
+
+    function likePost(id) {
+      const metaMap = getPostMetaMap();
+      const key = String(id);
+      const item = metaMap[key] || {};
+      item.likes = Number(item.likes || 0) + 1;
+      metaMap[key] = item;
+      savePostMetaMap(metaMap);
+      return findPostById(id);
+    }
+
+    function addView(id) {
+      const metaMap = getPostMetaMap();
+      const key = String(id);
+      const item = metaMap[key] || {};
+      item.views = Number(item.views || 0) + 1;
+      item.lastViewedAt = new Date().toISOString();
+      metaMap[key] = item;
+      savePostMetaMap(metaMap);
+      return findPostById(id);
+    }
+
+    function deletePost(id) {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 삭제할 수 있습니다.');
+        return;
+      }
+      if (!confirm('이 게시글을 삭제할까요?')) return;
+      const posts = getPosts().filter(post => String(post.id) !== String(id));
+      savePosts(posts);
+      const commentsMap = getPostCommentsMap();
+      delete commentsMap[String(id)];
+      savePostCommentsMap(commentsMap);
+      closeModal('detailModal');
+      renderAll();
+      alert('게시글이 삭제되었습니다.');
+    }
+
     async function openDetail(id, options = {}) {
-      const { incrementView = true } = options;
-      const post = incrementView ? await addView(id) : await findPostById(id);
+      const post = options.incrementView === false ? findPostById(id) : addView(id);
       if (!post) return;
 
       detailTitle.textContent = post.title;
       detailMeta.innerHTML = `
-        <div>행사일: ${formatDate(post.date)}</div>
+        <div>행사일: ${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ` ~ ${formatDate(post.endDate)}` : ''}</div>
         <div>장소: ${escapeHtml(post.place)}</div>
         <div>작성자: ${escapeHtml(post.author)}</div>
         <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-        <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
+        <div>조회수: ${post.views || 0} · 좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0}</div>
       `;
-
       detailMedia.innerHTML = post.mediaType === 'video'
         ? buildEventVideoHtml(post)
         : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
-
       detailDescription.textContent = post.description || '';
       detailShareBtn.onclick = () => sharePost(id);
-      detailLikeBtn.onclick = async () => {
-        const updated = await likePost(id);
-        if (!updated) return;
-        await openDetail(id, { incrementView: false });
-        await renderAll();
+      detailLikeBtn.onclick = () => {
+        likePost(id);
+        openDetail(id, { incrementView: false });
+        renderAll();
       };
       detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
       detailDeleteBtn.onclick = () => deletePost(id);
-
       commentForm.dataset.postId = String(id);
-      renderComments(post);
+      renderComments(findPostById(id));
       openModal('detailModal');
-      await renderAll();
+      renderAll();
+    }
+    window.openDetail = openDetail;
+
+    function fallbackShare(fullText) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(fullText).then(() => {
+          alert('공유용 링크를 복사했습니다.');
+        }).catch(() => {
+          window.prompt('아래 내용을 복사해 공유하세요.', fullText);
+        });
+      } else {
+        window.prompt('아래 내용을 복사해 공유하세요.', fullText);
+      }
     }
 
-    async function sharePost(id) {
-      const post = await findPostById(id);
+    function sharePost(id) {
+      const post = findPostById(id);
       if (!post) {
         alert('공유할 글을 찾지 못했습니다.');
         return;
@@ -2539,20 +1655,11 @@ function updateTotalViews(posts) {
               title: shareTitle,
               description: shareDesc,
               imageUrl: shareImage,
-              link: {
-                mobileWebUrl: shareUrl,
-                webUrl: shareUrl,
-              },
+              link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
             },
             buttons: [
-              {
-                title: '자세히 보기',
-                link: {
-                  mobileWebUrl: shareUrl,
-                  webUrl: shareUrl,
-                },
-              },
-            ],
+              { title: '자세히 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }
+            ]
           });
           return;
         } catch (error) {
@@ -2560,113 +1667,341 @@ function updateTotalViews(posts) {
         }
       }
 
-      const fullText = `${shareTitle}
-${shareDesc}
-${shareUrl}`;
-      fallbackShare(fullText);
+      fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
     }
 
-    function fallbackShare(fullText) {
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(fullText).then(() => {
-          alert('공유용 링크를 복사했습니다.');
-        }).catch(() => {
-          window.prompt('아래 내용을 복사해 공유하세요.', fullText);
-        });
-      } else {
-        window.prompt('아래 내용을 복사해 공유하세요.', fullText);
+    function addComment(postId, author, text) {
+      const commentsMap = getPostCommentsMap();
+      const key = String(postId);
+      commentsMap[key] = Array.isArray(commentsMap[key]) ? commentsMap[key] : [];
+      commentsMap[key].unshift({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        author: String(author).trim(),
+        text: String(text).trim(),
+        date: getTodayString()
+      });
+      savePostCommentsMap(commentsMap);
+    }
+
+    function editNotice(id) {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 수정할 수 있습니다.');
+        return;
       }
+      const notices = getNotices();
+      const item = notices.find(n => String(n.id) === String(id));
+      if (!item) return;
+      const nextTitle = prompt('공지 제목 수정', item.title);
+      if (nextTitle === null) return;
+      const nextContent = prompt('공지 내용 수정', item.content);
+      if (nextContent === null) return;
+      item.title = nextTitle.trim() || item.title;
+      item.content = nextContent.trim() || item.content;
+      saveNotices(notices);
+      renderNotices();
     }
+    window.editNotice = editNotice;
 
-    function escapeHtml(value) {
-      return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    function deleteNotice(id) {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 삭제할 수 있습니다.');
+        return;
+      }
+      if (!confirm('이 공지를 삭제할까요?')) return;
+      saveNotices(getNotices().filter(n => String(n.id) !== String(id)));
+      renderNotices();
     }
+    window.deleteNotice = deleteNotice;
 
-    adminLoginBtn.addEventListener('click', () => {
-      if (isAdminLoggedIn) {
-        setAdminMode(false);
-        alert('관리자 로그아웃 되었습니다.');
+    function playVideo(id) {
+      const item = getVideoItems().find(v => String(v.id) === String(id));
+      if (!item) return;
+      videoPlayer.innerHTML = `
+        <h4 style="margin:0 0 10px;">${escapeHtml(item.title)}</h4>
+        <div>${buildEventVideoHtml(item)}</div>
+        <p style="margin-top:10px; color:#666;">${escapeHtml(item.description || '')}</p>
+      `;
+    }
+    window.playVideo = playVideo;
+
+    function addVideo() {
+      const title = document.getElementById('videoTitle').value.trim();
+      const url = document.getElementById('youtubeUrl').value.trim();
+      const description = document.getElementById('videoDesc').value.trim();
+      const youtubeId = getYoutubeId(url);
+
+      if (!title || !url || !youtubeId) {
+        alert('영상 제목과 올바른 유튜브 링크를 입력해주세요.');
         return;
       }
 
-      const password = prompt('관리자 비밀번호를 입력하세요');
-      if (password === ADMIN_PASSWORD) {
-        setAdminMode(true);
-        alert('관리자 로그인 완료');
-      } else {
-        alert('비밀번호가 올바르지 않습니다');
+      const items = getVideoItems();
+      items.unshift({
+        id: String(Date.now()),
+        title,
+        description,
+        youtubeId,
+        mediaType: 'video',
+        mediaUrl: '',
+        date: getTodayString()
+      });
+      saveVideoItems(items);
+
+      document.getElementById('videoTitle').value = '';
+      document.getElementById('youtubeUrl').value = '';
+      document.getElementById('videoDesc').value = '';
+
+      renderVideoList();
+      setVideoTab('list');
+      alert('영상이 등록되었습니다.');
+    }
+    window.addVideo = addVideo;
+
+    function renderAll() {
+      renderPosts();
+      renderNotices();
+      renderBoardPosts();
+      renderVideoList();
+      document.body.classList.toggle('admin-mode', isAdminLoggedIn);
+      adminLoginBtn.textContent = isAdminLoggedIn ? '관리자 로그아웃' : '관리자 로그인';
+      detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
+    }
+
+    fileInput.addEventListener('change', () => {
+      uploadPreview.innerHTML = '';
+      uploadPreview.classList.remove('show');
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      const mediaType = normalizeMediaType(mediaTypeSelect.value);
+
+      if (mediaType === 'video') {
+        uploadPreview.innerHTML = '<div style="padding:12px;">영상 파일 직접 업로드는 사용 가능하지만, 안정성을 위해 유튜브 링크 등록을 권장합니다.</div>';
+        uploadPreview.classList.add('show');
+        return;
       }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        uploadPreview.innerHTML = `<img src="${event.target.result}" alt="미리보기">`;
+        uploadPreview.classList.add('show');
+      };
+      reader.readAsDataURL(file);
     });
 
-    noticeViewTab.addEventListener('click', showNoticeList);
-    noticeWriteTab.addEventListener('click', showNoticeWrite);
+    mediaTypeSelect.addEventListener('change', () => {
+      fileInput.value = '';
+      uploadPreview.innerHTML = '';
+      uploadPreview.classList.remove('show');
+      fileInput.accept = mediaTypeSelect.value === 'video' ? 'video/*' : 'image/*';
+    });
 
-    document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
-      e.preventDefault();
+    uploadForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const place = document.getElementById('place').value.trim();
+      const author = document.getElementById('author').value.trim();
+      const description = document.getElementById('description').value.trim();
+      const mediaType = normalizeMediaType(mediaTypeSelect.value);
+      const file = fileInput.files?.[0];
 
-      const title = document.getElementById('boardTitle').value.trim();
-      const content = document.getElementById('boardContent').value.trim();
+      if (!title || !startDate || !endDate || !place || !author || !description || !file) {
+        alert('모든 항목을 입력해주세요.');
+        return;
+      }
 
+      if (mediaType === 'video') {
+        alert('영상 파일 직접 업로드 대신 영상행사 메뉴의 유튜브 링크 등록을 사용해주세요.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        savePost({
+          id: String(Date.now()),
+          title,
+          date: startDate,
+          endDate,
+          place,
+          author,
+          description,
+          mediaType: 'image',
+          mediaUrl: String(e.target.result || ''),
+          likes: 0,
+          views: 0,
+          comments: []
+        });
+
+        uploadForm.reset();
+        uploadPreview.innerHTML = '';
+        uploadPreview.classList.remove('show');
+        visiblePostCount = 8;
+        closeModal('uploadModal');
+        renderAll();
+        alert('게시글이 등록되었습니다.');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    noticeForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!isAdminLoggedIn) {
+        alert('관리자만 공지를 등록할 수 있습니다.');
+        return;
+      }
+      const title = document.getElementById('noticeTitle').value.trim();
+      const content = document.getElementById('noticeContent').value.trim();
       if (!title || !content) {
         alert('제목과 내용을 입력해주세요.');
         return;
       }
 
-      await savePost({
+      const notices = getNotices();
+      notices.unshift({
+        id: `n-${Date.now()}`,
+        title,
+        content,
+        date: getTodayString()
+      });
+      saveNotices(notices);
+      noticeForm.reset();
+      setNoticeTab('list');
+      renderNotices();
+      alert('공지가 등록되었습니다.');
+    });
+
+    document.getElementById('boardWriteForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const title = document.getElementById('boardTitle').value.trim();
+      const content = document.getElementById('boardContent').value.trim();
+      if (!title || !content) {
+        alert('제목과 내용을 입력해주세요.');
+        return;
+      }
+
+      savePost({
         id: String(Date.now()),
         title,
-        date: new Date().toISOString().slice(0, 10),
-        endDate: new Date().toISOString().slice(0, 10),
-        place: '시민 문화이야기',
+        date: getTodayString(),
+        endDate: getTodayString(),
+        place: '문화이야기',
         author: '시민',
         description: content,
         mediaType: 'image',
-        mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+        mediaUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80',
         likes: 0,
         views: 0,
         comments: []
       });
 
-      this.reset();
-      await renderAll();
-      showBoardList();
-      alert('문화이야기가 등록되었습니다.');
+      event.target.reset();
+      setBoardTab('list');
+      renderAll();
+      alert('문화이야기 글이 등록되었습니다.');
     });
 
-   
-    document.querySelectorAll('[data-open]').forEach((button) => {
+    commentForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const postId = commentForm.dataset.postId;
+      const author = document.getElementById('commentAuthor').value.trim();
+      const text = document.getElementById('commentText').value.trim();
+      if (!postId || !author || !text) {
+        alert('댓글 작성자와 내용을 입력해주세요.');
+        return;
+      }
+      addComment(postId, author, text);
+      event.target.reset();
+      openDetail(postId, { incrementView: false });
+      renderAll();
+    });
+
+    searchBtn.addEventListener('click', () => {
+      visiblePostCount = 8;
+      renderPosts();
+    });
+
+    searchInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        visiblePostCount = 8;
+        renderPosts();
+      }
+    });
+
+    aiKeywordButtons.forEach(button => {
       button.addEventListener('click', () => {
-        document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
-        const openId = button.dataset.open;
-        const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
-        if (linkedTop) linkedTop.classList.add('active');
-        openModal(openId);
+        searchInput.value = button.dataset.aiKeyword || '';
+        visiblePostCount = 8;
+        renderPosts();
       });
     });
 
-    document.addEventListener('click', (event) => {
-      const tabBtn = event.target.closest('[data-board-tab]');
-      if (tabBtn) {
-        const tab = tabBtn.getAttribute('data-board-tab');
-        if (tab === 'list') showBoardList();
-        if (tab === 'write') showBoardWrite();
+    loadMoreBtn.addEventListener('click', () => {
+      visiblePostCount += 8;
+      renderPosts();
+    });
+
+    adminLoginBtn.addEventListener('click', () => {
+      if (isAdminLoggedIn) {
+        isAdminLoggedIn = false;
+        renderAll();
         return;
       }
 
+      const input = prompt('관리자 비밀번호를 입력하세요.');
+      if (input === null) return;
+      if (input === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        renderAll();
+        alert('관리자 로그인되었습니다.');
+      } else {
+        alert('비밀번호가 다릅니다.');
+      }
+    });
+
+    document.querySelectorAll('[data-open]').forEach(button => {
+      button.addEventListener('click', () => {
+        const modalId = button.dataset.open;
+        if (modalId === 'noticeModal') setNoticeTab('list');
+        if (modalId === 'boardModal') setBoardTab('list');
+        if (modalId === 'videoModal') setVideoTab('list');
+        openModal(modalId);
+      });
+    });
+
+    document.querySelectorAll('[data-close]').forEach(button => {
+      button.addEventListener('click', () => closeModal(button.dataset.close));
+    });
+
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+      backdrop.addEventListener('click', (event) => {
+        if (event.target === backdrop) backdrop.classList.remove('show');
+      });
+    });
+
+    document.getElementById('noticeViewTab').addEventListener('click', () => setNoticeTab('list'));
+    document.getElementById('noticeWriteTab').addEventListener('click', () => {
+      if (!isAdminLoggedIn) {
+        alert('관리자만 공지를 작성할 수 있습니다.');
+        return;
+      }
+      setNoticeTab('write');
+    });
+
+    document.querySelectorAll('[data-board-tab]').forEach(button => {
+      button.addEventListener('click', () => setBoardTab(button.dataset.boardTab));
+    });
+
+    document.getElementById('videoViewTab').addEventListener('click', () => setVideoTab('list'));
+    document.getElementById('videoWriteTab').addEventListener('click', () => setVideoTab('write'));
+    document.getElementById('addVideoBtn').addEventListener('click', addVideo);
+
+    document.addEventListener('click', (event) => {
       const detailBtn = event.target.closest('.detail-btn');
       if (detailBtn) {
         openDetail(detailBtn.dataset.postId);
-        return;
-      }
-
-      const thumbClick = event.target.closest('.thumb-click');
-      if (thumbClick) {
-        openDetail(thumbClick.dataset.postId);
         return;
       }
 
@@ -2675,359 +2010,24 @@ ${shareUrl}`;
         sharePost(shareBtn.dataset.postId);
         return;
       }
-      const boardItem = event.target.closest('.board-item-click');
-     if (boardItem) {
-     const id = boardItem.dataset.postId;
-     openDetail(id);
-     return;
-     }
 
-      const deletePostBtn = event.target.closest('.delete-post-btn');
-      if (deletePostBtn) {
-        deletePost(deletePostBtn.dataset.postId);
-      }
-    });
-
-    eventGrid.addEventListener('keydown', (event) => {
-      const thumbClick = event.target.closest('.thumb-click');
-      if (!thumbClick) return;
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openDetail(thumbClick.dataset.postId);
-      }
-    });
-
-    document.querySelectorAll('[data-close]').forEach((button) => {
-      button.addEventListener('click', () => closeModal(button.dataset.close));
-    });
-
-    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-      backdrop.addEventListener('click', (event) => {
-        if (event.target === backdrop) {
-          backdrop.classList.remove('show');
-          if (!document.querySelector('.modal-backdrop.show')) {
-            document.body.style.overflow = '';
-          }
-        }
-      });
-    });
-
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    mediaTypeSelect.addEventListener('change', () => {
-      const file = fileInput.files?.[0];
-      renderPreview(file, mediaTypeSelect.value);
-    });
-
-    searchBtn.addEventListener('click', () => {
-      resetVisiblePostCount();
-      renderPosts();
-    });
-    searchInput.addEventListener('input', updateAiSearchMessage);
-    searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        resetVisiblePostCount();
-        renderPosts();
-      }
-    });
-    aiKeywordButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        aiKeywordButtons.forEach((item) => item.classList.remove('active'));
-        button.classList.add('active');
-        searchInput.value = button.dataset.aiKeyword || '';
-        resetVisiblePostCount();
-        renderPosts();
-      });
-    });
-    filterType.addEventListener('change', () => {
-      resetVisiblePostCount();
-      renderPosts();
-    });
-
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', () => {
-        visiblePostCount += 8;
-        renderPosts();
-      });
-    }
-
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const file = fileInput.files[0];
-      if (!file) {
-        alert('이미지 또는 영상을 선택해 주세요.');
+      const thumb = event.target.closest('.thumb-click');
+      if (thumb) {
+        openDetail(thumb.dataset.postId);
         return;
       }
 
-      const titleValue = document.getElementById('title').value.trim();
-      const placeValue = document.getElementById('place').value.trim();
-      const authorValue = document.getElementById('author').value.trim();
-      const descriptionValue = document.getElementById('description').value.trim();
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
-
-      if (!titleValue || !placeValue || !authorValue || !descriptionValue) {
-        alert('제목, 장소, 작성자, 설명을 모두 입력해 주세요.');
-        return;
-      }
-
-      if (!startDate || !endDate) {
-        alert('행사 기간을 입력해 주세요.');
-        return;
-      }
-
-      if (startDate > endDate) {
-        alert('종료일이 시작일보다 빠를 수 없습니다.');
-        return;
-      }
-
-      const submitBtn = uploadForm.querySelector('.submit');
-
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '업로드 중...';
-
-        const uploadedUrl = await uploadFileToWorker(file, mediaTypeSelect.value);
-
-        await savePost({
-          id: String(Date.now()),
-          title: titleValue,
-          date: startDate,
-          endDate,
-          place: placeValue,
-          author: authorValue,
-          description: descriptionValue,
-          mediaType: mediaTypeSelect.value,
-          mediaUrl: uploadedUrl,
-          likes: 0,
-          views: 0,
-          comments: []
-        });
-        uploadForm.reset();
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-        await renderAll();
-        alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
-        closeModal('uploadModal');
-      } catch (error) {
-        console.error(error);
-        alert('업로드 실패: ' + (error && error.message ? error.message : '알 수 없는 오류'));
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '게시글 등록';
+      const deleteBtn = event.target.closest('.delete-post-btn');
+      if (deleteBtn) {
+        deletePost(deleteBtn.dataset.postId);
       }
     });
 
-    uploadForm.addEventListener('reset', () => {
-      setTimeout(() => {
-        renderPreview(null, 'image');
-        mediaTypeSelect.value = 'image';
-      }, 0);
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeAllModals();
     });
-
-    noticeForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-
-      if (!isAdminLoggedIn) {
-        const password = prompt('공지 등록을 위해 관리자 비밀번호를 입력하세요');
-        if (password !== ADMIN_PASSWORD) {
-          alert('관리자만 등록 가능합니다');
-          return;
-        }
-        setAdminMode(true);
-      }
-
-      const notices = getNotices();
-      const editId = noticeForm.dataset.editId;
-
-      const payload = {
-        id: editId || String(Date.now()),
-        title: document.getElementById('noticeTitle').value.trim(),
-        content: document.getElementById('noticeContent').value.trim(),
-        date: new Date().toISOString().slice(0, 10)
-      };
-
-      let next;
-      if (editId) {
-        next = notices.map((item) => item.id === editId ? payload : item);
-      } else {
-        next = [payload, ...notices];
-      }
-
-      saveNotices(next);
-      noticeForm.reset();
-      delete noticeForm.dataset.editId;
-      renderNotices();
-      showNoticeList();
-      alert(editId ? '공지 수정 완료' : '공지 등록 완료');
-    });
-
-    commentForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const postId = commentForm.dataset.postId;
-      const author = document.getElementById('commentAuthor').value.trim();
-      const textValue = document.getElementById('commentText').value.trim();
-      if (!postId || !author || !textValue) return;
-
-      const newComment = normalizeComment({
-        id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        postId,
-        author,
-        text: textValue,
-        date: new Date().toISOString().slice(0, 10),
-        createdAt: new Date().toISOString()
-      });
-
-      const commentsMap = getPostCommentsMap();
-      const currentComments = Array.isArray(commentsMap[postId]) ? commentsMap[postId] : [];
-      commentsMap[postId] = [newComment, ...currentComments];
-      savePostCommentsMap(commentsMap);
-
-      try {
-        await saveCommentToServer(postId, newComment);
-      } catch (error) {
-        console.error('댓글 서버 저장 실패', error);
-        alert('댓글은 내 기기에는 저장되었지만 서버 저장은 실패했습니다. Worker에 /api/comments 기능을 추가하면 모든 사람에게 보입니다.');
-      }
-
-      commentForm.reset();
-      await openDetail(postId, { incrementView: false });
-      await renderAll();
-    });
-
-    async function openPostFromHash() {
-      const hash = window.location.hash || '';
-      if (!hash.startsWith('#post-')) return;
-
-      const id = hash.replace('#post-', '');
-      const post = await findPostById(id);
-      if (post) {
-        openDetail(id);
-      }
-    }
-
-    window.editNotice = editNotice;
-    window.deleteNotice = deleteNotice;
 
     renderAll();
-    openPostFromHash();
-
-    window.addEventListener('hashchange', openPostFromHash);
-  
-
-    function addVideo() {
-      const titleEl = document.getElementById('videoTitle');
-      const urlEl = document.getElementById('youtubeUrl');
-      const descEl = document.getElementById('videoDesc');
-
-      const title = titleEl ? titleEl.value.trim() : '';
-      const url = urlEl ? urlEl.value.trim() : '';
-      const desc = descEl ? descEl.value.trim() : '';
-
-      if (!title || !url) {
-        alert('영상 제목과 유튜브 링크를 입력해주세요.');
-        return;
-      }
-
-      const videoId = getYoutubeId(url);
-
-      if (!videoId || videoId.length < 5) {
-        alert('유튜브 링크를 다시 확인해주세요.');
-        return;
-      }
-
-      const items = getVideoItems();
-
-      items.unshift({
-        id: 'video-' + Date.now(),
-        title,
-        description: desc,
-        youtubeId: videoId,
-        date: new Date().toISOString().slice(0, 10)
-      });
-
-      saveVideoItems(items);
-      renderVideoList();
-      playCustomVideo(items[0].id);
-
-      if (titleEl) titleEl.value = '';
-      if (urlEl) urlEl.value = '';
-      if (descEl) descEl.value = '';
-
-      document.getElementById('videoViewPanel').style.display = 'block';
-      document.getElementById('videoWritePanel').style.display = 'none';
-      alert('영상이 등록되었습니다.');
-    }
-
-    window.addVideo = addVideo;
-
-    const videoViewTab = document.getElementById('videoViewTab');
-    const videoWriteTabOnly = document.getElementById('videoWriteTab');
-    const videoViewPanel = document.getElementById('videoViewPanel');
-    const videoWritePanel = document.getElementById('videoWritePanel');
-
-    videoViewTab.addEventListener('click', () => {
-      videoViewPanel.style.display = 'block';
-      videoWritePanel.style.display = 'none';
-    });
-
-    videoWriteTabOnly.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      videoViewPanel.style.display = 'none';
-      videoWritePanel.style.display = 'block';
-    });
-    if (window.Kakao && !window.Kakao.isInitialized()) {
-      window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-    }
-
-    function shareKakao(title, desc, imageUrl, linkUrl) {
-      if (!(window.Kakao && window.Kakao.Share)) {
-        fallbackShare(`${title}
-${desc}
-${linkUrl}`);
-        return;
-      }
-
-      window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: title,
-          description: desc,
-          imageUrl: imageUrl,
-          link: {
-            mobileWebUrl: linkUrl,
-            webUrl: linkUrl,
-          },
-        },
-        buttons: [
-          {
-            title: '자세히 보기',
-            link: {
-              mobileWebUrl: linkUrl,
-              webUrl: linkUrl,
-            },
-          },
-        ],
-      });
-    }
-
-  
-    updateAiSearchMessage();
   </script>
-
-  <div id="totalViewsBox" style="
-  text-align:center;
-  margin:40px 0;
-  font-size:16px;
-  color:#666;
-">
-  총 조회수: 0 | 오늘 조회수: 0
-</div>
 </body>
 </html>
