@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Fixed version: USE_API=false localStorage fallback to avoid /api/posts 500 -->
 <html lang="ko">
 <head>
   <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
@@ -566,6 +567,29 @@
       font-size: 0.92rem;
     }
 
+    .load-more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 14px;
+    }
+
+    .load-more-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #222;
+      padding: 12px 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .load-more-btn:hover {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+
     .detail-meta {
       display: grid;
       gap: 8px;
@@ -822,6 +846,7 @@
 
       <div class="cards" id="eventGrid"></div>
       <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
+      <div class="load-more-wrap"><button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button></div>
     </section>
 
     <section id="noticePreview" class="wrap panel">
@@ -1061,6 +1086,9 @@
   </div>
 
   <footer>
+    <div id="totalViewsBox" style="text-align:center; padding:0 0 18px; font-weight:700; color:#444;">
+      총 조회수: 0 | 오늘 조회수: 0
+    </div>
     <div class="wrap footer-inner">
       <div>
         <strong>정읍문화소식</strong><br>
@@ -1075,7 +1103,8 @@
   <script>
 
 
-    const API_POSTS_ENDPOINT = '/api/posts';
+   const API_POSTS_ENDPOINT = '/api/posts';
+    const API_VERSION = '20260408-mobile-fix';
     const API_COMMENTS_ENDPOINT = '/api/comments';
     const POST_META_KEY = 'jeongeup-culture-post-meta-v1';
     const POST_COMMENTS_KEY = 'jeongeup-culture-post-comments-v1';
@@ -1083,7 +1112,22 @@
     const VIDEO_ITEMS_KEY = 'jeongeup-video-items-v1';
     const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
     const ADMIN_PASSWORD = '1234';
-   const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
+  const R2_UPLOAD_ENDPOINT = '/api/upload';
+    const USE_API = false;
+    const LOCAL_POSTS_KEY = 'jeongeup-posts';
+
+    function buildApiUrl(endpoint) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      return `${endpoint}${separator}v=${encodeURIComponent(API_VERSION)}&t=${Date.now()}`;
+    }
+
+    window.addEventListener('load', () => {
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((key) => caches.delete(key));
+        }).catch(() => {});
+      }
+    });
 
     const demoPosts = [
       {
@@ -1205,6 +1249,7 @@
     const aiSearchResultText = document.getElementById('aiSearchResultText');
     const aiKeywordButtons = document.querySelectorAll('.ai-keyword-btn');
     const paginationInfo = document.getElementById('paginationInfo');
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
     const detailTitle = document.getElementById('detailTitle');
     const detailMeta = document.getElementById('detailMeta');
     const detailMedia = document.getElementById('detailMedia');
@@ -1226,6 +1271,7 @@
     const videoList = document.getElementById('videoList');
     const commentForm = document.getElementById('commentForm');
     let isAdminLoggedIn = false;
+    let visiblePostCount = 8;
 
 
     function getHiddenBrokenPostIds() {
@@ -1343,10 +1389,25 @@
     }
 
     async function getServerCommentsMap() {
+      if (!USE_API) {
+        return {};
+      }
+
       try {
-        const response = await fetch(API_COMMENTS_ENDPOINT, { cache: 'no-store' });
+        const response = await fetch(buildApiUrl(API_COMMENTS_ENDPOINT), {
+          cache: 'no-store'
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+
         if (!response.ok) {
           throw new Error(`댓글 불러오기 실패 (${response.status})`);
+        }
+
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('댓글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('댓글 API가 JSON이 아니라 HTML을 반환했습니다.');
         }
 
         const data = await response.json();
@@ -1389,6 +1450,16 @@
         throw new Error('저장할 댓글 형식이 올바르지 않습니다.');
       }
 
+      if (!USE_API) {
+        const commentsMap = getPostCommentsMap();
+        commentsMap[String(postId)] = Array.isArray(commentsMap[String(postId)])
+          ? commentsMap[String(postId)]
+          : [];
+        commentsMap[String(postId)].push(normalized);
+        savePostCommentsMap(commentsMap);
+        return normalized;
+      }
+
       const response = await fetch(API_COMMENTS_ENDPOINT, {
         method: 'POST',
         headers: {
@@ -1412,16 +1483,58 @@
     }
 
     async function getPosts() {
+      const metaMap = getPostMetaMap();
+      const commentsMap = await getMergedCommentsMap();
+
+      if (!USE_API) {
+        const localItems = getStored(LOCAL_POSTS_KEY, demoPosts);
+
+        const normalizedLocal = localItems
+          .map((item) => {
+            const id = String(item.id || '');
+            const meta = metaMap[id] || {};
+            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
+
+            return normalizePost({
+              ...item,
+              date: item.date || item.startDate || item.createdAt || item.created_at || '',
+              endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
+              place: item.place || meta.place || '',
+              author: item.author || meta.author || '시민',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
+              comments
+            });
+          })
+          .filter(Boolean);
+
+        return sortPosts(normalizedLocal);
+      }
+
       try {
-        const response = await fetch(API_POSTS_ENDPOINT, { cache: 'no-store' });
+        const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
+          cache: 'no-store'
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+
         if (!response.ok) {
           throw new Error(`게시글 불러오기 실패 (${response.status})`);
         }
 
+        if (!contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('게시글 API가 JSON 대신 반환한 내용:', text.slice(0, 300));
+          throw new Error('게시글 API가 JSON이 아니라 HTML을 반환했습니다.');
+        }
+
         const data = await response.json();
-        const items = Array.isArray(data) ? data : [];
-        const metaMap = getPostMetaMap();
-        const commentsMap = await getMergedCommentsMap();
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+            ? data.results
+            : [];
 
         const normalized = items
           .map((item) => {
@@ -1431,18 +1544,13 @@
 
             return normalizePost({
               ...item,
+              date: item.date || item.startDate || item.createdAt || item.created_at || '',
+              endDate: item.endDate || item.date || item.startDate || item.createdAt || item.created_at || '',
+              place: item.place || meta.place || '',
               author: item.author || meta.author || '시민',
-              likes: Number.isFinite(Number(item.likes))
-                ? Number(item.likes)
-                : (Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : 0),
-              views: Number.isFinite(Number(item.views))
-                ? Number(item.views)
-                : (Number.isFinite(Number(meta.views)) ? Number(meta.views) : 0),
-              todayViews: Number.isFinite(Number(item.todayViews))
-                ? Number(item.todayViews)
-                : (Number.isFinite(Number(meta.todayViews)) ? Number(meta.todayViews) : 0),
-              todayViewsDate: String(item.todayViewsDate || meta.todayViewsDate || ''),
-              lastViewedAt: item.lastViewedAt || meta.lastViewedAt || '',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || item.createdAt || item.created_at || '',
               comments
             });
           })
@@ -1451,7 +1559,26 @@
         return sortPosts(normalized);
       } catch (error) {
         console.error('서버 게시글 읽기 실패', error);
-        return [];
+
+        const fallbackItems = getStored(LOCAL_POSTS_KEY, demoPosts);
+        const normalizedFallback = fallbackItems
+          .map((item) => {
+            const id = String(item.id || '');
+            const meta = metaMap[id] || {};
+            const comments = Array.isArray(commentsMap[id]) ? commentsMap[id] : [];
+
+            return normalizePost({
+              ...item,
+              author: item.author || meta.author || '시민',
+              likes: Number.isFinite(Number(meta.likes)) ? Number(meta.likes) : Number(item.likes || 0),
+              views: Number.isFinite(Number(meta.views)) ? Number(meta.views) : Number(item.views || 0),
+              lastViewedAt: meta.lastViewedAt || item.lastViewedAt || '',
+              comments
+            });
+          })
+          .filter(Boolean);
+
+        return sortPosts(normalizedFallback);
       }
     }
 
@@ -1463,8 +1590,46 @@
 
       unhideBrokenPostId(normalized.id);
 
+      if (!USE_API) {
+        const posts = getStored(LOCAL_POSTS_KEY, demoPosts);
+
+        const nextPosts = [
+          {
+            id: String(normalized.id),
+            title: normalized.title,
+            date: normalized.date,
+            endDate: normalized.endDate,
+            place: normalized.place,
+            author: normalized.author,
+            description: normalized.description,
+            mediaType: normalized.mediaType,
+            mediaUrl: normalized.mediaUrl,
+            likes: Number(normalized.likes || 0),
+            views: Number(normalized.views || 0),
+            comments: Array.isArray(normalized.comments) ? normalized.comments : [],
+            createdAt: new Date().toISOString()
+          },
+          ...posts.filter((item) => String(item.id) !== String(normalized.id))
+        ];
+
+        saveStored(LOCAL_POSTS_KEY, nextPosts);
+
+        const metaMap = getPostMetaMap();
+        metaMap[String(normalized.id)] = {
+          ...(metaMap[String(normalized.id)] || {}),
+          author: normalized.author,
+          place: normalized.place,
+          likes: Number(metaMap[String(normalized.id)]?.likes || 0),
+          views: Number(metaMap[String(normalized.id)]?.views || 0),
+          lastViewedAt: metaMap[String(normalized.id)]?.lastViewedAt || ''
+        };
+        savePostMetaMap(metaMap);
+
+        return normalized;
+      }
+
       const payload = {
-        id: normalized.id,
+        id: String(normalized.id),
         title: normalized.title,
         content: normalized.description,
         mediaType: normalized.mediaType,
@@ -1478,8 +1643,9 @@
         createdAt: new Date().toISOString()
       };
 
-      const response = await fetch(API_POSTS_ENDPOINT, {
+      const response = await fetch(buildApiUrl(API_POSTS_ENDPOINT), {
         method: 'POST',
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -1497,56 +1663,21 @@
         throw new Error(result?.error || result?.detail || '게시글 저장에 실패했습니다.');
       }
 
+      const metaMap = getPostMetaMap();
+      metaMap[String(normalized.id)] = {
+        ...(metaMap[String(normalized.id)] || {}),
+        author: normalized.author,
+        place: normalized.place,
+        likes: Number(metaMap[String(normalized.id)]?.likes || 0),
+        views: Number(metaMap[String(normalized.id)]?.views || 0),
+        lastViewedAt: metaMap[String(normalized.id)]?.lastViewedAt || ''
+      };
+      savePostMetaMap(metaMap);
+
       return {
         ...normalized,
         id: String(result?.id || normalized.id)
       };
-    }
-
-    async function syncPostMetaToServer(post) {
-      if (!post || !post.id) return false;
-
-      const payload = {
-        id: String(post.id),
-        title: String(post.title || ''),
-        content: String(post.description || post.content || ''),
-        mediaType: String(post.mediaType || 'image'),
-        mediaUrl: String(post.mediaUrl || ''),
-        imageUrl: String(post.mediaUrl || ''),
-        startDate: String(post.date || post.startDate || ''),
-        date: String(post.date || post.startDate || ''),
-        endDate: String(post.endDate || post.date || post.startDate || ''),
-        place: String(post.place || ''),
-        author: String(post.author || '시민'),
-        likes: Number(post.likes || 0),
-        views: Number(post.views || 0),
-        todayViews: Number(post.todayViews || 0),
-        todayViewsDate: String(post.todayViewsDate || ''),
-        lastViewedAt: String(post.lastViewedAt || ''),
-        createdAt: String(post.createdAt || new Date().toISOString())
-      };
-
-      const attempts = [
-        { method: 'PATCH', body: JSON.stringify(payload) },
-        { method: 'PUT', body: JSON.stringify(payload) },
-        { method: 'POST', body: JSON.stringify({ ...payload, _action: 'updateMeta' }) },
-        { method: 'POST', body: JSON.stringify(payload) }
-      ];
-
-      for (const attempt of attempts) {
-        try {
-          const response = await fetch(API_POSTS_ENDPOINT, {
-            method: attempt.method,
-            headers: { 'Content-Type': 'application/json' },
-            body: attempt.body
-          });
-          if (response.ok) return true;
-        } catch (error) {
-          console.warn('조회수 서버 동기화 재시도', attempt.method, error);
-        }
-      }
-
-      return false;
     }
 
     function isValidMediaUrl(value) {
@@ -1585,8 +1716,22 @@
       const mediaType = normalizeMediaType(post.mediaType);
       if (!isValidMediaUrl(mediaUrl)) return null;
 
-      const startDate = String(post.startDate || post.date || '').trim();
-      const endDate = String(post.endDate || post.startDate || post.date || '').trim();
+      const startDate = String(
+        post.startDate ||
+        post.date ||
+        post.createdAt ||
+        post.created_at ||
+        ''
+      ).trim().slice(0, 10);
+
+      const endDate = String(
+        post.endDate ||
+        post.startDate ||
+        post.date ||
+        post.createdAt ||
+        post.created_at ||
+        ''
+      ).trim().slice(0, 10);
 
       return {
         id: String(post.id || Date.now()),
@@ -1601,9 +1746,7 @@
         youtubeId: String(post.youtubeId || '').trim(),
         likes: Number.isFinite(Number(post.likes)) ? Number(post.likes) : 0,
         views: Number.isFinite(Number(post.views)) ? Number(post.views) : 0,
-        todayViews: Number.isFinite(Number(post.todayViews)) ? Number(post.todayViews) : 0,
-        todayViewsDate: String(post.todayViewsDate || '').trim(),
-        lastViewedAt: String(post.lastViewedAt || '').trim(),
+        lastViewedAt: String(post.lastViewedAt || post.createdAt || post.created_at || '').trim(),
         comments: Array.isArray(post.comments) ? post.comments : []
       };
     }
@@ -1698,35 +1841,53 @@ async function uploadFileToWorker(file, mediaType) {
     throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
+  if (!USE_API) {
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const result = String(reader.result || '').trim();
+        if (!result.startsWith('data:image/')) {
+          reject(new Error('이미지 변환에 실패했습니다.'));
+          return;
+        }
+        resolve(result);
+      };
+
+      reader.onerror = () => {
+        reject(new Error('이미지 읽기에 실패했습니다.'));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
   const formData = new FormData();
   formData.append('file', file);
 
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    body: formData
+  });
 
-const response = await fetch(R2_UPLOAD_ENDPOINT, {
-  method: "POST",
-  body: formData
-});
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+  }
 
+  if (!response.ok || !data?.ok) {
+    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+  }
 
-let data = null;
-try {
-  data = await response.json();
-} catch (error) {
-  throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+  const uploadedUrl = String(data?.url || '').trim();
+  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+    throw new Error('업로드 주소를 받지 못했습니다.');
+  }
+
+  return uploadedUrl;
 }
-
-if (!response.ok || !data?.ok) {
-  throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
-}
-
-const uploadedUrl = String(data?.url || '').trim();
-if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-  throw new Error('업로드 주소를 받지 못했습니다.');
-}
-
-return uploadedUrl;
-}
-
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
@@ -1752,6 +1913,10 @@ return uploadedUrl;
         if (aFuture !== bFuture) return aFuture - bFuture;
         return new Date(a.date) - new Date(b.date);
       });
+    }
+
+    function resetVisiblePostCount() {
+      visiblePostCount = 8;
     }
 
     function getPlaceholderDataUrl(label) {
@@ -1839,7 +2004,7 @@ return uploadedUrl;
         });
       }
 
-      return posts.slice(0, 8);
+      return posts;
     } 
 
     function updateAiSearchMessage() {
@@ -1856,17 +2021,34 @@ return uploadedUrl;
 
     async function renderPosts() {
       updateAiSearchMessage();
-      const allPosts = await getPosts();
-      const posts = await currentFilteredPosts();
-      updateTotalViews(allPosts);
+      const allFilteredPosts = await currentFilteredPosts();
+      const posts = allFilteredPosts.slice(0, visiblePostCount);
 
       if (posts.length === 0) {
-        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
+        eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">표시할 문화소식이 없습니다.</div>';
         paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
 
-      paginationInfo.textContent = `가까운 날짜순 ${posts.length}개 노출`;
+      const shownCount = posts.length;
+      const totalCount = allFilteredPosts.length;
+
+      paginationInfo.textContent = totalCount > shownCount
+        ? `가까운 날짜순 ${shownCount}개 표시 / 전체 ${totalCount}개`
+        : `가까운 날짜순 ${shownCount}개 노출`;
+
+      updateTotalViews(allFilteredPosts);
+
+      if (loadMoreBtn) {
+        if (totalCount > shownCount) {
+          loadMoreBtn.style.display = 'inline-flex';
+          loadMoreBtn.textContent = `더보기 (${totalCount - shownCount}개 남음)`;
+        } else {
+          loadMoreBtn.style.display = 'none';
+        }
+      }
+
       eventGrid.innerHTML = posts.map((post) => `
         <article class="card" id="post-${post.id}">
           <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
@@ -1878,7 +2060,7 @@ return uploadedUrl;
             <div class="title">${escapeHtml(post.title)}</div>
             <div class="place">${escapeHtml(post.place)}</div>
             <div class="stat-row">
-            
+
               <span>좋아요 ${(post.likes || 0)}</span>
               <span>댓글 ${post.comments?.length || 0}</span>
             </div>
@@ -1898,12 +2080,13 @@ function updateTotalViews(posts) {
   let todayTotal = 0;
   const today = getTodayString();
 
-  (Array.isArray(posts) ? posts : []).forEach(post => {
-    total += Number(post.views || 0);
+  posts.forEach(post => {
+    const views = Number(post.views || 0);
+    total += views;
 
-    const todayViewsDate = String(post.todayViewsDate || '').slice(0, 10);
-    if (todayViewsDate === today) {
-      todayTotal += Number(post.todayViews || 0);
+    const updatedAt = String(post.updatedAt || post.viewDate || post.lastViewedAt || '').slice(0, 10);
+    if (updatedAt === today || String(post.date || '').slice(0, 10) === today) {
+      todayTotal += views;
     }
   });
 
@@ -2177,63 +2360,24 @@ function updateTotalViews(posts) {
     }
 
     async function addView(id) {
-      const target = await findPostById(id);
+      const posts = await getPosts();
+      const target = posts.find(p => String(p.id) === String(id));
       if (!target) return null;
 
       const metaMap = getPostMetaMap();
-      const key = String(id);
-      const today = getTodayString();
-      const nowIso = new Date().toISOString();
-      const currentMeta = metaMap[key] || {};
+      const currentMeta = metaMap[String(id)] || {};
+      const nextViews = (Number(currentMeta.views) || target.views || 0) + 1;
+      metaMap[String(id)] = {
+        ...currentMeta,
+        author: currentMeta.author || target.author || '시민',
+        likes: Number(currentMeta.likes) || target.likes || 0,
+        views: nextViews,
+        lastViewedAt: new Date().toISOString()
+      };
+      savePostMetaMap(metaMap);
 
-      const baseViews = Number.isFinite(Number(target.views))
-        ? Number(target.views)
-        : (Number.isFinite(Number(currentMeta.views)) ? Number(currentMeta.views) : 0);
-
-      const baseTodayViewsDate = String(target.todayViewsDate || currentMeta.todayViewsDate || '').slice(0, 10);
-      const baseTodayViews = baseTodayViewsDate === today
-        ? (Number.isFinite(Number(target.todayViews))
-            ? Number(target.todayViews)
-            : (Number.isFinite(Number(currentMeta.todayViews)) ? Number(currentMeta.todayViews) : 0))
-        : 0;
-
-      const updatedPost = normalizePost({
-        ...target,
-        views: baseViews + 1,
-        todayViews: baseTodayViews + 1,
-        todayViewsDate: today,
-        lastViewedAt: nowIso
-      });
-
-      let synced = false;
-      try {
-        synced = await syncPostMetaToServer(updatedPost);
-      } catch (error) {
-        synced = false;
-      }
-
-      if (!synced) {
-        metaMap[key] = {
-          ...currentMeta,
-          author: currentMeta.author || target.author || '시민',
-          likes: Number.isFinite(Number(currentMeta.likes))
-            ? Number(currentMeta.likes)
-            : Number(target.likes || 0),
-          views: updatedPost.views,
-          todayViews: updatedPost.todayViews,
-          todayViewsDate: updatedPost.todayViewsDate,
-          lastViewedAt: updatedPost.lastViewedAt
-        };
-        savePostMetaMap(metaMap);
-      } else if (metaMap[key]) {
-        delete metaMap[key].views;
-        delete metaMap[key].todayViews;
-        delete metaMap[key].todayViewsDate;
-        delete metaMap[key].lastViewedAt;
-        savePostMetaMap(metaMap);
-      }
-
-      return updatedPost;
+      target.views = nextViews;
+      return target;
     }
 
     async function likePost(id) {
@@ -2578,11 +2722,15 @@ ${shareUrl}`;
       renderPreview(file, mediaTypeSelect.value);
     });
 
-    searchBtn.addEventListener('click', renderPosts);
+    searchBtn.addEventListener('click', () => {
+      resetVisiblePostCount();
+      renderPosts();
+    });
     searchInput.addEventListener('input', updateAiSearchMessage);
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        resetVisiblePostCount();
         renderPosts();
       }
     });
@@ -2591,10 +2739,21 @@ ${shareUrl}`;
         aiKeywordButtons.forEach((item) => item.classList.remove('active'));
         button.classList.add('active');
         searchInput.value = button.dataset.aiKeyword || '';
+        resetVisiblePostCount();
         renderPosts();
       });
     });
-    filterType.addEventListener('change', renderPosts);
+    filterType.addEventListener('change', () => {
+      resetVisiblePostCount();
+      renderPosts();
+    });
+
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        visiblePostCount += 8;
+        renderPosts();
+      });
+    }
 
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
