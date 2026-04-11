@@ -1766,7 +1766,15 @@
     }
 
     function saveStored(key, value) {
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        const message = String(error && error.message ? error.message : error);
+        if (message.toLowerCase().includes('quota')) {
+          throw new Error('브라우저 저장공간이 부족합니다. 더 작은 이미지로 올려주세요.');
+        }
+        throw error;
+      }
     }
 
     function getNotices() {
@@ -1845,16 +1853,57 @@ async function uploadFileToWorker(file, mediaType) {
       const reader = new FileReader();
 
       reader.onload = () => {
-        const result = String(reader.result || '').trim();
-        if (!result.startsWith('data:image/')) {
-          reject(new Error('이미지 변환에 실패했습니다.'));
-          return;
-        }
-        resolve(result);
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const maxWidth = 1400;
+            const maxHeight = 1800;
+            let { width, height } = img;
+
+            const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+            width = Math.max(1, Math.round(width * ratio));
+            height = Math.max(1, Math.round(height * ratio));
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('이미지 변환 준비에 실패했습니다.'));
+              return;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+
+            let quality = 0.82;
+            let result = canvas.toDataURL('image/jpeg', quality);
+
+            while (result.length > 1_600_000 && quality > 0.45) {
+              quality -= 0.08;
+              result = canvas.toDataURL('image/jpeg', quality);
+            }
+
+            if (!result.startsWith('data:image/')) {
+              reject(new Error('이미지 변환에 실패했습니다.'));
+              return;
+            }
+
+            resolve(result);
+          } catch (error) {
+            reject(new Error('이미지 압축 중 오류가 발생했습니다.'));
+          }
+        };
+
+        img.onerror = () => {
+          reject(new Error('이미지 읽기에 실패했습니다.'));
+        };
+
+        img.src = String(reader.result || '');
       };
 
       reader.onerror = () => {
-        reject(new Error('이미지 읽기에 실패했습니다.'));
+        reject(new Error('파일 읽기 실패'));
       };
 
       reader.readAsDataURL(file);
@@ -1877,16 +1926,12 @@ async function uploadFileToWorker(file, mediaType) {
   }
 
   if (!response.ok || !data?.ok) {
-    throw new Error(data?.error || data?.detail || '업로드 서버 연결에 실패했습니다.');
+    throw new Error(data?.error || data?.detail || '업로드 실패');
   }
 
-  const uploadedUrl = String(data?.url || '').trim();
-  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
-    throw new Error('업로드 주소를 받지 못했습니다.');
-  }
-
-  return uploadedUrl;
+  return data.url;
 }
+
 
     function formatDate(dateString) {
       const d = new Date(dateString + 'T00:00:00');
