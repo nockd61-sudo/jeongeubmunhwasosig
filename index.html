@@ -193,7 +193,6 @@
       cursor: pointer;
     }
 
-
     .ai-search-wrap {
       background: #fff;
       border: 1px solid var(--line);
@@ -323,7 +322,8 @@
     }
 
     .thumb img,
-    .thumb video {
+    .thumb video,
+    .thumb iframe {
       height: 100%;
       object-fit: cover;
     }
@@ -771,332 +771,338 @@
       .hero-overlay h1 { font-size: 1.8rem; }
       .modal-body, .modal-head { padding: 16px; }
     }
-  
+
     .board-tab-content { display: none; }
     .board-tab-content.active { display: block; }
-</style>
+  </style>
 </head>
 <body>
 <header>
-    <div class="wrap topbar">
-      <a href="#top" class="brand">
-        <strong>정읍문화소식</strong>
-        <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
-      </a>
-      <nav class="menu">
-        <button class="active" type="button" data-open="boardModal">문화이야기</button>
-        <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="videoModal">영상행사</button>
-        <button type="button" data-open="uploadModal">소식올리기</button>
-        <button type="button" id="adminLoginBtn">관리자 로그인</button>
-      </nav>
+  <div class="wrap topbar">
+    <a href="#top" class="brand">
+      <strong>정읍문화소식</strong>
+      <span>시민이 직접 올리고 함께 보는 이미지 중심 문화소식 플랫폼</span>
+    </a>
+    <nav class="menu">
+      <button class="active" type="button" data-open="boardModal">문화이야기</button>
+      <button type="button" data-open="noticeModal">공지사항</button>
+      <button type="button" data-open="videoModal">영상행사</button>
+      <button type="button" data-open="uploadModal">소식올리기</button>
+      <button type="button" id="adminLoginBtn">관리자 로그인</button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <div class="hero-box">
+      <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80" alt="메인 비주얼">
+      <div class="hero-overlay">
+        <div>
+          <h1>정읍문화소식</h1>
+          <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기</p>
+        </div>
+      </div>
     </div>
-  </header>
+  </section>
 
-  <main id="top">
-    <section class="hero wrap">
-      <div class="hero-box">
-        <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1600&q=80" alt="메인 비주얼">
-        <div class="hero-overlay">
-          <div>
-            <h1>정읍문화소식</h1>
-            <p>행사 포스터처럼 보이고, 시민이 직접 사진과 영상을 올릴 수 있는 열린 문화이야기
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
+  <section class="wrap">
+    <div class="quick-row">
+      <button type="button" data-open="noticeModal">공지사항</button>
+      <button type="button" data-open="boardModal">문화이야기</button>
+      <button type="button" data-open="videoModal">영상행사</button>
+      <button type="button" data-open="uploadModal" class="active">소식올리기</button>
+    </div>
+  </section>
 
-    <section class="wrap">
-      <div class="quick-row">
-        <button type="button" data-open="noticeModal">공지사항</button>
-        <button type="button" data-open="boardModal">문화이야기</button>
-        <button type="button" data-open="videoModal">영상행사</button>
-        <button type="button" data-open="uploadModal" class="active">소식올리기</button>
-      </div>
-    </section>
+  <section id="board" class="wrap">
+    <h2 class="section-title">가까운 날짜순 문화소식</h2>
 
-    <section id="board" class="wrap">
-      <h2 class="section-title">가까운 날짜순 문화소식</h2>
-      <div class="ai-search-wrap">
-        <div class="ai-search-title-row">
-          <h3 class="ai-search-title">AI 검색창</h3>
-          <span class="ai-search-badge">정읍행사</span>
-        </div>
-
-        <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 다양한 문화행사를 한 번에 통합검색합니다.</p>
-
-        <div class="toolbar ai-toolbar">
-          <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
-            <option value="all" selected>전체</option>
-            <option value="image">이미지</option>
-            <option value="video">영상</option>
-          </select>
-          <input id="searchInput" type="text" placeholder="정읍 행사명을 검색해보세요">
-          <button id="searchBtn" type="button">검색</button>
-        </div>
-
-        <div class="ai-keyword-row">
-          <button type="button" class="ai-keyword-btn" data-ai-keyword="정읍행사">정읍행사</button>
-        </div>
-
-        <div id="aiSearchResultText" class="ai-search-result-text">정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.</div>
+    <div class="ai-search-wrap">
+      <div class="ai-search-title-row">
+        <h3 class="ai-search-title">AI 검색창</h3>
+        <span class="ai-search-badge">정읍행사</span>
       </div>
 
-      <div class="cards" id="eventGrid"></div>
-      <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
-      <div class="load-more-wrap"><button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button></div>
-    </section>
+      <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 다양한 문화행사를 한 번에 통합검색합니다.</p>
 
-    <section id="noticePreview" class="wrap panel">
-      <h3>관리자공지사항 미리보기</h3>
-      <div class="notice-list" id="noticePreviewList"></div>
-    </section>
-  </main>
-
-  <div class="modal-backdrop" id="noticeModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>공지사항</h3>
-        <button class="close-btn" type="button" data-close="noticeModal">✕</button>
+      <div class="toolbar ai-toolbar">
+        <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
+          <option value="all" selected>전체</option>
+          <option value="image">이미지</option>
+          <option value="video">영상</option>
+        </select>
+        <input id="searchInput" type="text" placeholder="정읍 행사명을 검색해보세요">
+        <button id="searchBtn" type="button">검색</button>
       </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="noticeViewTab">공지 보기</button>
-          <button class="reset" type="button" id="noticeWriteTab">공지 쓰기</button>
-        </div>
 
-        <div class="panel" id="noticeWritePanel" style="margin-top:0; padding:0; border:0; box-shadow:none; display:none;">
-          <h3>관리자 글쓰기</h3>
-          <form id="noticeForm">
-            <div class="form-grid">
-              <div class="field full">
-                <label for="noticeTitle">제목</label>
-                <input id="noticeTitle" type="text" required>
-              </div>
-              <div class="field full">
-                <label for="noticeContent">내용</label>
-                <textarea id="noticeContent" required></textarea>
-              </div>
+      <div class="ai-keyword-row">
+        <button type="button" class="ai-keyword-btn" data-ai-keyword="정읍행사">정읍행사</button>
+      </div>
+
+      <div id="aiSearchResultText" class="ai-search-result-text">정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.</div>
+    </div>
+
+    <div class="cards" id="eventGrid"></div>
+    <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
+    <div class="load-more-wrap">
+      <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button>
+    </div>
+  </section>
+
+  <section id="noticePreview" class="wrap panel">
+    <h3>관리자공지사항 미리보기</h3>
+    <div class="notice-list" id="noticePreviewList"></div>
+  </section>
+</main>
+
+<div class="modal-backdrop" id="noticeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>공지사항</h3>
+      <button class="close-btn" type="button" data-close="noticeModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="submit" type="button" id="noticeViewTab">공지 보기</button>
+        <button class="reset" type="button" id="noticeWriteTab">공지 쓰기</button>
+      </div>
+
+      <div class="panel" id="noticeWritePanel" style="margin-top:0; padding:0; border:0; box-shadow:none; display:none;">
+        <h3>관리자 글쓰기</h3>
+        <form id="noticeForm">
+          <div class="form-grid">
+            <div class="field full">
+              <label for="noticeTitle">제목</label>
+              <input id="noticeTitle" type="text" required>
             </div>
-            <div class="form-actions">
-              <button class="submit" type="submit">공지 등록</button>
+            <div class="field full">
+              <label for="noticeContent">내용</label>
+              <textarea id="noticeContent" required></textarea>
             </div>
-          </form>
-        </div>
+          </div>
+          <div class="form-actions">
+            <button class="submit" type="submit">공지 등록</button>
+          </div>
+        </form>
+      </div>
 
-        <div class="panel" id="noticeListPanel">
-          <h3>등록된 공지</h3>
-          <div class="notice-list" id="noticeList"></div>
-        </div>
+      <div class="panel" id="noticeListPanel">
+        <h3>등록된 공지</h3>
+        <div class="notice-list" id="noticeList"></div>
       </div>
     </div>
-  </div>
-
- 
-
-  
-  <div class="modal-backdrop" id="boardModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>문화이야기</h3>
-        <button class="close-btn" type="button" data-close="boardModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button type="button" class="submit active" data-board-tab="list">게시글 보기</button>
-          <button type="button" class="reset" data-board-tab="write">글 쓰기</button>
-        </div>
-
-        <div class="board-tab-content active" id="boardListTab">
-          <div class="panel" style="margin-top:0;">
-            <h3>전체 게시글 목록</h3>
-            <ul class="board-post-list" id="boardPostList" style="list-style:none; padding:0; margin:0;"></ul>
-          </div>
-        </div>
-
-        <div class="board-tab-content" id="boardWriteTab">
-          <div class="panel" style="margin-top:0;">
-            <h3>문화이야기 글쓰기</h3>
-            <form id="boardWriteForm">
-              <div class="form-grid">
-                <div class="field full">
-                  <label for="boardTitle">제목</label>
-                  <input id="boardTitle" type="text" placeholder="제목을 입력하세요" required>
-                </div>
-                <div class="field full">
-                  <label for="boardContent">내용</label>
-                  <textarea id="boardContent" placeholder="정읍문화소식 관련 이야기를 자유롭게 적어주세요" required></textarea>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button class="submit" type="submit">등록하기</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<div class="modal-backdrop" id="videoModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>영상행사</h3>
-        <button class="close-btn" type="button" data-close="videoModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
-          <button class="submit" type="button" id="videoViewTab">영상 보기</button>
-          <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
-        </div>
-        <div class="panel" style="margin-top:0;">
-  <div id="videoViewPanel">
-    <h3>등록된 영상 목록</h3>
-    <div id="videoPlayer" style="margin-bottom:20px;"></div>
-    <div class="video-list" id="videoList"></div>
-  </div>
-  
-  <div id="videoWritePanel" style="display:none;">
-    <h3>유튜브 영상 등록</h3>
-
-    <input type="text" id="videoTitle" placeholder="영상 제목"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
-
-    <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
-      style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
-
-    <textarea id="videoDesc" placeholder="영상 설명"
-      style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
-
-    <button type="button" onclick="addVideo()"
-      style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
-      영상 등록
-    </button>
   </div>
 </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="modal-backdrop" id="detailModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3 id="detailTitle">상세보기</h3>
-        <button class="close-btn" type="button" data-close="detailModal">✕</button>
+<div class="modal-backdrop" id="boardModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>문화이야기</h3>
+      <button class="close-btn" type="button" data-close="boardModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <button type="button" class="submit active" data-board-tab="list">게시글 보기</button>
+        <button type="button" class="reset" data-board-tab="write">글 쓰기</button>
       </div>
-      <div class="modal-body">
-        <div class="detail-meta" id="detailMeta"></div>
-        <div class="detail-media" id="detailMedia"></div>
-        <div class="detail-description" id="detailDescription"></div>
-        <div class="detail-actions">
-          <button type="button" id="detailLikeBtn">좋아요</button>
-          <button type="button" id="detailShareBtn">공유하기</button>
-          <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
+
+      <div class="board-tab-content active" id="boardListTab">
+        <div class="panel" style="margin-top:0;">
+          <h3>전체 게시글 목록</h3>
+          <ul class="board-post-list" id="boardPostList" style="list-style:none; padding:0; margin:0;"></ul>
         </div>
-        <div class="comment-box">
-          <h4>댓글</h4>
-          <form id="commentForm">
+      </div>
+
+      <div class="board-tab-content" id="boardWriteTab">
+        <div class="panel" style="margin-top:0;">
+          <h3>문화이야기 글쓰기</h3>
+          <form id="boardWriteForm">
             <div class="form-grid">
-              <div class="field">
-                <label for="commentAuthor">작성자</label>
-                <input id="commentAuthor" type="text" placeholder="이름" required>
+              <div class="field full">
+                <label for="boardTitle">제목</label>
+                <input id="boardTitle" type="text" placeholder="제목을 입력하세요" required>
               </div>
               <div class="field full">
-                <label for="commentText">댓글 내용</label>
-                <textarea id="commentText" placeholder="댓글을 남겨주세요" required></textarea>
+                <label for="boardContent">내용</label>
+                <textarea id="boardContent" placeholder="정읍문화소식 관련 이야기를 자유롭게 적어주세요" required></textarea>
               </div>
             </div>
             <div class="form-actions">
-              <button class="submit" type="submit">댓글 등록</button>
-            </div>
-          </form>
-          <div class="comment-list" id="commentList"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="uploadModal">
-    <div class="modal">
-      <div class="modal-head">
-        <h3>소식올리기</h3>
-        <button class="close-btn" type="button" data-close="uploadModal">✕</button>
-      </div>
-      <div class="modal-body">
-        <div class="upload-box" style="margin-top:0;">
-          <h3>시민이 직접 문화소식 올리기</h3>
-          <p>이미지를 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다. 영상은 영상행사 메뉴에서 유튜브 링크로 등록해주세요.</p>
-          <form id="uploadForm">
-            <div class="form-grid">
-              <div class="field">
-                <label for="title">행사 제목</label>
-                <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
-              </div>
-
-              <div class="field">
-                <label>행사 기간</label>
-                <div class="date-range" style="display:flex; gap:8px; align-items:center;">
-                  <input id="startDate" type="date" required>
-                  <span>~</span>
-                  <input id="endDate" type="date" required>
-                </div>
-              </div>
-
-              <div class="field">
-                <label for="place">장소</label>
-                <input id="place" type="text" placeholder="예: 정읍문화원" required>
-              </div>
-
-              <div class="field">
-                <label for="author">작성자</label>
-                <input id="author" type="text" placeholder="예: 시민 제보자" required>
-              </div>
-
-              <div class="field">
-                <label for="mediaType">올릴 파일 종류</label>
-                <select id="mediaType">
-                  <option value="image">이미지</option>
-                  <option value="video">영상</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="fileInput">파일 업로드</label>
-                <input id="fileInput" type="file" accept="image/*,video/*" required>
-                <div class="upload-preview" id="uploadPreview"></div>
-              </div>
-
-              <div class="field full">
-                <label for="description">설명</label>
-                <textarea id="description" placeholder="행사 설명, 시간, 참가 방법 등을 적어주세요." required></textarea>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button class="submit" type="submit">게시글 등록</button>
-              <button class="reset" type="reset">다시쓰기</button>
+              <button class="submit" type="submit">등록하기</button>
             </div>
           </form>
         </div>
       </div>
     </div>
   </div>
+</div>
 
-  <footer>
-    <div class="wrap footer-inner">
-      <div>
-        <strong>정읍문화소식</strong><br>
-        정읍의 문화행사, 전시, 공연, 체험, 기록을 시민이 함께 올리고 공유하는 공간
+<div class="modal-backdrop" id="videoModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>영상행사</h3>
+      <button class="close-btn" type="button" data-close="videoModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
+        <button class="submit" type="button" id="videoViewTab">영상 보기</button>
+        <button class="reset" type="button" id="videoWriteTab">영상 올리러 가기</button>
       </div>
-      <div>
-        메인은 그대로 유지하고, 메뉴를 누르면 기능별 창이 열리는 통합형 구조입니다.
+
+      <div class="panel" style="margin-top:0;">
+        <div id="videoViewPanel">
+          <h3>등록된 영상 목록</h3>
+          <div id="videoPlayer" style="margin-bottom:20px;"></div>
+          <div class="video-list" id="videoList"></div>
+        </div>
+
+        <div id="videoWritePanel" style="display:none;">
+          <h3>유튜브 영상 등록</h3>
+
+          <input type="text" id="videoTitle" placeholder="영상 제목"
+            style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+
+          <input type="text" id="youtubeUrl" placeholder="유튜브 링크 입력"
+            style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;">
+
+          <textarea id="videoDesc" placeholder="영상 설명"
+            style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
+
+          <button type="button" onclick="addVideo()"
+            style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
+            영상 등록
+          </button>
+        </div>
       </div>
     </div>
-  </footer>
+  </div>
+</div>
 
-  
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="detailTitle">상세보기</h3>
+      <button class="close-btn" type="button" data-close="detailModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-meta" id="detailMeta"></div>
+      <div class="detail-media" id="detailMedia"></div>
+      <div class="detail-description" id="detailDescription"></div>
+      <div class="detail-actions">
+        <button type="button" id="detailLikeBtn">좋아요</button>
+        <button type="button" id="detailShareBtn">공유하기</button>
+        <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
+      </div>
+      <div class="comment-box">
+        <h4>댓글</h4>
+        <form id="commentForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="commentAuthor">작성자</label>
+              <input id="commentAuthor" type="text" placeholder="이름" required>
+            </div>
+            <div class="field full">
+              <label for="commentText">댓글 내용</label>
+              <textarea id="commentText" placeholder="댓글을 남겨주세요" required></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="submit" type="submit">댓글 등록</button>
+          </div>
+        </form>
+        <div class="comment-list" id="commentList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="uploadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>소식올리기</h3>
+      <button class="close-btn" type="button" data-close="uploadModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-box" style="margin-top:0;">
+        <h3>시민이 직접 문화소식 올리기</h3>
+        <p>이미지를 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다. 영상은 영상행사 메뉴에서 유튜브 링크로 등록해주세요.</p>
+        <form id="uploadForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="title">행사 제목</label>
+              <input id="title" type="text" placeholder="예: 정읍 봄 전시회" required>
+            </div>
+
+            <div class="field">
+              <label>행사 기간</label>
+              <div class="date-range" style="display:flex; gap:8px; align-items:center;">
+                <input id="startDate" type="date" required>
+                <span>~</span>
+                <input id="endDate" type="date" required>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="place">장소</label>
+              <input id="place" type="text" placeholder="예: 정읍문화원" required>
+            </div>
+
+            <div class="field">
+              <label for="author">작성자</label>
+              <input id="author" type="text" placeholder="예: 시민 제보자" required>
+            </div>
+
+            <div class="field">
+              <label for="mediaType">올릴 파일 종류</label>
+              <select id="mediaType">
+                <option value="image">이미지</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="fileInput">파일 업로드</label>
+              <input id="fileInput" type="file" accept="image/*" required>
+              <div class="upload-preview" id="uploadPreview"></div>
+            </div>
+
+            <div class="field full">
+              <label for="description">설명</label>
+              <textarea id="description" placeholder="행사 설명, 시간, 참가 방법 등을 적어주세요." required></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="submit" type="submit" id="uploadSubmitBtn">게시글 등록</button>
+            <button class="reset" type="reset">다시쓰기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap footer-inner">
+    <div>
+      <strong>정읍문화소식</strong><br>
+      정읍의 문화행사, 전시, 공연, 체험, 기록을 시민이 함께 올리고 공유하는 공간
+    </div>
+    <div>
+      메인은 그대로 유지하고, 메뉴를 누르면 기능별 창이 열리는 통합형 구조입니다.
+    </div>
+  </div>
+</footer>
+
+<div id="totalViewsBox" style="
+  text-align:center;
+  margin:40px 0;
+  font-size:16px;
+  color:#666;
+">
+  총 조회수: 0 | 오늘 조회수: 0
+</div>
+
 <script>
 const API_BASE = 'https://empty-lab-e489.nockd61.workers.dev';
 const API_POSTS_ENDPOINT = `${API_BASE}/api/posts`;
@@ -1136,10 +1142,11 @@ const adminLoginBtn = document.getElementById('adminLoginBtn');
 const noticeList = document.getElementById('noticeList');
 const noticePreviewList = document.getElementById('noticePreviewList');
 const boardPostList = document.getElementById('boardPostList');
-const videoList = document.getElementById('videoList');
 const commentForm = document.getElementById('commentForm');
+const videoList = document.getElementById('videoList');
 const videoViewPanel = document.getElementById('videoViewPanel');
 const videoWritePanel = document.getElementById('videoWritePanel');
+const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
 
 let isAdminLoggedIn = false;
 let visiblePostCount = 8;
@@ -1187,7 +1194,10 @@ function getHiddenBrokenPostIds() {
 }
 
 function saveHiddenBrokenPostIds(ids) {
-  localStorage.setItem(HIDDEN_BROKEN_POST_IDS_KEY, JSON.stringify(Array.from(new Set((ids || []).map(String)))));
+  localStorage.setItem(
+    HIDDEN_BROKEN_POST_IDS_KEY,
+    JSON.stringify(Array.from(new Set((ids || []).map(String))))
+  );
 }
 
 function hideBrokenPostId(postId) {
@@ -1204,6 +1214,42 @@ function unhideBrokenPostId(postId) {
   saveHiddenBrokenPostIds(getHiddenBrokenPostIds().filter(item => item !== id));
 }
 
+function setSubmitting(button, submitting, label = '게시글 등록') {
+  if (!button) return;
+  button.disabled = submitting;
+  button.textContent = submitting ? '업로드 중...' : label;
+  button.style.opacity = submitting ? '0.7' : '1';
+}
+
+function friendlyServerError(error) {
+  const raw = String(error?.message || error || '').trim();
+
+  if (raw.includes('no column named views')) {
+    return [
+      '서버 DB(posts 테이블)에 views 컬럼이 없어서 저장에 실패했습니다.',
+      '',
+      'Cloudflare D1에서 아래 SQL을 먼저 실행해주세요.',
+      'ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0;',
+      'ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'
+    ].join('\n');
+  }
+
+  if (raw.includes('no column named likes')) {
+    return [
+      '서버 DB(posts 테이블)에 likes 컬럼이 없어서 저장에 실패했습니다.',
+      '',
+      'Cloudflare D1에서 아래 SQL을 실행해주세요.',
+      'ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'
+    ].join('\n');
+  }
+
+  if (raw.includes('Failed to fetch')) {
+    return '서버 연결에 실패했습니다. 워커 주소, CORS, 배포 상태를 확인해주세요.';
+  }
+
+  return raw || '알 수 없는 오류가 발생했습니다.';
+}
+
 async function apiJson(url, options = {}) {
   const response = await fetch(url, {
     headers: {
@@ -1212,56 +1258,19 @@ async function apiJson(url, options = {}) {
     },
     ...options
   });
+
   if (!response.ok) {
     const txt = await response.text();
     throw new Error(txt || `서버 오류 (${response.status})`);
   }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const txt = await response.text();
+    throw new Error(txt || '서버가 JSON이 아닌 응답을 반환했습니다.');
+  }
+
   return response.json();
-}
-
-function normalizePost(item) {
-  if (!item || typeof item !== 'object') return null;
-
-  const youtubeId = getYoutubeId(item.youtube_url || item.youtubeUrl || '');
-  const mediaType = youtubeId ? 'video' : ((item.category === '영상행사' || item.mediaType === 'video') ? 'video' : 'image');
-  const mediaUrl = item.image_url || item.mediaUrl || item.imageUrl || '';
-  const description = item.content || item.description || '';
-  const place = item.location || item.place || '';
-  const startDate = (item.start_date || item.startDate || item.date || '').slice(0,10);
-  const endDate = (item.end_date || item.endDate || startDate || '').slice(0,10);
-
-  if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
-
-  return {
-    id: String(item.id),
-    title: String(item.title || '제목 없음'),
-    date: startDate,
-    endDate,
-    place: String(place || ''),
-    author: String(item.author || '시민'),
-    description: String(description || ''),
-    mediaType,
-    mediaUrl: String(mediaUrl || ''),
-    youtubeId,
-    likes: Number(item.likes || 0),
-    views: Number(item.views || 0),
-    comments: Array.isArray(item.comments) ? item.comments : [],
-    category: String(item.category || (place === '시민 문화이야기' ? '문화이야기' : (mediaType === 'video' ? '영상행사' : '행사')))
-  };
-}
-
-function normalizeComment(comment, postId = '') {
-  if (!comment) return null;
-  const author = String(comment.author || '').trim();
-  const text = String(comment.text || comment.content || '').trim();
-  if (!author || !text) return null;
-  return {
-    id: String(comment.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
-    postId: String(postId || comment.postId || comment.post_id || ''),
-    author,
-    text,
-    date: String(comment.created_at || comment.date || new Date().toISOString().slice(0,10)).slice(0,10)
-  };
 }
 
 function getYoutubeId(url) {
@@ -1289,6 +1298,54 @@ function isValidMediaUrl(value) {
     }
   }
   return false;
+}
+
+function normalizeComment(comment, postId = '') {
+  if (!comment) return null;
+  const author = String(comment.author || '').trim();
+  const text = String(comment.text || comment.content || '').trim();
+  if (!author || !text) return null;
+  return {
+    id: String(comment.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    postId: String(postId || comment.postId || comment.post_id || ''),
+    author,
+    text,
+    date: String(comment.created_at || comment.date || new Date().toISOString().slice(0,10)).slice(0,10)
+  };
+}
+
+function normalizePost(item) {
+  if (!item || typeof item !== 'object') return null;
+
+  const youtubeId = getYoutubeId(item.youtube_url || item.youtubeUrl || '');
+  const mediaType = youtubeId
+    ? 'video'
+    : ((item.category === '영상행사' || item.mediaType === 'video') ? 'video' : 'image');
+
+  const mediaUrl = item.image_url || item.mediaUrl || item.imageUrl || '';
+  const description = item.content || item.description || '';
+  const place = item.location || item.place || '';
+  const startDate = (item.start_date || item.startDate || item.date || '').slice(0, 10);
+  const endDate = (item.end_date || item.endDate || startDate || '').slice(0, 10);
+
+  if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
+
+  return {
+    id: String(item.id),
+    title: String(item.title || '제목 없음'),
+    date: startDate,
+    endDate,
+    place: String(place || ''),
+    author: String(item.author || '시민'),
+    description: String(description || ''),
+    mediaType,
+    mediaUrl: String(mediaUrl || ''),
+    youtubeId,
+    likes: Number(item.likes || 0),
+    views: Number(item.views || 0),
+    comments: Array.isArray(item.comments) ? item.comments : [],
+    category: String(item.category || (place === '시민 문화이야기' ? '문화이야기' : (mediaType === 'video' ? '영상행사' : '행사')))
+  };
 }
 
 function getPlaceholderDataUrl(label) {
@@ -1372,7 +1429,9 @@ async function fetchVideos() {
 async function fetchPostDetail(id) {
   const data = await apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`);
   const post = normalizePost(data.post);
-  const comments = Array.isArray(data.comments) ? data.comments.map(item => normalizeComment(item, id)).filter(Boolean) : [];
+  const comments = Array.isArray(data.comments)
+    ? data.comments.map(item => normalizeComment(item, id)).filter(Boolean)
+    : [];
   if (post) post.comments = comments;
   return post;
 }
@@ -1388,6 +1447,7 @@ async function savePost(post) {
     image_url: post.mediaType === 'image' ? post.mediaUrl : '',
     content: post.description
   };
+
   return apiJson(API_POSTS_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify(payload)
@@ -1463,31 +1523,37 @@ async function increaseSiteView() {
 async function uploadFileToWorker(file, mediaType) {
   if (!file) throw new Error('업로드할 파일이 없습니다.');
   if (mediaType === 'video') {
-    throw new Error('영상 파일 직접 업로드는 현재 안정화 작업 중입니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+    throw new Error('영상 파일 직접 업로드는 현재 지원하지 않습니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
   }
   const imageMaxBytes = 10 * 1024 * 1024;
   if (file.size > imageMaxBytes) {
     throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
+
   const formData = new FormData();
   formData.append('file', file);
+
   const response = await fetch(R2_UPLOAD_ENDPOINT, {
     method: 'POST',
     body: formData
   });
+
   let data = {};
   try {
     data = await response.json();
   } catch {
     throw new Error('업로드 서버 응답을 읽지 못했습니다.');
   }
+
   if (!response.ok || !data.ok) {
     throw new Error(data.error || data.detail || '업로드 서버 연결에 실패했습니다.');
   }
+
   const uploadedUrl = String(data.url || '').trim();
   if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
     throw new Error('업로드 주소를 받지 못했습니다.');
   }
+
   return uploadedUrl;
 }
 
@@ -1503,6 +1569,7 @@ function currentFilteredPosts() {
   const typeValue = filterType.value;
   const keyword = searchInput.value.trim().toLowerCase();
   const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
+
   let posts = sortPosts(cachedPosts).filter(post => {
     if (hiddenBrokenIds.has(String(post.id))) return false;
     if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
@@ -1515,7 +1582,9 @@ function currentFilteredPosts() {
 
   if (keyword) {
     posts = posts.filter(post => {
-      const hay = [post.title, post.place, post.description, post.author, '정읍행사 축제 전시 공연 체험 문화행사'].join(' ').toLowerCase();
+      const hay = [post.title, post.place, post.description, post.author, '정읍행사 축제 전시 공연 체험 문화행사']
+        .join(' ')
+        .toLowerCase();
       if (keyword === '정읍행사') return true;
       return hay.includes(keyword);
     });
@@ -1530,6 +1599,7 @@ function renderPreview(file, mediaType) {
     uploadPreview.innerHTML = '';
     return;
   }
+
   const url = URL.createObjectURL(file);
   uploadPreview.innerHTML = mediaType === 'video'
     ? `<video src="${url}" controls muted playsinline preload="metadata"></video>`
@@ -1550,9 +1620,11 @@ function buildMedia(post) {
     }
     return buildEventVideoHtml(post);
   }
+
   if (!isValidMediaUrl(post.mediaUrl)) {
     return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
   }
+
   return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
 }
 
@@ -1678,6 +1750,7 @@ async function renderVideoList() {
         </div>
       `;
     }
+
     return `
       <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
         <div>
@@ -1698,6 +1771,7 @@ async function renderVideoList() {
 async function playCustomVideo(id, switchToView = true) {
   const target = cachedVideos.find(item => String(item.id) === String(id));
   if (!target) return;
+
   const iframe = `
     <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
       <iframe
@@ -1708,6 +1782,7 @@ async function playCustomVideo(id, switchToView = true) {
       </iframe>
     </div>
   `;
+
   document.getElementById('videoPlayer').innerHTML = iframe;
   if (switchToView) {
     videoViewPanel.style.display = 'block';
@@ -1801,7 +1876,7 @@ async function deleteNotice(id) {
     await renderNotices();
   } catch (error) {
     console.error(error);
-    alert('공지 삭제 실패');
+    alert('공지 삭제 실패\n' + friendlyServerError(error));
   }
 }
 
@@ -1839,7 +1914,9 @@ async function deletePost(id) {
     alert('관리자만 삭제할 수 있습니다.');
     return;
   }
+
   if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+
   try {
     await deletePostFromServer(id);
     closeModal('detailModal');
@@ -1848,7 +1925,7 @@ async function deletePost(id) {
     alert('게시글이 삭제되었습니다.');
   } catch (error) {
     console.error(error);
-    alert('게시글 삭제 실패');
+    alert('게시글 삭제 실패\n' + friendlyServerError(error));
   }
 }
 
@@ -1858,6 +1935,7 @@ function renderComments(post) {
     list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
     return;
   }
+
   list.innerHTML = post.comments.map(c => `
     <div class="comment-item">
       <strong>${escapeHtml(c.author)}</strong>
@@ -1913,6 +1991,7 @@ async function sharePost(id) {
     alert('공유할 글을 찾지 못했습니다.');
     return;
   }
+
   const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
@@ -1939,6 +2018,7 @@ async function sharePost(id) {
       console.error('카카오 공유 실패', error);
     }
   }
+
   fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
 }
 
@@ -1953,317 +2033,6 @@ function fallbackShare(fullText) {
     window.prompt('아래 내용을 복사해 공유하세요.', fullText);
   }
 }
-
-adminLoginBtn.addEventListener('click', () => {
-  if (isAdminLoggedIn) {
-    setAdminMode(false);
-    alert('관리자 로그아웃 되었습니다.');
-    return;
-  }
-  const password = prompt('관리자 비밀번호를 입력하세요');
-  if (password === ADMIN_PASSWORD) {
-    setAdminMode(true);
-    alert('관리자 로그인 완료');
-  } else {
-    alert('비밀번호가 올바르지 않습니다');
-  }
-});
-
-noticeViewTab.addEventListener('click', showNoticeList);
-noticeWriteTab.addEventListener('click', showNoticeWrite);
-
-document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
-  e.preventDefault();
-  const title = document.getElementById('boardTitle').value.trim();
-  const content = document.getElementById('boardContent').value.trim();
-  if (!title || !content) {
-    alert('제목과 내용을 입력해주세요.');
-    return;
-  }
-
-  try {
-    await savePost({
-      title,
-      date: new Date().toISOString().slice(0, 10),
-      endDate: new Date().toISOString().slice(0, 10),
-      place: '시민 문화이야기',
-      author: '시민',
-      description: content,
-      mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
-      category: '문화이야기'
-    });
-    this.reset();
-    await fetchPosts();
-    await renderAll();
-    showBoardList();
-    alert('문화이야기가 등록되었습니다.');
-  } catch (error) {
-    console.error(error);
-    alert('문화이야기 등록 실패');
-  }
-});
-
-document.querySelectorAll('[data-open]').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
-    const openId = button.dataset.open;
-    const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
-    if (linkedTop) linkedTop.classList.add('active');
-    openModal(openId);
-  });
-});
-
-document.addEventListener('click', (event) => {
-  const tabBtn = event.target.closest('[data-board-tab]');
-  if (tabBtn) {
-    const tab = tabBtn.getAttribute('data-board-tab');
-    if (tab === 'list') showBoardList();
-    if (tab === 'write') showBoardWrite();
-    return;
-  }
-
-  const detailBtn = event.target.closest('.detail-btn');
-  if (detailBtn) {
-    openDetail(detailBtn.dataset.postId);
-    return;
-  }
-
-  const thumbClick = event.target.closest('.thumb-click');
-  if (thumbClick) {
-    openDetail(thumbClick.dataset.postId);
-    return;
-  }
-
-  const shareBtn = event.target.closest('.share-btn');
-  if (shareBtn) {
-    sharePost(shareBtn.dataset.postId);
-    return;
-  }
-
-  const boardItem = event.target.closest('.board-item-click');
-  if (boardItem) {
-    openDetail(boardItem.dataset.postId);
-    return;
-  }
-
-  const deletePostBtn = event.target.closest('.delete-post-btn');
-  if (deletePostBtn) {
-    deletePost(deletePostBtn.dataset.postId);
-  }
-
-  const boardDeleteBtn = event.target.closest('.board-delete-btn');
-  if (boardDeleteBtn) {
-    deletePost(boardDeleteBtn.dataset.postId);
-  }
-});
-
-eventGrid.addEventListener('keydown', (event) => {
-  const thumbClick = event.target.closest('.thumb-click');
-  if (!thumbClick) return;
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    openDetail(thumbClick.dataset.postId);
-  }
-});
-
-document.querySelectorAll('[data-close]').forEach((button) => {
-  button.addEventListener('click', () => closeModal(button.dataset.close));
-});
-
-document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-  backdrop.addEventListener('click', (event) => {
-    if (event.target === backdrop) {
-      backdrop.classList.remove('show');
-      if (!document.querySelector('.modal-backdrop.show')) {
-        document.body.style.overflow = '';
-      }
-    }
-  });
-});
-
-fileInput.addEventListener('change', (e) => {
-  const file = e.target.files?.[0];
-  renderPreview(file, mediaTypeSelect.value);
-});
-
-mediaTypeSelect.addEventListener('change', () => {
-  const file = fileInput.files?.[0];
-  renderPreview(file, mediaTypeSelect.value);
-});
-
-searchBtn.addEventListener('click', () => {
-  visiblePostCount = 8;
-  renderPosts();
-});
-
-searchInput.addEventListener('input', updateAiSearchMessage);
-searchInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    visiblePostCount = 8;
-    renderPosts();
-  }
-});
-
-aiKeywordButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    aiKeywordButtons.forEach((item) => item.classList.remove('active'));
-    button.classList.add('active');
-    searchInput.value = button.dataset.aiKeyword || '';
-    visiblePostCount = 8;
-    renderPosts();
-  });
-});
-
-filterType.addEventListener('change', () => {
-  visiblePostCount = 8;
-  renderPosts();
-});
-
-if (loadMoreBtn) {
-  loadMoreBtn.addEventListener('click', () => {
-    visiblePostCount += 8;
-    renderPosts();
-  });
-}
-
-uploadForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const file = fileInput.files[0];
-  if (!file) {
-    alert('이미지 또는 영상을 선택해 주세요.');
-    return;
-  }
-  const titleValue = document.getElementById('title').value.trim();
-  const placeValue = document.getElementById('place').value.trim();
-  const authorValue = document.getElementById('author').value.trim();
-  const descriptionValue = document.getElementById('description').value.trim();
-  const startDate = document.getElementById('startDate').value;
-  const endDate = document.getElementById('endDate').value;
-
-  if (!titleValue || !placeValue || !authorValue || !descriptionValue) {
-    alert('제목, 장소, 작성자, 설명을 모두 입력해 주세요.');
-    return;
-  }
-  if (!startDate || !endDate) {
-    alert('행사 기간을 입력해 주세요.');
-    return;
-  }
-  if (startDate > endDate) {
-    alert('종료일이 시작일보다 빠를 수 없습니다.');
-    return;
-  }
-
-  const submitBtn = uploadForm.querySelector('.submit');
-  try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = '업로드 중...';
-    const uploadedUrl = await uploadFileToWorker(file, mediaTypeSelect.value);
-    await savePost({
-      title: titleValue,
-      date: startDate,
-      endDate,
-      place: placeValue,
-      author: authorValue,
-      description: descriptionValue,
-      mediaType: mediaTypeSelect.value,
-      mediaUrl: uploadedUrl,
-      category: '행사'
-    });
-    unhideBrokenPostId(titleValue);
-    uploadForm.reset();
-    renderPreview(null, 'image');
-    mediaTypeSelect.value = 'image';
-    await fetchPosts();
-    await renderAll();
-    alert('등록되었습니다. 가까운 날짜순 문화소식에 반영됩니다.');
-    closeModal('uploadModal');
-  } catch (error) {
-    console.error(error);
-    alert('업로드 실패: ' + (error && error.message ? error.message : '알 수 없는 오류'));
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = '게시글 등록';
-  }
-});
-
-uploadForm.addEventListener('reset', () => {
-  setTimeout(() => {
-    renderPreview(null, 'image');
-    mediaTypeSelect.value = 'image';
-  }, 0);
-});
-
-noticeForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (!isAdminLoggedIn) {
-    const password = prompt('공지 등록을 위해 관리자 비밀번호를 입력하세요');
-    if (password !== ADMIN_PASSWORD) {
-      alert('관리자만 등록 가능합니다');
-      return;
-    }
-    setAdminMode(true);
-  }
-
-  const payload = {
-    title: document.getElementById('noticeTitle').value.trim(),
-    author: '관리자',
-    content: document.getElementById('noticeContent').value.trim()
-  };
-
-  try {
-    const editId = noticeForm.dataset.editId;
-    if (editId) {
-      await deleteNoticeFromServer(editId);
-    }
-    await saveNoticeToServer(payload);
-    noticeForm.reset();
-    delete noticeForm.dataset.editId;
-    await fetchNotices();
-    await renderNotices();
-    showNoticeList();
-    alert(editId ? '공지 수정 완료' : '공지 등록 완료');
-  } catch (error) {
-    console.error(error);
-    alert('공지 등록 실패');
-  }
-});
-
-commentForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const postId = commentForm.dataset.postId;
-  const author = document.getElementById('commentAuthor').value.trim();
-  const textValue = document.getElementById('commentText').value.trim();
-  if (!postId || !author || !textValue) return;
-
-  try {
-    await saveCommentToServer(postId, { author, text: textValue });
-    commentForm.reset();
-    await openDetail(postId, { incrementView: false });
-    await fetchPosts();
-    await renderAll();
-  } catch (error) {
-    console.error(error);
-    alert('댓글 저장 실패');
-  }
-});
-
-async function openPostFromHash() {
-  const hash = window.location.hash || '';
-  if (!hash.startsWith('#post-')) return;
-  const id = hash.replace('#post-', '');
-  const post = await findPostById(id);
-  if (post) {
-    openDetail(id);
-  }
-}
-
-window.editNotice = editNotice;
-window.deleteNotice = deleteNotice;
-window.openDetail = openDetail;
-window.playCustomVideo = playCustomVideo;
 
 async function addVideo() {
   const titleEl = document.getElementById('videoTitle');
@@ -2304,20 +2073,308 @@ async function addVideo() {
     alert('영상이 등록되었습니다.');
   } catch (error) {
     console.error(error);
-    alert('영상 등록 실패');
+    alert('영상 등록 실패\n' + friendlyServerError(error));
   }
 }
+
 window.addVideo = addVideo;
+window.editNotice = editNotice;
+window.deleteNotice = deleteNotice;
+window.openDetail = openDetail;
+window.playCustomVideo = playCustomVideo;
+
+adminLoginBtn.addEventListener('click', () => {
+  if (isAdminLoggedIn) {
+    setAdminMode(false);
+    alert('관리자 로그아웃 되었습니다.');
+    return;
+  }
+
+  const password = prompt('관리자 비밀번호를 입력하세요');
+  if (password === ADMIN_PASSWORD) {
+    setAdminMode(true);
+    alert('관리자 로그인 완료');
+  } else {
+    alert('비밀번호가 올바르지 않습니다');
+  }
+});
+
+noticeViewTab.addEventListener('click', showNoticeList);
+noticeWriteTab.addEventListener('click', showNoticeWrite);
+
+document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('boardTitle').value.trim();
+  const content = document.getElementById('boardContent').value.trim();
+
+  if (!title || !content) {
+    alert('제목과 내용을 입력해주세요.');
+    return;
+  }
+
+  try {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    setSubmitting(submitBtn, true, '등록하기');
+
+    await savePost({
+      title,
+      date: new Date().toISOString().slice(0, 10),
+      endDate: new Date().toISOString().slice(0, 10),
+      place: '시민 문화이야기',
+      author: '시민',
+      description: content,
+      mediaType: 'image',
+      mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+      category: '문화이야기'
+    });
+
+    this.reset();
+    await fetchPosts();
+    await renderAll();
+    showBoardList();
+    alert('문화이야기가 등록되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('문화이야기 등록 실패\n' + friendlyServerError(error));
+  } finally {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    setSubmitting(submitBtn, false, '등록하기');
+  }
+});
+
+uploadForm?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('title').value.trim();
+  const startDate = document.getElementById('startDate').value;
+  const endDate = document.getElementById('endDate').value;
+  const place = document.getElementById('place').value.trim();
+  const author = document.getElementById('author').value.trim();
+  const description = document.getElementById('description').value.trim();
+  const mediaType = mediaTypeSelect.value;
+  const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+
+  if (!title || !startDate || !endDate || !place || !author || !description || !file) {
+    alert('모든 항목을 입력해주세요.');
+    return;
+  }
+
+  if (startDate > endDate) {
+    alert('행사 시작일이 종료일보다 늦을 수 없습니다.');
+    return;
+  }
+
+  try {
+    setSubmitting(uploadSubmitBtn, true);
+
+    const mediaUrl = await uploadFileToWorker(file, mediaType);
+
+    const saveResult = await savePost({
+      title,
+      date: startDate,
+      endDate,
+      place,
+      author,
+      description,
+      mediaType,
+      mediaUrl,
+      category: '행사'
+    });
+
+    const savedPostId = saveResult?.post?.id || saveResult?.id || '';
+    if (savedPostId) {
+      unhideBrokenPostId(savedPostId);
+    }
+
+    this.reset();
+    renderPreview(null, 'image');
+    await fetchPosts();
+    await renderAll();
+    closeModal('uploadModal');
+    alert('문화소식이 등록되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('업로드 실패\n' + friendlyServerError(error));
+  } finally {
+    setSubmitting(uploadSubmitBtn, false);
+  }
+});
+
+noticeForm?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const title = document.getElementById('noticeTitle').value.trim();
+  const content = document.getElementById('noticeContent').value.trim();
+  const editId = this.dataset.editId;
+
+  if (!title || !content) {
+    alert('제목과 내용을 입력해주세요.');
+    return;
+  }
+
+  try {
+    await saveNoticeToServer({
+      id: editId || undefined,
+      title,
+      content,
+      author: '관리자'
+    });
+    this.reset();
+    delete this.dataset.editId;
+    await fetchNotices();
+    await renderNotices();
+    showNoticeList();
+    alert(editId ? '공지 수정 완료' : '공지 등록 완료');
+  } catch (error) {
+    console.error(error);
+    alert('공지 저장 실패\n' + friendlyServerError(error));
+  }
+});
+
+commentForm?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+
+  const postId = this.dataset.postId;
+  const author = document.getElementById('commentAuthor').value.trim();
+  const text = document.getElementById('commentText').value.trim();
+
+  if (!postId) {
+    alert('댓글 대상 글을 찾지 못했습니다.');
+    return;
+  }
+
+  if (!author || !text) {
+    alert('작성자와 댓글 내용을 입력해주세요.');
+    return;
+  }
+
+  try {
+    await saveCommentToServer(postId, { author, text });
+    this.reset();
+    await openDetail(postId, { incrementView: false });
+  } catch (error) {
+    console.error(error);
+    alert('댓글 등록 실패\n' + friendlyServerError(error));
+  }
+});
+
+document.querySelectorAll('[data-open]').forEach((button) => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
+    const openId = button.dataset.open;
+    const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
+    if (linkedTop) linkedTop.classList.add('active');
+    openModal(openId);
+  });
+});
+
+document.querySelectorAll('[data-close]').forEach((button) => {
+  button.addEventListener('click', () => {
+    closeModal(button.dataset.close);
+  });
+});
+
+document.querySelectorAll('[data-board-tab]').forEach((button) => {
+  button.addEventListener('click', () => {
+    if (button.dataset.boardTab === 'list') showBoardList();
+    if (button.dataset.boardTab === 'write') showBoardWrite();
+  });
+});
+
+document.addEventListener('click', async (event) => {
+  const detailBtn = event.target.closest('.detail-btn');
+  if (detailBtn) {
+    await openDetail(detailBtn.dataset.postId);
+    return;
+  }
+
+  const shareBtn = event.target.closest('.share-btn');
+  if (shareBtn) {
+    await sharePost(shareBtn.dataset.postId);
+    return;
+  }
+
+  const thumbBtn = event.target.closest('.thumb-click');
+  if (thumbBtn) {
+    await openDetail(thumbBtn.dataset.postId);
+    return;
+  }
+
+  const boardItemBtn = event.target.closest('.board-item-click');
+  if (boardItemBtn) {
+    await openDetail(boardItemBtn.dataset.postId);
+    return;
+  }
+
+  const deleteBtn = event.target.closest('.delete-post-btn, .board-delete-btn');
+  if (deleteBtn) {
+    await deletePost(deleteBtn.dataset.postId);
+    return;
+  }
+
+  const keywordBtn = event.target.closest('.ai-keyword-btn');
+  if (keywordBtn) {
+    searchInput.value = keywordBtn.dataset.aiKeyword || '';
+    visiblePostCount = 8;
+    await renderPosts();
+  }
+
+  const backdrop = event.target.classList.contains('modal-backdrop') ? event.target : null;
+  if (backdrop) {
+    closeModal(backdrop.id);
+  }
+});
+
+document.addEventListener('keydown', async (event) => {
+  const thumbBtn = event.target.closest('.thumb-click');
+  if (thumbBtn && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    await openDetail(thumbBtn.dataset.postId);
+  }
+
+  if (event.key === 'Escape') {
+    document.querySelectorAll('.modal-backdrop.show').forEach((modal) => closeModal(modal.id));
+  }
+});
+
+fileInput?.addEventListener('change', () => {
+  const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+  renderPreview(file, mediaTypeSelect.value);
+});
+
+mediaTypeSelect?.addEventListener('change', () => {
+  const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+  renderPreview(file, mediaTypeSelect.value);
+});
+
+searchBtn?.addEventListener('click', async () => {
+  visiblePostCount = 8;
+  await renderPosts();
+});
+
+searchInput?.addEventListener('keydown', async (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    visiblePostCount = 8;
+    await renderPosts();
+  }
+});
+
+loadMoreBtn?.addEventListener('click', async () => {
+  visiblePostCount += 8;
+  await renderPosts();
+});
 
 const videoViewTab = document.getElementById('videoViewTab');
 const videoWriteTabOnly = document.getElementById('videoWriteTab');
 
-videoViewTab.addEventListener('click', () => {
+videoViewTab?.addEventListener('click', () => {
   videoViewPanel.style.display = 'block';
   videoWritePanel.style.display = 'none';
 });
 
-videoWriteTabOnly.addEventListener('click', (e) => {
+videoWriteTabOnly?.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();
   videoViewPanel.style.display = 'none';
@@ -2336,6 +2393,16 @@ async function renderAll() {
   await renderVideoList();
 }
 
+async function openPostFromHash() {
+  const hash = window.location.hash || '';
+  if (!hash.startsWith('#post-')) return;
+  const id = hash.replace('#post-', '');
+  const post = await findPostById(id);
+  if (post) {
+    openDetail(id);
+  }
+}
+
 increaseSiteView().finally(async () => {
   await fetchPosts();
   await fetchNotices();
@@ -2347,14 +2414,5 @@ increaseSiteView().finally(async () => {
 window.addEventListener('hashchange', openPostFromHash);
 updateAiSearchMessage();
 </script>
-
-<div id="totalViewsBox" style="
-  text-align:center;
-  margin:40px 0;
-  font-size:16px;
-  color:#666;
-">
-  총 조회수: 0 | 오늘 조회수: 0
-</div>
 </body>
 </html>
