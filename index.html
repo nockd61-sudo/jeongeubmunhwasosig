@@ -1103,37 +1103,7 @@
   총 조회수: 0 | 오늘 조회수: 0
 </div>
 
-<script>
-async function updateViews() {
-  try {
-    // 조회수 증가
-    await fetch('/api/stats/view', {
-      method: 'POST',
-      cache: 'no-store'
-    });
 
-    // 조회수 불러오기
-    const res = await fetch('/api/stats', {
-      cache: 'no-store'
-    });
-
-    const data = await res.json();
-
-    // 🔥 여기 중요 (세웅님 API 구조 맞춤)
-    const box = document.getElementById('totalViewsBox');
-    if (box) {
-      box.innerText =
-  '총 조회수: ' + (data.totalViews ?? 0) +
-  ' | 오늘 조회수: ' + (data.todayViews ?? 0);
-    }
-
-  } catch (e) {
-    console.error('조회수 오류', e);
-  }
-}
-
-document.addEventListener('DOMContentLoaded', updateViews);
-</script>
 const API_POSTS_ENDPOINT = '/api/posts';
 const API_NOTICES_ENDPOINT = '/api/notices';
 const API_VIDEOS_ENDPOINT = '/api/videos';
@@ -1548,6 +1518,10 @@ async function increaseSiteView() {
     console.error('오늘 조회수 증가 실패', error);
   }
 }
+  document.addEventListener('DOMContentLoaded', async () => {
+  await increaseSiteView();
+  await loadSiteStats();
+});
 </script>
   <script>
 async function uploadFileToWorker(file, mediaType) {
