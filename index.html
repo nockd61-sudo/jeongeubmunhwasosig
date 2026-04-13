@@ -1104,12 +1104,11 @@
 </div>
 
 <script>
-const API_BASE = 'https://empty-lab-e489.nockd61.workers.dev';
-const API_POSTS_ENDPOINT = `${API_BASE}/api/posts`;
-const API_NOTICES_ENDPOINT = `${API_BASE}/api/notices`;
-const API_VIDEOS_ENDPOINT = `${API_BASE}/api/videos`;
-const API_STATS_ENDPOINT = `${API_BASE}/api/stats`;
-const API_STATS_VIEW_ENDPOINT = `${API_BASE}/api/stats/view`;
+const API_POSTS_ENDPOINT = '/api/posts';
+const API_NOTICES_ENDPOINT = '/api/notices';
+const API_VIDEOS_ENDPOINT = '/api/videos';
+const API_STATS_ENDPOINT = '/api/stats';
+const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
 const ADMIN_PASSWORD = '1234';
 const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
 const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
@@ -2413,6 +2412,7 @@ increaseSiteView().finally(async () => {
 
 window.addEventListener('hashchange', openPostFromHash);
 updateAiSearchMessage();
+  
 </script>
 </body>
 </html>
