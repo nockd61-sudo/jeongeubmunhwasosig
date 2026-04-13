@@ -1548,7 +1548,8 @@ async function increaseSiteView() {
     console.error('오늘 조회수 증가 실패', error);
   }
 }
-
+</script>
+  <script>
 async function uploadFileToWorker(file, mediaType) {
   if (!file) throw new Error('업로드할 파일이 없습니다.');
   if (mediaType === 'video') {
