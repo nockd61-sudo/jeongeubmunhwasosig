@@ -1904,12 +1904,15 @@ async function addView(id) {
 async function likePost(id) {
   const post = await findPostById(id);
   if (!post) return null;
+
   if (likedPostIds.has(String(id))) {
     alert('이미 좋아요를 눌렀습니다.');
     return post;
   }
+
   likedPostIds.add(String(id));
   post.likes = Number(post.likes || 0) + 1;
+
   return post;
 }
 
@@ -1982,17 +1985,16 @@ detailLikeBtn.onclick = async () => {
 
   detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
 
-  await openDetail(id, { incrementView: false });
-  await renderAll();
-};
-  detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
-  detailDeleteBtn.onclick = () => deletePost(id);
-  commentForm.dataset.postId = String(id);
-  renderComments(post);
-  openModal('detailModal');
-  await fetchPosts();
+  detailMeta.innerHTML = `
+    <div>행사일: ${formatDate(updated.date)}${updated.endDate && updated.endDate !== updated.date ? ' ~ ' + formatDate(updated.endDate) : ''}</div>
+    <div>장소: ${escapeHtml(updated.place)}</div>
+    <div>작성자: ${escapeHtml(updated.author)}</div>
+    <div>유형: ${updated.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+    <div>좋아요: ${updated.likes || 0} · 댓글: ${updated.comments?.length || 0} · 조회: ${updated.views || 0}</div>
+  `;
+
   await renderPosts();
-}
+};
 
 async function sharePost(id) {
   const post = await findPostById(id);
