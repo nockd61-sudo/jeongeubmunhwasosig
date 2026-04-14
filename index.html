@@ -1905,17 +1905,10 @@ async function likePost(id) {
   const post = await findPostById(id);
   if (!post) return null;
 
-  if (likedPostIds.has(String(id))) {
-    alert('이미 좋아요를 눌렀습니다.');
-    return post;
-  }
-
-  likedPostIds.add(String(id));
   post.likes = Number(post.likes || 0) + 1;
 
   return post;
 }
-
 async function deletePost(id) {
   if (!isAdminLoggedIn) {
     alert('관리자만 삭제할 수 있습니다.');
