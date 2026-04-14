@@ -1973,13 +1973,18 @@ async function openDetail(id, options = {}) {
     : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
 
   detailDescription.textContent = post.description || '';
-  detailShareBtn.onclick = () => sharePost(id);
-  detailLikeBtn.onclick = async () => {
-    const updated = await likePost(id);
-    if (!updated) return;
-    await openDetail(id, { incrementView: false });
-    await renderAll();
-  };
+detailShareBtn.onclick = () => sharePost(id);
+detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
+
+detailLikeBtn.onclick = async () => {
+  const updated = await likePost(id);
+  if (!updated) return;
+
+  detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
+
+  await openDetail(id, { incrementView: false });
+  await renderAll();
+};
   detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
   detailDeleteBtn.onclick = () => deletePost(id);
   commentForm.dataset.postId = String(id);
