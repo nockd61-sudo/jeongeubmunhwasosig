@@ -4503,13 +4503,994 @@ async function addVideo() {
   }
 }
 
+<script>
+const API_POSTS_ENDPOINT = '/api/posts';
+const API_NOTICES_ENDPOINT = '/api/notices';
+const API_VIDEOS_ENDPOINT = '/api/videos'; 
+const API_STATS_ENDPOINT = '/api/stats';
+const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
+const ADMIN_PASSWORD = '1234';
+const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
+const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
+
+const eventGrid = document.getElementById('eventGrid');
+const uploadForm = document.getElementById('uploadForm');
+const uploadPreview = document.getElementById('uploadPreview');
+const fileInput = document.getElementById('fileInput');
+const mediaTypeSelect = document.getElementById('mediaType');
+const filterType = document.getElementById('filterType');
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const aiSearchResultText = document.getElementById('aiSearchResultText');
+const aiKeywordButtons = document.querySelectorAll('.ai-keyword-btn');
+const paginationInfo = document.getElementById('paginationInfo');
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+const detailTitle = document.getElementById('detailTitle');
+const detailMeta = document.getElementById('detailMeta');
+const detailMedia = document.getElementById('detailMedia');
+const detailDescription = document.getElementById('detailDescription');
+const detailShareBtn = document.getElementById('detailShareBtn');
+const detailLikeBtn = document.getElementById('detailLikeBtn');
+const detailDeleteBtn = document.getElementById('detailDeleteBtn');
+const noticeForm = document.getElementById('noticeForm');
+const noticeViewTab = document.getElementById('noticeViewTab');
+const noticeWriteTab = document.getElementById('noticeWriteTab');
+const noticeListPanel = document.getElementById('noticeListPanel');
+const noticeWritePanel = document.getElementById('noticeWritePanel');
+const adminLoginBtn = document.getElementById('adminLoginBtn');
+const noticeList = document.getElementById('noticeList');
+const noticePreviewList = document.getElementById('noticePreviewList');
+const boardPostList = document.getElementById('boardPostList');
+const commentForm = document.getElementById('commentForm');
+const videoList = document.getElementById('videoList');
+const videoViewPanel = document.getElementById('videoViewPanel');
+const videoWritePanel = document.getElementById('videoWritePanel');
+const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+
+let isAdminLoggedIn = false;
+let visiblePostCount = 8;
+let cachedPosts = [];
+let cachedNotices = [];
+let cachedVideos = [];
+let likedPostIds = new Set();
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const raw = String(dateString).slice(0, 10);
+  const d = new Date(raw + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return raw;
+  const days = ['일','월','화','수','목','금','토'];
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}(${days[d.getDay()]})`;
+}
+
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getHiddenBrokenPostIds() {
+  const raw = localStorage.getItem(HIDDEN_BROKEN_POST_IDS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    localStorage.removeItem(HIDDEN_BROKEN_POST_IDS_KEY);
+    return [];
+  }
+}
+
+function saveHiddenBrokenPostIds(ids) {
+  localStorage.setItem(
+    HIDDEN_BROKEN_POST_IDS_KEY,
+    JSON.stringify(Array.from(new Set((ids || []).map(String))))
+  );
+}
+
+function hideBrokenPostId(postId) {
+  const ids = getHiddenBrokenPostIds();
+  const id = String(postId || '');
+  if (id && !ids.includes(id)) {
+    ids.push(id);
+    saveHiddenBrokenPostIds(ids);
+  }
+}
+
+function unhideBrokenPostId(postId) {
+  const id = String(postId || '');
+  saveHiddenBrokenPostIds(getHiddenBrokenPostIds().filter(item => item !== id));
+}
+
+function setSubmitting(button, submitting, label = '게시글 등록') {
+  if (!button) return;
+  button.disabled = submitting;
+  button.textContent = submitting ? '업로드 중...' : label;
+  button.style.opacity = submitting ? '0.7' : '1';
+}
+
+function friendlyServerError(error) {
+  const raw = String(error?.message || error || '').trim();
+
+  if (raw.includes('no column named views')) {
+    return [
+      '서버 DB(posts 테이블)에 views 컬럼이 없어서 저장에 실패했습니다.',
+      '',
+      'Cloudflare D1에서 아래 SQL을 먼저 실행해주세요.',
+      'ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0;',
+      'ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'
+    ].join('\n');
+  }
+
+  if (raw.includes('no column named likes')) {
+    return [
+      '서버 DB(posts 테이블)에 likes 컬럼이 없어서 저장에 실패했습니다.',
+      '',
+      'Cloudflare D1에서 아래 SQL을 실행해주세요.',
+      'ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'
+    ].join('\n');
+  }
+
+  if (raw.includes('Failed to fetch')) {
+    return '서버 연결에 실패했습니다. 워커 주소, CORS, 배포 상태를 확인해주세요.';
+  }
+
+  return raw || '알 수 없는 오류가 발생했습니다.';
+}
+
+async function apiJson(url, options = {}) {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    ...options
+  });
+
+  if (!response.ok) {
+    const txt = await response.text();
+    throw new Error(txt || `서버 오류 (${response.status})`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const txt = await response.text();
+    throw new Error(txt || '서버가 JSON이 아닌 응답을 반환했습니다.');
+  }
+
+  return response.json();
+}
+
+function getYoutubeId(url) {
+  if (!url) return '';
+  let videoId = '';
+  if (url.includes('watch?v=')) videoId = url.split('watch?v=')[1];
+  else if (url.includes('shorts/')) videoId = url.split('shorts/')[1];
+  else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1];
+  if (videoId.includes('&')) videoId = videoId.split('&')[0];
+  if (videoId.includes('?')) videoId = videoId.split('?')[0];
+  return videoId.trim();
+}
+
+function isValidMediaUrl(value) {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (/^data:(image|video)\//i.test(trimmed)) return true;
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      new URL(trimmed);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+function normalizeComment(comment, postId = '') {
+  if (!comment) return null;
+  const author = String(comment.author || '').trim();
+  const text = String(comment.text || comment.content || '').trim();
+  if (!author || !text) return null;
+  return {
+    id: String(comment.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    postId: String(postId || comment.postId || comment.post_id || ''),
+    author,
+    text,
+    date: String(comment.created_at || comment.date || new Date().toISOString().slice(0,10)).slice(0,10)
+  };
+}
+
+function normalizePost(item) {
+  if (!item || typeof item !== 'object') return null;
+
+  const youtubeId = getYoutubeId(item.youtube_url || item.youtubeUrl || '');
+  const mediaType = youtubeId
+    ? 'video'
+    : ((item.category === '영상행사' || item.mediaType === 'video') ? 'video' : 'image');
+
+  const mediaUrl = item.image_url || item.mediaUrl || item.imageUrl || '';
+  const description = item.content || item.description || '';
+  const place = item.location || item.place || '';
+  const startDate = (item.start_date || item.startDate || item.date || '').slice(0, 10);
+  const endDate = (item.end_date || item.endDate || startDate || '').slice(0, 10);
+
+  if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
+
+  return {
+    id: String(item.id),
+    title: String(item.title || '제목 없음'),
+    date: startDate,
+    endDate,
+    place: String(place || ''),
+    author: String(item.author || '시민'),
+    description: String(description || ''),
+    mediaType,
+    mediaUrl: String(mediaUrl || ''),
+    youtubeId,
+    likes: Number(item.likes || 0),
+    views: Number(item.views || 0),
+    comments: Array.isArray(item.comments) ? item.comments : [],
+    category: String(item.category || (place === '시민 문화이야기' ? '문화이야기' : (mediaType === 'video' ? '영상행사' : '행사')))
+  };
+}
+
+function getPlaceholderDataUrl(label) {
+  const text = encodeURIComponent(label || '이미지를 불러올 수 없습니다');
+  return `data:image/svg+xml;charset=UTF-8,` +
+    `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'>` +
+    `<rect width='100%' height='100%' fill='%23e5e7eb'/>` +
+    `<text x='50%' y='48%' text-anchor='middle' fill='%236b7280' font-size='24' font-family='Arial, sans-serif'>${text}</text>` +
+    `<text x='50%' y='54%' text-anchor='middle' fill='%239ca3af' font-size='18' font-family='Arial, sans-serif'>정읍문화소식</text>` +
+    `</svg>`;
+}
+
+function buildEventVideoHtml(post) {
+  if (post.youtubeId) {
+    return `
+      <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;background:#000;">
+        <iframe
+          src="https://www.youtube.com/embed/${post.youtubeId}"
+          style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
+      </div>
+    `;
+  }
+  return `<video src="${post.mediaUrl}" controls muted playsinline preload="metadata"></video>`;
+}
+
+function sortPosts(posts) {
+  const today = getTodayString();
+  return [...posts].sort((a, b) => {
+    const aFuture = a.date >= today ? 0 : 1;
+    const bFuture = b.date >= today ? 0 : 1;
+    if (aFuture !== bFuture) return aFuture - bFuture;
+    return new Date(a.date) - new Date(b.date);
+  });
+}
+
+async function fetchPosts() {
+  try {
+    const data = await apiJson(API_POSTS_ENDPOINT);
+    const items = Array.isArray(data.posts) ? data.posts : [];
+    cachedPosts = sortPosts(items.map(normalizePost).filter(Boolean));
+  } catch (error) {
+    console.error('게시글 읽기 실패', error);
+    cachedPosts = [];
+  }
+  return cachedPosts;
+}
+
+async function fetchNotices() {
+  try {
+    const data = await apiJson(API_NOTICES_ENDPOINT);
+    cachedNotices = Array.isArray(data.notices) ? data.notices : [];
+  } catch (error) {
+    console.error('공지 읽기 실패', error);
+    cachedNotices = [];
+  }
+  return cachedNotices;
+}
+
+async function fetchVideos() {
+  try {
+    const data = await apiJson(API_VIDEOS_ENDPOINT);
+    const videos = Array.isArray(data.videos) ? data.videos : [];
+    cachedVideos = videos.map((item) => ({
+      id: String(item.id),
+      title: String(item.title || ''),
+      description: String(item.content || ''),
+      youtubeId: getYoutubeId(item.youtube_url || ''),
+      date: String(item.created_at || new Date().toISOString().slice(0,10)).slice(0,10),
+      author: String(item.author || '시민')
+    }));
+  } catch (error) {
+    console.error('영상 읽기 실패', error);
+    cachedVideos = [];
+  }
+  return cachedVideos;
+}
+
+async function fetchPostDetail(id) {
+  const data = await apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`);
+  const post = normalizePost(data.post);
+  const comments = Array.isArray(data.comments)
+    ? data.comments.map(item => normalizeComment(item, id)).filter(Boolean)
+    : [];
+  if (post) post.comments = comments;
+  return post;
+}
+
+async function savePost(post) {
+  const payload = {
+    category: post.category || (post.place === '시민 문화이야기' ? '문화이야기' : '행사'),
+    title: post.title,
+    start_date: post.date,
+    end_date: post.endDate || post.date,
+    location: post.place,
+    author: post.author,
+    image_url: post.mediaType === 'image' ? post.mediaUrl : '',
+    content: post.description
+  };
+
+  return apiJson(API_POSTS_ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+async function saveNoticeToServer(payload) {
+  return apiJson(API_NOTICES_ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+async function deleteNoticeFromServer(id) {
+  return apiJson(`${API_NOTICES_ENDPOINT}/${encodeURIComponent(String(id))}`, {
+    method: 'DELETE'
+  });
+}
+
+async function saveVideoToServer(payload) {
+  return apiJson(API_VIDEOS_ENDPOINT, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+async function saveCommentToServer(postId, payload) {
+  return apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(postId))}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({
+      author: payload.author,
+      content: payload.text
+    })
+  });
+}
+
+async function addPostView(id) {
+  return apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}/view`, {
+    method: 'POST',
+    body: JSON.stringify({})
+  });
+}
+
+async function deletePostFromServer(id) {
+  return apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`, {
+    method: 'DELETE'
+  });
+}
+
+async function loadSiteStats() {
+  try {
+    const data = await apiJson(API_STATS_ENDPOINT);
+    const box = document.getElementById('totalViewsBox');
+    if (box) {
+      box.innerText = `총 조회수: ${Number(data.total_views || 0).toLocaleString()} | 오늘 조회수: ${Number(data.today_views || 0).toLocaleString()}`;
+    }
+  } catch (error) {
+    console.error('통계 읽기 실패', error);
+  }
+}
+
+async function increaseSiteView() {
+  try {
+    await apiJson(API_STATS_VIEW_ENDPOINT, {
+      method: 'POST',
+      body: JSON.stringify({})
+    });
+  } catch (error) {
+    console.error('오늘 조회수 증가 실패', error);
+  }
+}
+
+async function uploadFileToWorker(file, mediaType) {
+  if (!file) throw new Error('업로드할 파일이 없습니다.');
+  if (mediaType === 'video') {
+    throw new Error('영상 파일 직접 업로드는 현재 지원하지 않습니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
+  }
+  const imageMaxBytes = 10 * 1024 * 1024;
+  if (file.size > imageMaxBytes) {
+    throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(R2_UPLOAD_ENDPOINT, {
+    method: 'POST',
+    body: formData
+  });
+
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error('업로드 서버 응답을 읽지 못했습니다.');
+  }
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || data.detail || '업로드 서버 연결에 실패했습니다.');
+  }
+
+  const uploadedUrl = String(data.url || '').trim();
+  if (!uploadedUrl || !/^https?:\/\//i.test(uploadedUrl)) {
+    throw new Error('업로드 주소를 받지 못했습니다.');
+  }
+
+  return uploadedUrl;
+}
+
+function updateAiSearchMessage() {
+  const keyword = (searchInput?.value || '').trim();
+  if (!aiSearchResultText) return;
+  aiSearchResultText.textContent = keyword
+    ? `"${keyword}" 관련 정읍행사를 통합검색 중입니다.`
+    : '정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.';
+}
+
+function currentFilteredPosts() {
+  const typeValue = filterType.value;
+  const keyword = searchInput.value.trim().toLowerCase();
+
+  let posts = sortPosts(cachedPosts).filter(post => {
+    if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
+    return true;
+  });
+
+  if (typeValue !== 'all') {
+    posts = posts.filter(post => post.mediaType === typeValue);
+  }
+
+  if (keyword) {
+    posts = posts.filter(post => {
+      const hay = [post.title, post.place, post.description, post.author, '정읍행사 축제 전시 공연 체험 문화행사']
+        .join(' ')
+        .toLowerCase();
+      if (keyword === '정읍행사') return true;
+      return hay.includes(keyword);
+    });
+  }
+
+  return posts;
+}
+
+function renderPreview(file, mediaType) {
+  if (!file) {
+    uploadPreview.className = 'upload-preview';
+    uploadPreview.innerHTML = '';
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+  uploadPreview.innerHTML = mediaType === 'video'
+    ? `<video src="${url}" controls muted playsinline preload="metadata"></video>`
+    : `<img src="${url}" alt="업로드 미리보기">`;
+  uploadPreview.className = 'upload-preview show';
+}
+
+window.handleCardImageError = function(postId, el) {
+  unhideBrokenPostId(postId);
+  if (el) {
+    el.onerror = null;
+    el.src = getPlaceholderDataUrl('이미지를 불러올 수 없습니다');
+  }
+};
+
+function buildMedia(post) {
+  if (post.mediaType === 'video') {
+    if (!post.youtubeId && !isValidMediaUrl(post.mediaUrl)) {
+      return `<img src="${getPlaceholderDataUrl('영상 주소 오류')}" alt="영상 주소 오류">`;
+    }
+    return buildEventVideoHtml(post);
+  }
+
+  if (!isValidMediaUrl(post.mediaUrl)) {
+    return `<img src="${getPlaceholderDataUrl('이미지 주소 오류')}" alt="이미지 주소 오류">`;
+  }
+
+  return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
+}
+
+async function renderPosts() {
+  updateAiSearchMessage();
+  const allFilteredPosts = currentFilteredPosts();
+  const posts = allFilteredPosts.slice(0, visiblePostCount);
+
+  if (posts.length === 0) {
+    eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
+    paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+    if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+    return;
+  }
+
+  const shownCount = posts.length;
+  const totalCount = allFilteredPosts.length;
+  paginationInfo.textContent = totalCount > shownCount
+    ? `가까운 날짜순 ${shownCount}개 표시 / 전체 ${totalCount}개`
+    : `가까운 날짜순 ${shownCount}개 노출`;
+
+  if (loadMoreBtn) {
+    if (totalCount > shownCount) {
+      loadMoreBtn.style.display = 'inline-flex';
+      loadMoreBtn.textContent = `더보기 (${totalCount - shownCount}개 남음)`;
+    } else {
+      loadMoreBtn.style.display = 'none';
+    }
+  }
+
+  eventGrid.innerHTML = posts.map((post) => `
+    <article class="card" id="post-${post.id}">
+      <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+        <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
+        ${buildMedia(post)}
+      </div>
+      <div class="meta">
+        <div class="date">${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ' ~ ' + formatDate(post.endDate) : ''}</div>
+        <div class="title">${escapeHtml(post.title)}</div>
+        <div class="place">${escapeHtml(post.place)}</div>
+        <div class="stat-row">
+          <span>좋아요 ${post.likes || 0}</span>
+          <span>댓글 ${post.comments?.length || 0}</span>
+          <span>조회 ${post.views || 0}</span>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="detail-btn" data-post-id="${post.id}">자세히</button>
+        <button type="button" class="share-btn" data-post-id="${post.id}">공유</button>
+      </div>
+      <div class="post-admin-actions">
+        <button class="mini-btn danger delete-post-btn" type="button" data-post-id="${post.id}">삭제</button>
+      </div>
+    </article>
+  `).join('');
+}
+
+async function renderNotices() {
+  const notices = [...cachedNotices].sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date));
+  const makeNoticeHtml = (notice) => `
+    <div class="notice-item">
+      <div class="notice-main">
+        <strong>${escapeHtml(notice.title)}</strong>
+        <span>${escapeHtml(notice.content)}</span>
+        <div class="notice-meta">
+          <span>${formatDate((notice.created_at || notice.date || '').slice(0,10))}</span>
+        </div>
+        <div class="notice-admin-actions">
+          <button class="mini-btn" type="button" onclick="editNotice('${notice.id}')">수정</button>
+          <button class="mini-btn danger" type="button" onclick="deleteNotice('${notice.id}')">삭제</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const emptyHtml = '<div class="notice-item"><div class="notice-main"><strong>등록된 공지가 없습니다.</strong></div></div>';
+  noticeList.innerHTML = notices.length ? notices.map(makeNoticeHtml).join('') : emptyHtml;
+  noticePreviewList.innerHTML = notices.length ? notices.slice(0, 3).map(makeNoticeHtml).join('') : emptyHtml;
+}
+
+async function renderBoardList() {
+  const posts = sortPosts(cachedPosts);
+  if (!posts.length) {
+    boardPostList.innerHTML = '<li style="padding:14px 0; border-bottom:1px solid #e5e7eb;"><strong>등록된 게시글이 없습니다.</strong></li>';
+    return;
+  }
+
+  boardPostList.innerHTML = posts.map((post) => `
+    <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
+      <div style="display:flex; justify-content:space-between; gap:20px; align-items:flex-start;">
+        <div data-post-id="${post.id}" class="board-item-click" style="flex:1; cursor:pointer;">
+          <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
+          <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">${formatDate(post.date)}</div>
+        </div>
+        ${isAdminLoggedIn ? `<button class="mini-btn danger board-delete-btn" type="button" data-post-id="${post.id}">삭제</button>` : ''}
+      </div>
+    </li>
+  `).join('');
+}
+
+async function renderVideoList() {
+  const postVideos = sortPosts(cachedPosts).filter(post => post.mediaType === 'video');
+  const customVideos = cachedVideos;
+  const merged = [
+    ...customVideos.map(item => ({ ...item, isCustomVideoItem: true })),
+    ...postVideos.map(item => ({ ...item, isCustomVideoItem: false }))
+  ];
+
+  if (merged.length === 0) {
+    videoList.innerHTML = '<div class="video-item"><div><strong>등록된 영상이 없습니다.</strong><span>영상행사 등록 후 이곳에 표시됩니다.</span></div></div>';
+    document.getElementById('videoPlayer').innerHTML = '';
+    return;
+  }
+
+  videoList.innerHTML = merged.map((item) => {
+    if (item.isCustomVideoItem) {
+      return `
+        <div class="video-item" style="cursor:pointer;" onclick="playCustomVideo('${item.id}')">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
+          </div>
+          <span>${formatDate(item.date)}</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="video-item" style="cursor:pointer;" onclick="openDetail('${item.id}')">
+        <div>
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml(item.place)} · ${escapeHtml(item.author)}</span>
+        </div>
+        <span>${formatDate(item.date)}</span>
+      </div>
+    `;
+  }).join('');
+
+  const latestCustom = customVideos[0];
+  if (latestCustom) {
+    playCustomVideo(latestCustom.id, false);
+  }
+}
+
+async function playCustomVideo(id, switchToView = true) {
+  const target = cachedVideos.find(item => String(item.id) === String(id));
+  if (!target) return;
+
+  const iframe = `
+    <div style="position:relative;width:100%;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;background:#000;">
+      <iframe
+        src="https://www.youtube.com/embed/${target.youtubeId}"
+        style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </div>
+  `;
+
+  document.getElementById('videoPlayer').innerHTML = iframe;
+  if (switchToView) {
+    videoViewPanel.style.display = 'block';
+    videoWritePanel.style.display = 'none';
+  }
+}
+
+function openModal(id) {
+  document.getElementById(id)?.classList.add('show');
+  document.body.style.overflow = 'hidden';
+  if (id === 'noticeModal') showNoticeList();
+  if (id === 'boardModal') showBoardList();
+}
+
+function closeModal(id) {
+  document.getElementById(id)?.classList.remove('show');
+  if (!document.querySelector('.modal-backdrop.show')) {
+    document.body.style.overflow = '';
+  }
+}
+
+function showNoticeList() {
+  noticeListPanel.style.display = 'block';
+  noticeWritePanel.style.display = 'none';
+  noticeViewTab.className = 'submit';
+  noticeWriteTab.className = 'reset';
+  noticeForm.reset();
+  delete noticeForm.dataset.editId;
+}
+
+function showNoticeWrite() {
+  if (!isAdminLoggedIn) {
+    const password = prompt('관리자 비밀번호를 입력하세요');
+    if (password !== ADMIN_PASSWORD) {
+      alert('관리자만 접근 가능합니다');
+      return;
+    }
+    setAdminMode(true);
+  }
+  noticeListPanel.style.display = 'none';
+  noticeWritePanel.style.display = 'block';
+  noticeViewTab.className = 'reset';
+  noticeWriteTab.className = 'submit';
+}
+
+function showBoardList() {
+  document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
+  document.querySelector('[data-board-tab="list"]')?.classList.add('active');
+  document.getElementById('boardListTab')?.classList.add('active');
+  document.getElementById('boardWriteTab')?.classList.remove('active');
+  document.getElementById('boardWriteForm')?.reset();
+}
+
+function showBoardWrite() {
+  document.querySelectorAll('[data-board-tab]').forEach(btn => btn.classList.remove('active'));
+  document.querySelector('[data-board-tab="write"]')?.classList.add('active');
+  document.getElementById('boardWriteTab')?.classList.add('active');
+  document.getElementById('boardListTab')?.classList.remove('active');
+}
+
+function setAdminMode(enabled) {
+  isAdminLoggedIn = enabled;
+  document.body.classList.toggle('admin-mode', enabled);
+  adminLoginBtn.textContent = enabled ? '관리자 로그아웃' : '관리자 로그인';
+  renderAll();
+}
+
+async function editNotice(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 수정 가능합니다');
+    return;
+  }
+  const target = cachedNotices.find(item => String(item.id) === String(id));
+  if (!target) return;
+  openModal('noticeModal');
+  showNoticeWrite();
+  document.getElementById('noticeTitle').value = target.title || '';
+  document.getElementById('noticeContent').value = target.content || '';
+  noticeForm.dataset.editId = String(id);
+}
+
+async function deleteNotice(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 삭제 가능합니다');
+    return;
+  }
+  if (!confirm('이 공지를 삭제하시겠습니까?')) return;
+  try {
+    await deleteNoticeFromServer(id);
+    await fetchNotices();
+    await renderNotices();
+  } catch (error) {
+    console.error(error);
+    alert('공지 삭제 실패\n' + friendlyServerError(error));
+  }
+}
+
+async function findPostById(id) {
+  return cachedPosts.find(post => String(post.id) === String(id)) || null;
+}
+
+async function addView(id) {
+  const post = await findPostById(id);
+  if (!post) return null;
+  try {
+    await addPostView(id);
+    post.views = Number(post.views || 0) + 1;
+    await loadSiteStats();
+  } catch (error) {
+    console.error('조회수 증가 실패', error);
+  }
+  return post;
+}
+
+async function likePost(id) {
+  const post = await findPostById(id);
+  if (!post) return null;
+  post.likes = Number(post.likes || 0) + 1;
+  return post;
+}
+
+async function deletePost(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 삭제할 수 있습니다.');
+    return;
+  }
+
+  if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+
+  try {
+    await deletePostFromServer(id);
+    closeModal('detailModal');
+    await fetchPosts();
+    await renderAll();
+    alert('게시글이 삭제되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('게시글 삭제 실패\n' + friendlyServerError(error));
+  }
+}
+
+function renderComments(post) {
+  const list = document.getElementById('commentList');
+  if (!post.comments || post.comments.length === 0) {
+    list.innerHTML = '<div class="comment-empty">댓글이 없습니다</div>';
+    return;
+  }
+
+  list.innerHTML = post.comments.map(c => `
+    <div class="comment-item">
+      <strong>${escapeHtml(c.author)}</strong>
+      <div>${escapeHtml(c.text)}</div>
+      <span>${formatDate(c.date)}</span>
+    </div>
+  `).join('');
+}
+
+async function openDetail(id, options = {}) {
+  const { incrementView = true } = options;
+  let post = await fetchPostDetail(id);
+  if (!post) return;
+
+  if (incrementView) {
+    await addView(id);
+    post.views = Number(post.views || 0) + 1;
+  }
+
+  detailTitle.textContent = post.title;
+  detailMeta.innerHTML = `
+    <div>행사일: ${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ' ~ ' + formatDate(post.endDate) : ''}</div>
+    <div>장소: ${escapeHtml(post.place)}</div>
+    <div>작성자: ${escapeHtml(post.author)}</div>
+    <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+    <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0} · 조회: ${post.views || 0}</div>
+  `;
+
+  detailMedia.innerHTML = post.mediaType === 'video'
+    ? buildEventVideoHtml(post)
+    : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
+
+  detailDescription.textContent = post.description || '';
+  detailShareBtn.onclick = () => sharePost(id);
+  detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
+
+  detailLikeBtn.onclick = async () => {
+    const updated = await likePost(id);
+    if (!updated) return;
+
+    detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
+
+    detailMeta.innerHTML = `
+      <div>행사일: ${formatDate(updated.date)}${updated.endDate && updated.endDate !== updated.date ? ' ~ ' + formatDate(updated.endDate) : ''}</div>
+      <div>장소: ${escapeHtml(updated.place)}</div>
+      <div>작성자: ${escapeHtml(updated.author)}</div>
+      <div>유형: ${updated.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+      <div>좋아요: ${updated.likes || 0} · 댓글: ${updated.comments?.length || 0} · 조회: ${updated.views || 0}</div>
+    `;
+
+    await renderPosts();
+  };
+
+  detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
+  detailDeleteBtn.onclick = () => deletePost(id);
+  commentForm.dataset.postId = String(id);
+  renderComments(post);
+  openModal('detailModal');
+  await fetchPosts();
+  await renderPosts();
+}
+
+async function sharePost(id) {
+  const post = await findPostById(id);
+  if (!post) {
+    alert('공유할 글을 찾지 못했습니다.');
+    return;
+  }
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
+  const shareTitle = `[정읍문화소식] ${post.title}`;
+  const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
+  const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
+
+  if (window.Kakao && window.Kakao.Share) {
+    try {
+      if (!window.Kakao.isInitialized()) {
+        window.Kakao.init('1c0147d8515c426787e201fbb816958c');
+      }
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: shareTitle,
+          description: shareDesc,
+          imageUrl: shareImage,
+          link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+        },
+        buttons: [{ title: '자세히 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
+      });
+      return;
+    } catch (error) {
+      console.error('카카오 공유 실패', error);
+    }
+  }
+
+  fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
+}
+
+function fallbackShare(fullText) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(fullText).then(() => {
+      alert('공유용 링크를 복사했습니다.');
+    }).catch(() => {
+      window.prompt('아래 내용을 복사해 공유하세요.', fullText);
+    });
+  } else {
+    window.prompt('아래 내용을 복사해 공유하세요.', fullText);
+  }
+}
+
+async function addVideo() {
+  const titleEl = document.getElementById('videoTitle');
+  const urlEl = document.getElementById('youtubeUrl');
+  const descEl = document.getElementById('videoDesc');
+
+  const title = titleEl ? titleEl.value.trim() : '';
+  const url = urlEl ? urlEl.value.trim() : '';
+  const desc = descEl ? descEl.value.trim() : '';
+
+  if (!title || !url) {
+    alert('영상 제목과 유튜브 링크를 입력해주세요.');
+    return;
+  }
+
+  const videoId = getYoutubeId(url);
+  if (!videoId || videoId.length < 5) {
+    alert('유튜브 링크를 다시 확인해주세요.');
+    return;
+  }
+
+  try {
+    await saveVideoToServer({
+      title,
+      youtube_url: url,
+      content: desc,
+      author: '시민'
+    });
+    await fetchVideos();
+    await renderVideoList();
+
+    if (titleEl) titleEl.value = '';
+    if (urlEl) urlEl.value = '';
+    if (descEl) descEl.value = '';
+
+    videoViewPanel.style.display = 'block';
+    videoWritePanel.style.display = 'none';
+    alert('영상이 등록되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('영상 등록 실패\n' + friendlyServerError(error));
+  }
+}
+
 window.addVideo = addVideo;
 window.editNotice = editNotice;
 window.deleteNotice = deleteNotice;
 window.openDetail = openDetail;
 window.playCustomVideo = playCustomVideo;
 
-adminLoginBtn.addEventListener('click', () => {
+adminLoginBtn?.addEventListener('click', () => {
   if (isAdminLoggedIn) {
     setAdminMode(false);
     alert('관리자 로그아웃 되었습니다.');
@@ -4519,17 +5500,61 @@ adminLoginBtn.addEventListener('click', () => {
   const password = prompt('관리자 비밀번호를 입력하세요');
   if (password === ADMIN_PASSWORD) {
     setAdminMode(true);
-    alert('관리자 로그인 완료');
-  } else {
-    alert('비밀번호가 올바르지 않습니다');
+    alert('관리자 로그인 되었습니다.');
+  } else if (password !== null) {
+    alert('비밀번호가 올바르지 않습니다.');
   }
 });
 
-noticeViewTab.addEventListener('click', showNoticeList);
-noticeWriteTab.addEventListener('click', showNoticeWrite);
+document.querySelectorAll('[data-open]').forEach(btn => {
+  btn.addEventListener('click', () => openModal(btn.dataset.open));
+});
 
-document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
-  e.preventDefault();
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close));
+});
+
+noticeViewTab?.addEventListener('click', showNoticeList);
+noticeWriteTab?.addEventListener('click', showNoticeWrite);
+
+document.querySelectorAll('[data-board-tab]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.boardTab === 'write') showBoardWrite();
+    else showBoardList();
+  });
+});
+
+noticeForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if (!isAdminLoggedIn) {
+    alert('관리자만 공지를 등록할 수 있습니다.');
+    return;
+  }
+
+  const title = document.getElementById('noticeTitle').value.trim();
+  const content = document.getElementById('noticeContent').value.trim();
+
+  if (!title || !content) {
+    alert('제목과 내용을 입력해주세요.');
+    return;
+  }
+
+  try {
+    await saveNoticeToServer({ title, content, author: '관리자' });
+    noticeForm.reset();
+    await fetchNotices();
+    await renderNotices();
+    showNoticeList();
+    alert('공지 등록 완료');
+  } catch (error) {
+    console.error(error);
+    alert('공지 등록 실패\n' + friendlyServerError(error));
+  }
+});
+
+document.getElementById('boardWriteForm')?.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
   const title = document.getElementById('boardTitle').value.trim();
   const content = document.getElementById('boardContent').value.trim();
@@ -4540,37 +5565,32 @@ document.getElementById('boardWriteForm')?.addEventListener('submit', async func
   }
 
   try {
-    const submitBtn = this.querySelector('button[type="submit"]');
-    setSubmitting(submitBtn, true, '등록하기');
-
     await savePost({
       title,
-      date: new Date().toISOString().slice(0, 10),
-      endDate: new Date().toISOString().slice(0, 10),
+      date: getTodayString(),
+      endDate: getTodayString(),
       place: '시민 문화이야기',
       author: '시민',
       description: content,
       mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+      mediaUrl: getPlaceholderDataUrl('문화이야기'),
       category: '문화이야기'
     });
 
-    this.reset();
+    event.target.reset();
     await fetchPosts();
-    await renderAll();
+    await renderPosts();
+    await renderBoardList();
     showBoardList();
     alert('문화이야기가 등록되었습니다.');
   } catch (error) {
     console.error(error);
     alert('문화이야기 등록 실패\n' + friendlyServerError(error));
-  } finally {
-    const submitBtn = this.querySelector('button[type="submit"]');
-    setSubmitting(submitBtn, false, '등록하기');
   }
 });
 
-uploadForm?.addEventListener('submit', async function(e) {
-  e.preventDefault();
+uploadForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
   const title = document.getElementById('title').value.trim();
   const startDate = document.getElementById('startDate').value;
@@ -4586,17 +5606,12 @@ uploadForm?.addEventListener('submit', async function(e) {
     return;
   }
 
-  if (startDate > endDate) {
-    alert('행사 시작일이 종료일보다 늦을 수 없습니다.');
-    return;
-  }
-
   try {
     setSubmitting(uploadSubmitBtn, true);
 
-    const mediaUrl = await uploadFileToWorker(file, mediaType);
+    const uploadedUrl = await uploadFileToWorker(file, mediaType);
 
-    const saveResult = await savePost({
+    await savePost({
       title,
       date: startDate,
       endDate,
@@ -4604,80 +5619,41 @@ uploadForm?.addEventListener('submit', async function(e) {
       author,
       description,
       mediaType,
-      mediaUrl,
+      mediaUrl: uploadedUrl,
       category: '행사'
     });
 
-    const savedPostId = saveResult?.post?.id || saveResult?.id || '';
-    if (savedPostId) {
-      unhideBrokenPostId(savedPostId);
-    }
-
-    this.reset();
-    renderPreview(null, 'image');
+    uploadForm.reset();
+    renderPreview(null, mediaType);
+    visiblePostCount = 8;
     await fetchPosts();
-    await renderAll();
+    await renderPosts();
+    await renderBoardList();
     closeModal('uploadModal');
-    alert('문화소식이 등록되었습니다.');
+    alert('게시글이 등록되었습니다.');
   } catch (error) {
     console.error(error);
-    alert('업로드 실패\n' + friendlyServerError(error));
+    alert('게시글 등록 실패\n' + friendlyServerError(error));
   } finally {
     setSubmitting(uploadSubmitBtn, false);
   }
 });
 
-noticeForm?.addEventListener('submit', async function(e) {
-  e.preventDefault();
+commentForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
 
-  const title = document.getElementById('noticeTitle').value.trim();
-  const content = document.getElementById('noticeContent').value.trim();
-  const editId = this.dataset.editId;
-
-  if (!title || !content) {
-    alert('제목과 내용을 입력해주세요.');
-    return;
-  }
-
-  try {
-    await saveNoticeToServer({
-      id: editId || undefined,
-      title,
-      content,
-      author: '관리자'
-    });
-    this.reset();
-    delete this.dataset.editId;
-    await fetchNotices();
-    await renderNotices();
-    showNoticeList();
-    alert(editId ? '공지 수정 완료' : '공지 등록 완료');
-  } catch (error) {
-    console.error(error);
-    alert('공지 저장 실패\n' + friendlyServerError(error));
-  }
-});
-
-commentForm?.addEventListener('submit', async function(e) {
-  e.preventDefault();
-
-  const postId = this.dataset.postId;
+  const postId = commentForm.dataset.postId;
   const author = document.getElementById('commentAuthor').value.trim();
   const text = document.getElementById('commentText').value.trim();
 
-  if (!postId) {
-    alert('댓글 대상 글을 찾지 못했습니다.');
-    return;
-  }
-
-  if (!author || !text) {
+  if (!postId || !author || !text) {
     alert('작성자와 댓글 내용을 입력해주세요.');
     return;
   }
 
   try {
     await saveCommentToServer(postId, { author, text });
-    this.reset();
+    commentForm.reset();
     await openDetail(postId, { incrementView: false });
   } catch (error) {
     console.error(error);
@@ -4685,56 +5661,21 @@ commentForm?.addEventListener('submit', async function(e) {
   }
 });
 
-document.querySelectorAll('[data-open]').forEach((button) => {
-  button.addEventListener('click', () => {
-    document.querySelectorAll('.menu button').forEach((item) => item.classList.remove('active'));
-    const openId = button.dataset.open;
-    const linkedTop = document.querySelector(`.menu button[data-open="${openId}"]`);
-    if (linkedTop) linkedTop.classList.add('active');
-    openModal(openId);
-  });
-});
-
-document.querySelectorAll('[data-close]').forEach((button) => {
-  button.addEventListener('click', () => {
-    closeModal(button.dataset.close);
-  });
-});
-
-document.querySelectorAll('[data-board-tab]').forEach((button) => {
-  button.addEventListener('click', () => {
-    if (button.dataset.boardTab === 'list') showBoardList();
-    if (button.dataset.boardTab === 'write') showBoardWrite();
-  });
-});
-
 document.addEventListener('click', async (event) => {
-  const detailBtn = event.target.closest('.detail-btn');
-  if (detailBtn) {
-    await openDetail(detailBtn.dataset.postId);
+  const openBtn = event.target.closest('.detail-btn, .thumb-click, .board-item-click');
+  if (openBtn?.dataset.postId) {
+    await openDetail(openBtn.dataset.postId);
     return;
   }
 
   const shareBtn = event.target.closest('.share-btn');
-  if (shareBtn) {
+  if (shareBtn?.dataset.postId) {
     await sharePost(shareBtn.dataset.postId);
     return;
   }
 
-  const thumbBtn = event.target.closest('.thumb-click');
-  if (thumbBtn) {
-    await openDetail(thumbBtn.dataset.postId);
-    return;
-  }
-
-  const boardItemBtn = event.target.closest('.board-item-click');
-  if (boardItemBtn) {
-    await openDetail(boardItemBtn.dataset.postId);
-    return;
-  }
-
   const deleteBtn = event.target.closest('.delete-post-btn, .board-delete-btn');
-  if (deleteBtn) {
+  if (deleteBtn?.dataset.postId) {
     await deletePost(deleteBtn.dataset.postId);
     return;
   }
@@ -4744,6 +5685,7 @@ document.addEventListener('click', async (event) => {
     searchInput.value = keywordBtn.dataset.aiKeyword || '';
     visiblePostCount = 8;
     await renderPosts();
+    return;
   }
 
   const backdrop = event.target.classList.contains('modal-backdrop') ? event.target : null;
@@ -4838,8 +5780,7 @@ increaseSiteView().finally(async () => {
 });
 
 window.addEventListener('hashchange', openPostFromHash);
-updateAiSearchMessage();ㅍ
-  
+updateAiSearchMessage();
 </script>
 </body>
 </html>
