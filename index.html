@@ -1969,25 +1969,34 @@ async function openDetail(id, options = {}) {
     : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
 
   detailDescription.textContent = post.description || '';
-detailShareBtn.onclick = () => sharePost(id);
-detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
+  detailShareBtn.onclick = () => sharePost(id);
+  detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
 
-detailLikeBtn.onclick = async () => {
-  const updated = await likePost(id);
-  if (!updated) return;
+  detailLikeBtn.onclick = async () => {
+    const updated = await likePost(id);
+    if (!updated) return;
 
-  detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
+    detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
 
-  detailMeta.innerHTML = `
-    <div>행사일: ${formatDate(updated.date)}${updated.endDate && updated.endDate !== updated.date ? ' ~ ' + formatDate(updated.endDate) : ''}</div>
-    <div>장소: ${escapeHtml(updated.place)}</div>
-    <div>작성자: ${escapeHtml(updated.author)}</div>
-    <div>유형: ${updated.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
-    <div>좋아요: ${updated.likes || 0} · 댓글: ${updated.comments?.length || 0} · 조회: ${updated.views || 0}</div>
-  `;
+    detailMeta.innerHTML = `
+      <div>행사일: ${formatDate(updated.date)}${updated.endDate && updated.endDate !== updated.date ? ' ~ ' + formatDate(updated.endDate) : ''}</div>
+      <div>장소: ${escapeHtml(updated.place)}</div>
+      <div>작성자: ${escapeHtml(updated.author)}</div>
+      <div>유형: ${updated.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+      <div>좋아요: ${updated.likes || 0} · 댓글: ${updated.comments?.length || 0} · 조회: ${updated.views || 0}</div>
+    `;
 
+    await renderPosts();
+  };
+
+  detailDeleteBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
+  detailDeleteBtn.onclick = () => deletePost(id);
+  commentForm.dataset.postId = String(id);
+  renderComments(post);
+  openModal('detailModal');
+  await fetchPosts();
   await renderPosts();
-};
+}
 
 async function sharePost(id) {
   const post = await findPostById(id);
