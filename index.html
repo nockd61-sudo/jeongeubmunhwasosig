@@ -969,7 +969,7 @@
           <textarea id="videoDesc" placeholder="영상 설명"
             style="width:100%; height:120px; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:8px; box-sizing:border-box;"></textarea>
 
-          <button type="button" onclick="addVideo()"
+          <button type="button" id="videoSubmitButton" onclick="addVideo()"
             style="padding:10px 16px; border:none; border-radius:8px; background:#6d4cff; color:#fff; cursor:pointer;">
             영상 등록
           </button>
@@ -1145,6 +1145,9 @@ const commentForm = document.getElementById('commentForm');
 const videoList = document.getElementById('videoList');
 const videoViewPanel = document.getElementById('videoViewPanel');
 const videoWritePanel = document.getElementById('videoWritePanel');
+const videoViewTab = document.getElementById('videoViewTab');
+const videoWriteTab = document.getElementById('videoWriteTab');
+const videoSubmitButton = document.getElementById('videoSubmitButton');
 const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
 
 let isAdminLoggedIn = false;
@@ -1414,8 +1417,9 @@ async function fetchVideos() {
       id: String(item.id),
       title: String(item.title || ''),
       description: String(item.content || ''),
+      youtubeUrl: String(item.youtube_url || ''),
       youtubeId: getYoutubeId(item.youtube_url || ''),
-      date: String(item.created_at || new Date().toISOString().slice(0,10)).slice(0,10),
+      date: String(item.created_at || item.createdAt || new Date().toISOString().slice(0,10)).slice(0,10),
       author: String(item.author || '시민')
     }));
   } catch (error) {
@@ -1470,6 +1474,19 @@ async function saveVideoToServer(payload) {
   return apiJson(API_VIDEOS_ENDPOINT, {
     method: 'POST',
     body: JSON.stringify(payload)
+  });
+}
+
+async function updateVideoToServer(id, payload) {
+  return apiJson(`${API_VIDEOS_ENDPOINT}/${encodeURIComponent(String(id))}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+async function deleteVideoFromServer(id) {
+  return apiJson(`${API_VIDEOS_ENDPOINT}/${encodeURIComponent(String(id))}`, {
+    method: 'DELETE'
   });
 }
 
@@ -1745,12 +1762,18 @@ async function renderVideoList() {
   videoList.innerHTML = merged.map((item) => {
     if (item.isCustomVideoItem) {
       return `
-        <div class="video-item" style="cursor:pointer;" onclick="playCustomVideo('${item.id}')">
-          <div>
+        <div class="video-item">
+          <div style="flex:1; cursor:pointer;" onclick="playCustomVideo('${item.id}')">
             <strong>${escapeHtml(item.title)}</strong>
             <span>${escapeHtml(item.description || '영상 설명 없음')}</span>
           </div>
-          <span>${formatDate(item.date)}</span>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <span>${formatDate(item.date)}</span>
+            ${isAdminLoggedIn ? `
+              <button class="mini-btn" type="button" onclick="editVideo('${item.id}')">수정</button>
+              <button class="mini-btn danger" type="button" onclick="deleteVideo('${item.id}')">삭제</button>
+            ` : ''}
+          </div>
         </div>
       `;
     }
@@ -1794,11 +1817,90 @@ async function playCustomVideo(id, switchToView = true) {
   }
 }
 
+
+function resetVideoForm() {
+  if (videoSubmitButton) videoSubmitButton.textContent = '영상 등록';
+  if (videoTitleInput) videoTitleInput.value = '';
+  if (youtubeUrlInput) youtubeUrlInput.value = '';
+  if (videoDescInput) videoDescInput.value = '';
+  if (videoWritePanel) delete videoWritePanel.dataset.editId;
+}
+
+const videoTitleInput = document.getElementById('videoTitle');
+const youtubeUrlInput = document.getElementById('youtubeUrl');
+const videoDescInput = document.getElementById('videoDesc');
+
+function showVideoList() {
+  videoViewPanel.style.display = 'block';
+  videoWritePanel.style.display = 'none';
+  if (videoViewTab) videoViewTab.className = 'submit';
+  if (videoWriteTab) videoWriteTab.className = 'reset';
+}
+
+function showVideoWrite() {
+  if (!isAdminLoggedIn) {
+    const password = prompt('관리자 비밀번호를 입력하세요');
+    if (password !== ADMIN_PASSWORD) {
+      alert('관리자만 접근 가능합니다');
+      return;
+    }
+    setAdminMode(true);
+  }
+  videoViewPanel.style.display = 'none';
+  videoWritePanel.style.display = 'block';
+  if (videoViewTab) videoViewTab.className = 'reset';
+  if (videoWriteTab) videoWriteTab.className = 'submit';
+}
+
+async function editVideo(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 수정 가능합니다.');
+    return;
+  }
+
+  const target = cachedVideos.find(item => String(item.id) === String(id));
+  if (!target) {
+    alert('수정할 영상을 찾지 못했습니다.');
+    return;
+  }
+
+  if (videoTitleInput) videoTitleInput.value = target.title || '';
+  if (youtubeUrlInput) youtubeUrlInput.value = target.youtubeUrl || (target.youtubeId ? `https://youtu.be/${target.youtubeId}` : '');
+  if (videoDescInput) videoDescInput.value = target.description || '';
+  videoWritePanel.dataset.editId = String(id);
+  if (videoSubmitButton) videoSubmitButton.textContent = '영상 수정 저장';
+  openModal('videoModal');
+  showVideoWrite();
+}
+
+async function deleteVideo(id) {
+  if (!isAdminLoggedIn) {
+    alert('관리자만 삭제 가능합니다.');
+    return;
+  }
+
+  if (!confirm('이 영상을 삭제하시겠습니까?')) return;
+
+  try {
+    await deleteVideoFromServer(id);
+    await fetchVideos();
+    await renderVideoList();
+    resetVideoForm();
+    showVideoList();
+    alert('영상이 삭제되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('영상 삭제 실패
+' + friendlyServerError(error));
+  }
+}
+
 function openModal(id) {
   document.getElementById(id)?.classList.add('show');
   document.body.style.overflow = 'hidden';
   if (id === 'noticeModal') showNoticeList();
   if (id === 'boardModal') showBoardList();
+  if (id === 'videoModal') showVideoList();
 }
 
 function closeModal(id) {
@@ -2048,13 +2150,10 @@ function fallbackShare(fullText) {
 }
 
 async function addVideo() {
-  const titleEl = document.getElementById('videoTitle');
-  const urlEl = document.getElementById('youtubeUrl');
-  const descEl = document.getElementById('videoDesc');
-
-  const title = titleEl ? titleEl.value.trim() : '';
-  const url = urlEl ? urlEl.value.trim() : '';
-  const desc = descEl ? descEl.value.trim() : '';
+  const title = videoTitleInput ? videoTitleInput.value.trim() : '';
+  const url = youtubeUrlInput ? youtubeUrlInput.value.trim() : '';
+  const desc = videoDescInput ? videoDescInput.value.trim() : '';
+  const editId = videoWritePanel?.dataset?.editId || '';
 
   if (!title || !url) {
     alert('영상 제목과 유튜브 링크를 입력해주세요.');
@@ -2067,26 +2166,30 @@ async function addVideo() {
     return;
   }
 
+  const payload = {
+    title,
+    youtube_url: url,
+    content: desc,
+    author: '시민'
+  };
+
   try {
-    await saveVideoToServer({
-      title,
-      youtube_url: url,
-      content: desc,
-      author: '시민'
-    });
+    if (editId) {
+      await updateVideoToServer(editId, payload);
+      alert('영상이 수정되었습니다.');
+    } else {
+      await saveVideoToServer(payload);
+      alert('영상이 등록되었습니다.');
+    }
+
     await fetchVideos();
     await renderVideoList();
-
-    if (titleEl) titleEl.value = '';
-    if (urlEl) urlEl.value = '';
-    if (descEl) descEl.value = '';
-
-    videoViewPanel.style.display = 'block';
-    videoWritePanel.style.display = 'none';
-    alert('영상이 등록되었습니다.');
+    resetVideoForm();
+    showVideoList();
   } catch (error) {
     console.error(error);
-    alert('영상 등록 실패\n' + friendlyServerError(error));
+    alert(`${editId ? '영상 수정' : '영상 등록'} 실패
+` + friendlyServerError(error));
   }
 }
 
@@ -2095,6 +2198,8 @@ window.editNotice = editNotice;
 window.deleteNotice = deleteNotice;
 window.openDetail = openDetail;
 window.playCustomVideo = playCustomVideo;
+window.editVideo = editVideo;
+window.deleteVideo = deleteVideo;
 
 adminLoginBtn.addEventListener('click', () => {
   if (isAdminLoggedIn) {
@@ -2114,6 +2219,8 @@ adminLoginBtn.addEventListener('click', () => {
 
 noticeViewTab.addEventListener('click', showNoticeList);
 noticeWriteTab.addEventListener('click', showNoticeWrite);
+if (videoViewTab) videoViewTab.addEventListener('click', showVideoList);
+if (videoWriteTab) videoWriteTab.addEventListener('click', showVideoWrite);
 
 document.getElementById('boardWriteForm')?.addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -2398,7 +2505,7 @@ if (window.Kakao && !window.Kakao.isInitialized()) {
   window.Kakao.init('1c0147d8515c426787e201fbb816958c');
 }
 
-async function renderAll() {
+async async function renderAll() {
   await loadSiteStats();
   await renderPosts();
   await renderNotices();
