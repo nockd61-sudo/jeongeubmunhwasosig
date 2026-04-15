@@ -1890,8 +1890,7 @@ async function deleteVideo(id) {
     alert('영상이 삭제되었습니다.');
   } catch (error) {
     console.error(error);
-    alert('영상 삭제 실패
-' + friendlyServerError(error));
+    alert('영상 삭제 실패\n' + friendlyServerError(error));
   }
 }
 
@@ -2188,8 +2187,7 @@ async function addVideo() {
     showVideoList();
   } catch (error) {
     console.error(error);
-    alert(`${editId ? '영상 수정' : '영상 등록'} 실패
-` + friendlyServerError(error));
+    alert(`${editId ? '영상 수정' : '영상 등록'} 실패\n` + friendlyServerError(error));
   }
 }
 
@@ -2486,26 +2484,12 @@ loadMoreBtn?.addEventListener('click', async () => {
   await renderPosts();
 });
 
-const videoViewTab = document.getElementById('videoViewTab');
-const videoWriteTabOnly = document.getElementById('videoWriteTab');
-
-videoViewTab?.addEventListener('click', () => {
-  videoViewPanel.style.display = 'block';
-  videoWritePanel.style.display = 'none';
-});
-
-videoWriteTabOnly?.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  videoViewPanel.style.display = 'none';
-  videoWritePanel.style.display = 'block';
-});
 
 if (window.Kakao && !window.Kakao.isInitialized()) {
   window.Kakao.init('1c0147d8515c426787e201fbb816958c');
 }
 
-async async function renderAll() {
+async function renderAll() {
   await loadSiteStats();
   await renderPosts();
   await renderNotices();
