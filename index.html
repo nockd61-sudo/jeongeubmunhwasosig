@@ -1333,16 +1333,20 @@ function normalizeComment(comment, postId = '') {
 function normalizePost(item) {
   if (!item || typeof item !== 'object') return null;
 
-  const youtubeId = getYoutubeId(item.youtube_url || item.youtubeUrl || '');
-  const mediaType = youtubeId
-    ? 'video'
-    : ((item.category === '영상행사' || item.mediaType === 'video') ? 'video' : 'image');
-
   const mediaUrl = item.image_url || item.mediaUrl || item.imageUrl || '';
   const description = item.content || item.description || '';
   const place = item.location || item.place || '';
   const startDate = (item.start_date || item.startDate || item.date || '').slice(0, 10);
   const endDate = (item.end_date || item.endDate || startDate || '').slice(0, 10);
+  const isBoardPost = item.category === '문화이야기' || place === '시민 문화이야기';
+  const youtubeId = getYoutubeId(item.youtube_url || item.youtubeUrl || '');
+
+  let mediaType = 'image';
+  if (isBoardPost) {
+    mediaType = 'text';
+  } else if (youtubeId || item.category === '영상행사' || item.mediaType === 'video') {
+    mediaType = 'video';
+  }
 
   if (mediaType === 'image' && !isValidMediaUrl(mediaUrl)) return null;
 
@@ -1360,7 +1364,7 @@ function normalizePost(item) {
     likes: Number(item.likes || 0),
     views: Number(item.views || 0),
     comments: Array.isArray(item.comments) ? item.comments : [],
-    category: String(item.category || (place === '시민 문화이야기' ? '문화이야기' : (mediaType === 'video' ? '영상행사' : '행사')))
+    category: String(item.category || (isBoardPost ? '문화이야기' : (mediaType === 'video' ? '영상행사' : '행사')))
   };
 }
 
@@ -1606,6 +1610,7 @@ function currentFilteredPosts() {
   const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
   let posts = sortPosts(cachedPosts).filter(post => {
+    if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
     if (hiddenBrokenIds.has(String(post.id))) return false;
     if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
     return isValidMediaUrl(post.mediaUrl);
@@ -2074,17 +2079,28 @@ async function openDetail(id, options = {}) {
   }
 
   detailTitle.textContent = post.title;
+  const detailTypeLabel = post.mediaType === 'video'
+    ? '영상행사'
+    : (post.mediaType === 'text' ? '문화이야기' : '이미지행사');
+
   detailMeta.innerHTML = `
     <div>행사일: ${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ' ~ ' + formatDate(post.endDate) : ''}</div>
     <div>장소: ${escapeHtml(post.place)}</div>
     <div>작성자: ${escapeHtml(post.author)}</div>
-    <div>유형: ${post.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+    <div>유형: ${detailTypeLabel}</div>
     <div>좋아요: ${post.likes || 0} · 댓글: ${post.comments?.length || 0} · 조회: ${post.views || 0}</div>
   `;
 
-  detailMedia.innerHTML = post.mediaType === 'video'
-    ? buildEventVideoHtml(post)
-    : `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
+  if (post.mediaType === 'video') {
+    detailMedia.style.display = '';
+    detailMedia.innerHTML = buildEventVideoHtml(post);
+  } else if (post.mediaType === 'text') {
+    detailMedia.style.display = 'none';
+    detailMedia.innerHTML = '';
+  } else {
+    detailMedia.style.display = '';
+    detailMedia.innerHTML = `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}">`;
+  }
 
   detailDescription.textContent = post.description || '';
   detailShareBtn.onclick = () => sharePost(id);
@@ -2096,11 +2112,15 @@ async function openDetail(id, options = {}) {
 
     detailLikeBtn.textContent = `좋아요 ${updated.likes || 0}`;
 
+    const updatedTypeLabel = updated.mediaType === 'video'
+      ? '영상행사'
+      : (updated.mediaType === 'text' ? '문화이야기' : '이미지행사');
+
     detailMeta.innerHTML = `
       <div>행사일: ${formatDate(updated.date)}${updated.endDate && updated.endDate !== updated.date ? ' ~ ' + formatDate(updated.endDate) : ''}</div>
       <div>장소: ${escapeHtml(updated.place)}</div>
       <div>작성자: ${escapeHtml(updated.author)}</div>
-      <div>유형: ${updated.mediaType === 'video' ? '영상행사' : '이미지행사'}</div>
+      <div>유형: ${updatedTypeLabel}</div>
       <div>좋아요: ${updated.likes || 0} · 댓글: ${updated.comments?.length || 0} · 조회: ${updated.views || 0}</div>
     `;
 
@@ -2259,8 +2279,8 @@ document.getElementById('boardWriteForm')?.addEventListener('submit', async func
       place: '시민 문화이야기',
       author: '시민',
       description: content,
-      mediaType: 'image',
-      mediaUrl: 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=1200&q=80',
+      mediaType: 'text',
+      mediaUrl: '',
       category: '문화이야기'
     });
 
