@@ -923,6 +923,16 @@
       <div class="board-tab-content active" id="boardListTab">
         <div class="panel" style="margin-top:0;">
           <h3>전체 게시글 목록</h3>
+          <div style="
+            background:#fff3cd;
+            color:#856404;
+            padding:12px;
+            border-radius:8px;
+            margin-bottom:12px;
+            font-size:0.9rem;
+          ">
+            공고: 타행사 홍보, 비방글, 부적절한 게시글은 관리자에 의해 삭제됩니다.
+          </div>
           <ul class="board-post-list" id="boardPostList" style="list-style:none; padding:0; margin:0;"></ul>
         </div>
       </div>
@@ -1739,9 +1749,16 @@ async function renderNotices() {
 }
 
 async function renderBoardList() {
-  const posts = sortPosts(cachedPosts);
+  const posts = sortPosts(cachedPosts).filter(post =>
+    post.category === '문화이야기' || post.place === '시민 문화이야기'
+  );
+
   if (!posts.length) {
-    boardPostList.innerHTML = '<li style="padding:14px 0; border-bottom:1px solid #e5e7eb;"><strong>등록된 게시글이 없습니다.</strong></li>';
+    boardPostList.innerHTML = `
+      <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
+        <strong>등록된 문화이야기가 없습니다.</strong>
+      </li>
+    `;
     return;
   }
 
@@ -1749,8 +1766,10 @@ async function renderBoardList() {
     <li style="padding:14px 0; border-bottom:1px solid #e5e7eb;">
       <div style="display:flex; justify-content:space-between; gap:20px; align-items:flex-start;">
         <div data-post-id="${post.id}" class="board-item-click" style="flex:1; cursor:pointer;">
-          <span><strong>${escapeHtml(post.title)}</strong> ${escapeHtml(post.place)} · ${escapeHtml(post.author)}</span>
-          <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">${formatDate(post.date)}</div>
+          <div style="font-weight:600; font-size:15px;">${escapeHtml(post.title)}</div>
+          <div style="margin-top:6px; color:#6b7280; font-size:0.9rem;">
+            ${formatDate(post.date)} · ${escapeHtml(post.author)}
+          </div>
         </div>
         ${isAdminLoggedIn ? `<button class="mini-btn danger board-delete-btn" type="button" data-post-id="${post.id}">삭제</button>` : ''}
       </div>
