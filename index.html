@@ -1199,15 +1199,23 @@ function getPostShareUrl(postId) {
 }
 
 function syncDetailUrl(postId, replace = true) {
-  const basePath = window.location.pathname || '/';
-  const nextUrl = postId
-    ? `${basePath}?post=${encodeURIComponent(String(postId))}`
-    : basePath;
+  try {
+    const url = new URL(window.location.href);
 
-  if (replace) {
-    window.history.replaceState({}, '', nextUrl);
-  } else {
-    window.history.pushState({}, '', nextUrl);
+    if (postId) {
+      url.searchParams.set('post', String(postId));
+    } else {
+      url.searchParams.delete('post');
+    }
+
+    if (replace) {
+      window.history.replaceState({}, '', url.toString());
+    } else {
+      window.history.pushState({}, '', url.toString());
+    }
+
+  } catch (e) {
+    console.warn('URL 변경 실패 (무시됨)', e);
   }
 }
 
