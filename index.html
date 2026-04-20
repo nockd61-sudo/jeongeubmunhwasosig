@@ -2225,26 +2225,26 @@ async function sharePost(id) {
   const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-  const defaultImage = 'https://jeongeup-art.com/og-image.jpg';
-  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
-    ? post.mediaUrl
-    : defaultImage;
+
+  const visibleText = [
+    shareTitle,
+    shareDesc,
+    '',
+    '아래 주소를 눌러 정읍문화소식에서 확인하세요.',
+    shareUrl
+  ].join('\n');
 
   if (ensureKakaoReady()) {
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: shareTitle,
-          description: shareDesc,
-          imageUrl: shareImage,
-          link: {
-            mobileWebUrl: shareUrl,
-            webUrl: shareUrl
-          }
+        objectType: 'text',
+        text: visibleText,
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl
         },
         buttons: [{
-          title: '정읍문화소식 보기',
+          title: '정읍문화소식 바로가기',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl
@@ -2257,8 +2257,10 @@ async function sharePost(id) {
     }
   }
 
-  fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
+  fallbackShare(visibleText);
 }
+
+
 function fallbackShare(fullText) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(fullText).then(() => {
