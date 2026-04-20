@@ -2018,20 +2018,20 @@ function showVideoList() {
   if (videoWriteTab) videoWriteTab.className = 'reset';
 }
 
+function showVideoList() {
+  videoViewPanel.style.display = 'block';
+  videoWritePanel.style.display = 'none';
+  if (videoViewTab) videoViewTab.className = 'submit';
+  if (videoWriteTab) videoWriteTab.className = 'reset';
+}
+
 function showVideoWrite() {
-  if (!isAdminLoggedIn) {
-    const password = prompt('관리자 비밀번호를 입력하세요');
-    if (password !== ADMIN_PASSWORD) {
-      alert('관리자만 접근 가능합니다');
-      return;
-    }
-    setAdminMode(true);
-  }
   videoViewPanel.style.display = 'none';
   videoWritePanel.style.display = 'block';
   if (videoViewTab) videoViewTab.className = 'reset';
   if (videoWriteTab) videoWriteTab.className = 'submit';
 }
+
 
 async function editVideo(id) {
   if (!isAdminLoggedIn) {
