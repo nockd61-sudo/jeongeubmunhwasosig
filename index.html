@@ -1184,28 +1184,26 @@ function escapeHtml(value) {
 }
 
 function getSiteBaseUrl() {
-  const canonical = document.querySelector('link[rel="canonical"]')?.href || SITE_CANONICAL_URL;
-  try {
-    const url = new URL(canonical);
-    url.search = '';
-    url.hash = '';
-    return url.toString();
-  } catch {
-    const url = new URL(window.location.pathname, window.location.origin);
-    url.search = '';
-    url.hash = '';
-    return url.toString();
-  }
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  return url.toString();
 }
 
 function getPostShareUrl(postId) {
-  const url = new URL(getSiteBaseUrl());
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
   url.searchParams.set('post', String(postId));
   return url.toString();
 }
 
 function syncDetailUrl(postId, replace = true) {
-  const nextUrl = postId ? getPostShareUrl(postId) : getSiteBaseUrl();
+  const basePath = window.location.pathname || '/';
+  const nextUrl = postId
+    ? `${basePath}?post=${encodeURIComponent(String(postId))}`
+    : basePath;
+
   if (replace) {
     window.history.replaceState({}, '', nextUrl);
   } else {
@@ -2208,7 +2206,8 @@ async function openDetail(id, options = {}) {
   await renderPosts();
   } catch (error) {
     console.error('상세보기 열기 실패', error);
-    alert('상세보기를 열지 못했습니다.\n' + friendlyServerError(error));
+    alert('상세보기를 열지 못했습니다.
+' + friendlyServerError(error));
   }
 }
 
@@ -2610,7 +2609,7 @@ async function openPostFromUrl() {
   if (!id) return;
   const post = await findPostById(id);
   if (post) {
-    await openDetail(id, { incrementView: false });
+    await openDetail(id);
   }
 }
 
