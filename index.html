@@ -1502,13 +1502,19 @@ async function fetchVideos() {
 }
 
 async function fetchPostDetail(id) {
-  const data = await apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`);
-  const post = normalizePost(data.post);
-  const comments = Array.isArray(data.comments)
-    ? data.comments.map(item => normalizeComment(item, id)).filter(Boolean)
-    : [];
-  if (post) post.comments = comments;
-  return post;
+  try {
+    const data = await apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`);
+    const post = normalizePost(data.post);
+    const comments = Array.isArray(data.comments)
+      ? data.comments.map(item => normalizeComment(item, id)).filter(Boolean)
+      : [];
+    if (post) post.comments = comments;
+    return post;
+  } catch (error) {
+    console.warn('상세 조회 API 실패, 목록 캐시로 대체합니다.', error);
+    const fallback = cachedPosts.find(post => String(post.id) === String(id));
+    return fallback ? { ...fallback, comments: Array.isArray(fallback.comments) ? fallback.comments : [] } : null;
+  }
 }
 
 async function savePost(post) {
@@ -2126,14 +2132,22 @@ function renderComments(post) {
 }
 
 async function openDetail(id, options = {}) {
-  const { incrementView = true } = options;
-  let post = await fetchPostDetail(id);
-  if (!post) return;
+  try {
+    const { incrementView = true } = options;
+    let post = await fetchPostDetail(id);
+    if (!post) {
+      alert('상세 글을 찾지 못했습니다.');
+      return;
+    }
 
-  if (incrementView) {
-    await addView(id);
-    post.views = Number(post.views || 0) + 1;
-  }
+    if (incrementView) {
+      try {
+        await addView(id);
+        post.views = Number(post.views || 0) + 1;
+      } catch (error) {
+        console.warn('조회수 증가 실패', error);
+      }
+    }
 
   detailTitle.textContent = post.title;
   const detailTypeLabel = post.mediaType === 'video'
@@ -2192,6 +2206,11 @@ async function openDetail(id, options = {}) {
   openModal('detailModal');
   await fetchPosts();
   await renderPosts();
+  } catch (error) {
+    console.error('상세보기 열기 실패', error);
+    alert('상세보기를 열지 못했습니다.
+' + friendlyServerError(error));
+  }
 }
 
 async function sharePost(id) {
