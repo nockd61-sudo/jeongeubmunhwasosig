@@ -2222,7 +2222,7 @@ async function sharePost(id) {
     return;
   }
 
-  const shareUrl = 'https://www.jeongeup-art.com/';
+ const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const defaultImage = 'https://www.jeongeup-art.com/og-image.jpg';
   const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
