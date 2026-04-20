@@ -2229,7 +2229,9 @@ async function sharePost(id) {
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
   const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
-  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
+  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
+    ? post.mediaUrl
+    : defaultImage;
 
   if (ensureKakaoReady()) {
     try {
@@ -2239,27 +2241,19 @@ async function sharePost(id) {
           title: shareTitle,
           description: shareDesc,
           imageUrl: shareImage,
-          link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
         },
-      Kakao.Share.sendDefault({
-  objectType: 'feed',
-  content: {
-    title: post.title || '정읍문화소식',
-    description: post.description || '정읍문화소식에서 자세히 보기',
-    imageUrl: post.mediaUrl || 'https://jeongeup-art.com/og-image.jpg',
-    link: {
-      mobileWebUrl: shareUrl,
-      webUrl: shareUrl
-    }
-  },
-  buttons: [{
-    title: '정읍문화소식 보기',
-    link: {
-      mobileWebUrl: shareUrl,
-      webUrl: shareUrl
-    }
-  }]
-});
+        buttons: [{
+          title: '정읍문화소식 보기',
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
+        }]
+      });
       return;
     } catch (error) {
       console.error('카카오 공유 실패', error);
