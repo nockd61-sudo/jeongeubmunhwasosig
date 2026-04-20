@@ -1184,14 +1184,14 @@ function escapeHtml(value) {
 }
 
 function getSiteBaseUrl() {
-  const url = new URL(window.location.href);
+  const url = new URL(SITE_CANONICAL_URL);
   url.search = '';
   url.hash = '';
   return url.toString();
 }
 
 function getPostShareUrl(postId) {
- const url = new URL(SITE_CANONICAL_URL);
+  const url = new URL(SITE_CANONICAL_URL);
   url.searchParams.set('post', String(postId));
   return url.toString();
 }
