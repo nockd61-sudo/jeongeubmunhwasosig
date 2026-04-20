@@ -2208,8 +2208,7 @@ async function openDetail(id, options = {}) {
   await renderPosts();
   } catch (error) {
     console.error('상세보기 열기 실패', error);
-    alert('상세보기를 열지 못했습니다.
-' + friendlyServerError(error));
+    alert('상세보기를 열지 못했습니다.\n' + friendlyServerError(error));
   }
 }
 
@@ -2611,7 +2610,7 @@ async function openPostFromUrl() {
   if (!id) return;
   const post = await findPostById(id);
   if (post) {
-    await openDetail(id);
+    await openDetail(id, { incrementView: false });
   }
 }
 
