@@ -2222,29 +2222,29 @@ async function sharePost(id) {
     return;
   }
 
-  const shareUrl = getPostShareUrl(post.id);
+  const shareUrl = SITE_CANONICAL_URL;
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-
-  const visibleText = [
-    shareTitle,
-    shareDesc,
-    '',
-    '아래 주소를 눌러 정읍문화소식에서 확인하세요.',
-    shareUrl
-  ].join('\n');
+  const defaultImage = 'https://jeongeup-art.com/og-image.jpg';
+  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
+    ? post.mediaUrl
+    : defaultImage;
 
   if (ensureKakaoReady()) {
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'text',
-        text: visibleText,
-        link: {
-          mobileWebUrl: shareUrl,
-          webUrl: shareUrl
+        objectType: 'feed',
+        content: {
+          title: shareTitle,
+          description: shareDesc,
+          imageUrl: shareImage,
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
         },
         buttons: [{
-          title: '정읍문화소식 바로가기',
+          title: '정읍문화소식 메인으로 가기',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl
@@ -2257,7 +2257,7 @@ async function sharePost(id) {
     }
   }
 
-  fallbackShare(visibleText);
+  fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
 }
 
 
