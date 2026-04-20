@@ -7,7 +7,7 @@
   <title>정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼</title>
   <meta name="description" content="정읍문화소식은 정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼입니다." />
   <meta name="keywords" content="정읍문화소식, 정읍행사, 정읍전시, 정읍공연, 정읍축제, 정읍문화" /> 
-  <link rel="canonical" href="https://jeongeup-art.com/" />
+  <link rel="canonical" href="https://www.jeongeup-art.com/" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
@@ -2225,23 +2225,23 @@ async function sharePost(id) {
   const shareUrl = SITE_CANONICAL_URL;
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-  const defaultImage = 'https://jeongeup-art.com/og-image.jpg';
-  const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
-    ? post.mediaUrl
-    : defaultImage;
+
+  const visibleText = [
+    shareTitle,
+    shareDesc,
+    '',
+    '아래 주소를 눌러 정읍문화소식 메인으로 들어가세요.',
+    shareUrl
+  ].join('\n');
 
   if (ensureKakaoReady()) {
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: shareTitle,
-          description: shareDesc,
-          imageUrl: shareImage,
-          link: {
-            mobileWebUrl: shareUrl,
-            webUrl: shareUrl
-          }
+        objectType: 'text',
+        text: visibleText,
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl
         },
         buttons: [{
           title: '정읍문화소식 메인으로 가기',
@@ -2257,9 +2257,8 @@ async function sharePost(id) {
     }
   }
 
-  fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
+  fallbackShare(visibleText);
 }
-
 
 function fallbackShare(fullText) {
   if (navigator.clipboard && window.isSecureContext) {
