@@ -2645,10 +2645,15 @@ increaseSiteView().finally(async () => {
   await openPostFromUrl();
 });
 
-window.addEventListener('popstate', openPostFromUrl);
-window.addEventListener('hashchange', openPostFromUrl);
-updateAiSearchMessage();
-  
+function ensureKakaoReady() {
+  if (!window.Kakao) return false;
+
+  if (!window.Kakao.isInitialized()) {
+    window.Kakao.init(KAKAO_JS_KEY);
+  }
+
+  return !!window.Kakao.Share;
+}
 </script>
 </body>
 </html>
