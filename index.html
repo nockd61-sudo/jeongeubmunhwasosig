@@ -603,6 +603,60 @@
       color: #fff;
     }
 
+    .more-thumb-grid {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .more-thumb-item {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      background: #ececec;
+      cursor: pointer;
+      padding: 0;
+      box-shadow: var(--shadow);
+    }
+
+    .more-thumb-item img,
+    .more-thumb-item video,
+    .more-thumb-item iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .more-thumb-item:hover {
+      transform: translateY(-2px);
+    }
+
+    .more-thumb-overlay {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 6px 7px;
+      font-size: 0.74rem;
+      color: #fff;
+      background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.78));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .more-thumb-empty {
+      width: 100%;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      padding: 10px 0 2px;
+    }
+
     .detail-meta {
       display: grid;
       gap: 8px;
@@ -772,6 +826,7 @@
       }
 
       .cards { grid-template-columns: repeat(2, 1fr); }
+      .more-thumb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .topbar { display: flex; flex-direction: column; align-items: start; }
       .hero-box { height: 280px; }
       .menu { width: 100%; }
@@ -780,6 +835,7 @@
     @media (max-width: 560px) {
       .wrap { width: min(var(--max), calc(100% - 18px)); }
       .cards { grid-template-columns: 1fr; }
+      .more-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .quick-row { grid-template-columns: repeat(2, 1fr); }
       .hero-box { height: 230px; }
       .hero-overlay h1 { font-size: 1.8rem; }
@@ -860,6 +916,7 @@
     <div class="cards" id="eventGrid"></div>
     <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
     <div class="load-more-wrap">
+      <div id="moreThumbGrid" class="more-thumb-grid" style="display:none;"></div>
       <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button>
     </div>
   </section>
@@ -1142,6 +1199,7 @@ const aiSearchResultText = document.getElementById('aiSearchResultText');
 const aiKeywordButtons = document.querySelectorAll('.ai-keyword-btn');
 const paginationInfo = document.getElementById('paginationInfo');
 const loadMoreBtn = document.getElementById('loadMoreBtn');
+const moreThumbGrid = document.getElementById('moreThumbGrid');
 const detailTitle = document.getElementById('detailTitle');
 const detailMeta = document.getElementById('detailMeta');
 const detailMedia = document.getElementById('detailMedia');
@@ -1731,6 +1789,42 @@ function buildMedia(post) {
   return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="handleCardImageError('${escapeHtml(String(post.id))}', this)">`;
 }
 
+function buildMoreThumbMedia(post) {
+  if (post.mediaType === 'video') {
+    if (post.youtubeId) {
+      return `<img src="https://img.youtube.com/vi/${post.youtubeId}/hqdefault.jpg" alt="${escapeHtml(post.title)}" loading="lazy">`;
+    }
+    if (isValidMediaUrl(post.mediaUrl)) {
+      return `<video src="${post.mediaUrl}" muted playsinline preload="metadata"></video>`;
+    }
+    return `<img src="${getPlaceholderDataUrl('영상')}" alt="영상">`;
+  }
+
+  if (!isValidMediaUrl(post.mediaUrl)) {
+    return `<img src="${getPlaceholderDataUrl('이미지')}" alt="이미지">`;
+  }
+
+  return `<img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer">`;
+}
+
+function renderMoreThumbs(posts) {
+  if (!moreThumbGrid) return;
+
+  if (!posts || posts.length === 0) {
+    moreThumbGrid.style.display = 'none';
+    moreThumbGrid.innerHTML = '';
+    return;
+  }
+
+  moreThumbGrid.style.display = 'grid';
+  moreThumbGrid.innerHTML = posts.slice(0, 8).map((post) => `
+    <button type="button" class="more-thumb-item" data-post-id="${post.id}" aria-label="${escapeHtml(post.title)} 크게 보기">
+      ${buildMoreThumbMedia(post)}
+      <span class="more-thumb-overlay">${escapeHtml(post.title)}</span>
+    </button>
+  `).join('');
+}
+
 async function renderPosts() {
   updateAiSearchMessage();
   const allFilteredPosts = currentFilteredPosts();
@@ -1739,23 +1833,22 @@ async function renderPosts() {
   if (posts.length === 0) {
     eventGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fff; border:1px solid #ddd; padding:30px; text-align:center;">검색 결과가 없습니다.</div>';
     paginationInfo.textContent = '표시할 문화소식이 없습니다.';
+    renderMoreThumbs([]);
     if (loadMoreBtn) loadMoreBtn.style.display = 'none';
     return;
   }
 
   const shownCount = posts.length;
   const totalCount = allFilteredPosts.length;
+  const hiddenPreviewPosts = allFilteredPosts.slice(shownCount, shownCount + 8);
   paginationInfo.textContent = totalCount > shownCount
     ? `가까운 날짜순 ${shownCount}개 표시 / 전체 ${totalCount}개`
     : `가까운 날짜순 ${shownCount}개 노출`;
 
+  renderMoreThumbs(hiddenPreviewPosts);
+
   if (loadMoreBtn) {
-    if (totalCount > shownCount) {
-      loadMoreBtn.style.display = 'inline-flex';
-      loadMoreBtn.textContent = `더보기 (${totalCount - shownCount}개 남음)`;
-    } else {
-      loadMoreBtn.style.display = 'none';
-    }
+    loadMoreBtn.style.display = 'none';
   }
 
   eventGrid.innerHTML = posts.map((post) => `
@@ -2600,6 +2693,24 @@ searchInput?.addEventListener('keydown', async (event) => {
     visiblePostCount = 8;
     await renderPosts();
   }
+});
+
+moreThumbGrid?.addEventListener('click', async (event) => {
+  const button = event.target.closest('.more-thumb-item');
+  if (!button) return;
+  const postId = button.dataset.postId;
+  if (!postId) return;
+  await openDetail(postId);
+});
+
+moreThumbGrid?.addEventListener('keydown', async (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const button = event.target.closest('.more-thumb-item');
+  if (!button) return;
+  event.preventDefault();
+  const postId = button.dataset.postId;
+  if (!postId) return;
+  await openDetail(postId);
 });
 
 loadMoreBtn?.addEventListener('click', async () => {
