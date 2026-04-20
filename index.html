@@ -2226,7 +2226,7 @@ async function sharePost(id) {
   const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
-  const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
+  const defaultImage = 'https://jeongeup-art.com/og-image.jpg';
   const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl))
     ? post.mediaUrl
     : defaultImage;
@@ -2260,7 +2260,6 @@ async function sharePost(id) {
 
   fallbackShare(`${shareTitle}\n${shareDesc}\n${shareUrl}`);
 }
-
 function fallbackShare(fullText) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(fullText).then(() => {
