@@ -15,6 +15,7 @@
   <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg" />
   <meta property="og:url" content="https://jeongeup-art.com/" />
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="정읍문화소식" />
 
   <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 </head>
@@ -1040,7 +1041,7 @@
     <div class="modal-body">
       <div class="upload-box" style="margin-top:0;">
         <h3>시민이 직접 문화소식 올리기</h3>
-        <p>이미지를 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다. 영상은 영상행사 메뉴에서 유튜브 링크로 등록해주세요.권장 크기: <b>800px ~ 1200px 너무 큰 이미지는 자동으로 깨지거나 로딩이 느려질 수 있습니다.</p>
+        <p>이미지를 올리고 행사 날짜를 입력하면 가까운 날짜순으로 자동 정렬됩니다. 영상은 영상행사 메뉴에서 유튜브 링크로 등록해주세요.권장 크기: <b>800px ~ 1200px</b> 너무 큰 이미지는 자동으로 깨지거나 로딩이 느려질 수 있습니다.</p>
         <form id="uploadForm">
           <div class="form-grid">
             <div class="field">
@@ -1126,6 +1127,8 @@ const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
 const ADMIN_PASSWORD = '1234';
 const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
 const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
+const SITE_CANONICAL_URL = 'https://jeongeup-art.com/';
+const KAKAO_JS_KEY = '1c0147d8515c426787e201fbb816958c';
 
 const eventGrid = document.getElementById('eventGrid');
 const uploadForm = document.getElementById('uploadForm');
@@ -1178,6 +1181,57 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function getSiteBaseUrl() {
+  const canonical = document.querySelector('link[rel="canonical"]')?.href || SITE_CANONICAL_URL;
+  try {
+    const url = new URL(canonical);
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  } catch {
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.search = '';
+    url.hash = '';
+    return url.toString();
+  }
+}
+
+function getPostShareUrl(postId) {
+  const url = new URL(getSiteBaseUrl());
+  url.searchParams.set('post', String(postId));
+  return url.toString();
+}
+
+function syncDetailUrl(postId, replace = true) {
+  const nextUrl = postId ? getPostShareUrl(postId) : getSiteBaseUrl();
+  if (replace) {
+    window.history.replaceState({}, '', nextUrl);
+  } else {
+    window.history.pushState({}, '', nextUrl);
+  }
+}
+
+function getRequestedPostIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const byQuery = params.get('post');
+  if (byQuery) return byQuery;
+
+  const hash = window.location.hash || '';
+  if (hash.startsWith('#post-')) {
+    return hash.replace('#post-', '');
+  }
+
+  return '';
+}
+
+function ensureKakaoReady() {
+  if (!window.Kakao) return false;
+  if (!window.Kakao.isInitialized()) {
+    window.Kakao.init(KAKAO_JS_KEY);
+  }
+  return !!window.Kakao.Share;
 }
 
 function formatDate(dateString) {
@@ -1926,6 +1980,9 @@ function openModal(id) {
 
 function closeModal(id) {
   document.getElementById(id)?.classList.remove('show');
+  if (id === 'detailModal') {
+    syncDetailUrl('');
+  }
   if (!document.querySelector('.modal-backdrop.show')) {
     document.body.style.overflow = '';
   }
@@ -2103,6 +2160,7 @@ async function openDetail(id, options = {}) {
   }
 
   detailDescription.textContent = post.description || '';
+  syncDetailUrl(id);
   detailShareBtn.onclick = () => sharePost(id);
   detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
 
@@ -2143,17 +2201,14 @@ async function sharePost(id) {
     return;
   }
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`;
+  const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
   const defaultImage = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80';
   const shareImage = (post.mediaType === 'image' && isValidMediaUrl(post.mediaUrl)) ? post.mediaUrl : defaultImage;
 
-  if (window.Kakao && window.Kakao.Share) {
+  if (ensureKakaoReady()) {
     try {
-      if (!window.Kakao.isInitialized()) {
-        window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-      }
       window.Kakao.Share.sendDefault({
         objectType: 'feed',
         content: {
@@ -2522,9 +2577,7 @@ loadMoreBtn?.addEventListener('click', async () => {
 });
 
 
-if (window.Kakao && !window.Kakao.isInitialized()) {
-  window.Kakao.init('1c0147d8515c426787e201fbb816958c');
-}
+ensureKakaoReady();
 
 async function renderAll() {
   await loadSiteStats();
@@ -2534,13 +2587,12 @@ async function renderAll() {
   await renderVideoList();
 }
 
-async function openPostFromHash() {
-  const hash = window.location.hash || '';
-  if (!hash.startsWith('#post-')) return;
-  const id = hash.replace('#post-', '');
+async function openPostFromUrl() {
+  const id = getRequestedPostIdFromUrl();
+  if (!id) return;
   const post = await findPostById(id);
   if (post) {
-    openDetail(id);
+    await openDetail(id);
   }
 }
 
@@ -2549,10 +2601,11 @@ increaseSiteView().finally(async () => {
   await fetchNotices();
   await fetchVideos();
   await renderAll();
-  await openPostFromHash();
+  await openPostFromUrl();
 });
 
-window.addEventListener('hashchange', openPostFromHash);
+window.addEventListener('popstate', openPostFromUrl);
+window.addEventListener('hashchange', openPostFromUrl);
 updateAiSearchMessage();
   
 </script>
