@@ -2241,8 +2241,25 @@ async function sharePost(id) {
           imageUrl: shareImage,
           link: { mobileWebUrl: shareUrl, webUrl: shareUrl }
         },
-        buttons: [{ title: '자세히 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }]
-      });
+      Kakao.Share.sendDefault({
+  objectType: 'feed',
+  content: {
+    title: post.title || '정읍문화소식',
+    description: post.description || '정읍문화소식에서 자세히 보기',
+    imageUrl: post.mediaUrl || 'https://jeongeup-art.com/og-image.jpg',
+    link: {
+      mobileWebUrl: shareUrl,
+      webUrl: shareUrl
+    }
+  },
+  buttons: [{
+    title: '정읍문화소식 보기',
+    link: {
+      mobileWebUrl: shareUrl,
+      webUrl: shareUrl
+    }
+  }]
+});
       return;
     } catch (error) {
       console.error('카카오 공유 실패', error);
