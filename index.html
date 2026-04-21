@@ -848,6 +848,61 @@
 
     .board-tab-content { display: none; }
     .board-tab-content.active { display: block; }
+
+    .past-toggle-btn {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #222;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .past-toggle-btn:hover {
+      background: var(--brand);
+      border-color: var(--brand);
+    }
+
+    .past-text-list {
+      display: none;
+      background: #fff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      border-radius: 16px;
+      padding: 8px 16px;
+      margin-bottom: 12px;
+    }
+
+    .past-text-item {
+      padding: 12px 4px;
+      border-bottom: 1px dashed var(--line);
+      cursor: pointer;
+    }
+
+    .past-text-item:last-child {
+      border-bottom: 0;
+    }
+
+    .past-text-item:hover {
+      background: #f8f8ff;
+    }
+
+    .past-text-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .past-text-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
   </style>
 </head>
 <body>
@@ -923,6 +978,11 @@
       <div id="moreThumbGrid" class="more-thumb-grid" style="display:none;"></div>
       <button type="button" class="load-more-btn" id="loadMoreBtn" style="display:none;">더보기</button>
     </div>
+  </section>
+
+  <section class="wrap">
+    <button type="button" class="past-toggle-btn" id="pastToggleBtn" onclick="togglePastTextList()">📁 지난행사 목록 보기</button>
+    <div id="pastTextList" class="past-text-list"></div>
   </section>
 
   <section id="noticePreview" class="wrap panel">
@@ -1219,6 +1279,8 @@ const noticeWritePanel = document.getElementById('noticeWritePanel');
 const adminLoginBtn = document.getElementById('adminLoginBtn');
 const noticeList = document.getElementById('noticeList');
 const noticePreviewList = document.getElementById('noticePreviewList');
+const pastTextList = document.getElementById('pastTextList');
+const pastToggleBtn = document.getElementById('pastToggleBtn');
 const boardPostList = document.getElementById('boardPostList');
 const commentForm = document.getElementById('commentForm');
 const videoList = document.getElementById('videoList');
@@ -1757,6 +1819,55 @@ function currentFilteredPosts() {
 
   return posts;
 }
+
+
+function getPastPosts() {
+  const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
+  const today = getTodayString();
+
+  return sortPosts(cachedPosts).filter(post => {
+    if (!post) return false;
+    if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
+    if (hiddenBrokenIds.has(String(post.id))) return false;
+    const endDate = String(post.endDate || post.date || '').slice(0, 10);
+    if (!endDate || endDate >= today) return false;
+    if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
+    return isValidMediaUrl(post.mediaUrl);
+  }).sort((a, b) => new Date(b.endDate || b.date) - new Date(a.endDate || a.date));
+}
+
+function renderPastTextList() {
+  if (!pastTextList) return;
+
+  const posts = getPastPosts();
+  if (!posts.length) {
+    pastTextList.innerHTML = '<div class="past-text-item" style="cursor:default;">지난 행사 기록이 아직 없습니다.</div>';
+    return;
+  }
+
+  pastTextList.innerHTML = posts.map(post => `
+    <div class="past-text-item" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+      <div class="past-text-title">${escapeHtml(post.title)}</div>
+      <div class="past-text-meta">${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ' ~ ' + formatDate(post.endDate) : ''}${post.place ? ' · ' + escapeHtml(post.place) : ''}</div>
+    </div>
+  `).join('');
+}
+
+function togglePastTextList() {
+  if (!pastTextList) return;
+  const isOpen = pastTextList.style.display === 'block';
+
+  if (isOpen) {
+    pastTextList.style.display = 'none';
+    if (pastToggleBtn) pastToggleBtn.textContent = '📁 지난행사 목록 보기';
+    return;
+  }
+
+  renderPastTextList();
+  pastTextList.style.display = 'block';
+  if (pastToggleBtn) pastToggleBtn.textContent = '📂 지난행사 목록 닫기';
+}
+
 
 function renderPreview(file, mediaType) {
   if (!file) {
@@ -2722,6 +2833,20 @@ loadMoreBtn?.addEventListener('click', async () => {
   await renderPosts();
 });
 
+pastTextList?.addEventListener('click', async (event) => {
+  const item = event.target.closest('.past-text-item[data-post-id]');
+  if (!item) return;
+  await openDetail(item.dataset.postId);
+});
+
+pastTextList?.addEventListener('keydown', async (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const item = event.target.closest('.past-text-item[data-post-id]');
+  if (!item) return;
+  event.preventDefault();
+  await openDetail(item.dataset.postId);
+});
+
 
 ensureKakaoReady();
 
@@ -2731,6 +2856,9 @@ async function renderAll() {
   await renderNotices();
   await renderBoardList();
   await renderVideoList();
+  if (pastTextList && pastTextList.style.display === 'block') {
+    renderPastTextList();
+  }
 }
 
 async function openPostFromUrl() {
