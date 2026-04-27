@@ -20,7 +20,6 @@
 
   <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
   <style>
-    </head>
     :root {
       --bg: #f4f4f4;
       --paper: #ffffff;
@@ -46,7 +45,7 @@
     button, input, textarea, select { font: inherit; }
 
     .wrap {
-      width: min(var(--max), calc(100% - 28px));
+      width: min(1180px, calc(100% - 48px));
       margin: 0 auto;
     }
 
@@ -748,7 +747,7 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
-      z-index: 100;
+      z-index: 10000;
     }
 
     .modal-backdrop.show {
@@ -930,6 +929,12 @@
       margin-top: 6px;
       color: var(--muted);
       font-size: 0.88rem;
+    }
+
+
+    /* 지호 수정: 메인 이미지 아래 중복 메뉴 숨김 */
+    .quick-row {
+      display: none !important;
     }
 
   </style>
