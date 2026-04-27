@@ -13,8 +13,8 @@
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
   <meta property="og:description" content="정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼" />
-  <meta property="og:image" content="https://www.jeongeup-art.com/og-image.jpg" />
-  <meta property="og:url" content="https://www.jeongeup-art.com/" />
+  <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg" />
+  <meta property="og:url" content="https://jeongeup-art.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="정읍문화소식" />
 
@@ -49,18 +49,15 @@
       margin: 0 auto;
     }
 
-   header {
-  background: #ffffff;
-  border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-.topbar {
-  background: #ffffff;
-}
- 
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 9999;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
     .topbar {
       display: flex;
       align-items: center;
@@ -744,10 +741,11 @@
       inset: 0;
       background: rgba(0,0,0,0.48);
       display: none;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      padding: 20px;
-      z-index: 10000;
+      padding: 88px 20px 32px;
+      z-index: 20000;
+      overflow-y: auto;
     }
 
     .modal-backdrop.show {
@@ -756,12 +754,14 @@
 
     .modal {
       width: min(920px, 100%);
-      max-height: 88vh;
-      overflow: auto;
+      max-height: calc(100vh - 120px);
+      overflow: hidden;
       background: #fff;
       border-radius: 20px;
       box-shadow: 0 24px 60px rgba(0,0,0,0.18);
       border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
     }
 
     .modal-head {
@@ -795,6 +795,7 @@
 
     .modal-body {
       padding: 22px;
+      overflow-y: auto;
     }
 
     footer {
@@ -840,7 +841,7 @@
     }
 
     @media (max-width: 560px) {
-      .wrap { width: min(var(--max), calc(100% - 18px)); }
+      .wrap { width: min(1180px, calc(100% - 24px)); }
       .cards { grid-template-columns: 1fr; }
       .more-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .quick-row { grid-template-columns: repeat(2, 1fr); }
@@ -932,9 +933,14 @@
     }
 
 
-    /* 지호 수정: 메인 이미지 아래 중복 메뉴 숨김 */
+    /* 지호 수정: 레이아웃 안정화 */
     .quick-row {
       display: none !important;
+    }
+
+    @media (max-width: 820px) {
+      .modal-backdrop { padding: 72px 12px 24px; }
+      .modal { max-height: calc(100vh - 96px); border-radius: 16px; }
     }
 
   </style>
@@ -1907,7 +1913,7 @@ function togglePastTextList() {
 
   renderPastTextList();
   pastTextList.style.display = 'block';
-  if (pastToggleBtn) pastToggleBtn.textContent = '📂 지난행사 목록 ';
+  if (pastToggleBtn) pastToggleBtn.textContent = '📂 지난행사 목록 닫기';
 }
 
 
@@ -2230,7 +2236,20 @@ async function deleteVideo(id) {
 }
 
 function openModal(id) {
-  document.getElementById(id)?.classList.add('show');
+  document.querySelectorAll('.modal-backdrop.show').forEach((modal) => {
+    if (modal.id !== id) modal.classList.remove('show');
+  });
+
+  const targetModal = document.getElementById(id);
+  if (!targetModal) return;
+
+  targetModal.classList.add('show');
+  targetModal.scrollTop = 0;
+  const innerModal = targetModal.querySelector('.modal');
+  const modalBody = targetModal.querySelector('.modal-body');
+  if (innerModal) innerModal.scrollTop = 0;
+  if (modalBody) modalBody.scrollTop = 0;
+
   document.body.style.overflow = 'hidden';
   if (id === 'noticeModal') showNoticeList();
   if (id === 'boardModal') showBoardList();
