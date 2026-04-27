@@ -1015,8 +1015,9 @@
           <option value="image">이미지</option>
           <option value="video">영상</option>
         </select>
-        <input id="searchInput" type="text" placeholder="정읍 행사명을 검색해보세요">
-        onkeydown="if(event.key==='Enter') searchGoogle()">
+       <input id="searchInput" type="text"
+  placeholder="정읍 행사명을 검색해보세요"
+  onkeydown="if(event.key==='Enter') searchGoogle()">
       <button id="searchBtn" type="button" onclick="searchGoogle()">전체검색</button>
       </div>
 
@@ -2980,6 +2981,23 @@ function searchGoogle() {
     '_blank'
   );
 }
+    <script>
+function searchGoogle() {
+  const q = document.querySelector('#searchInput').value.trim();
+
+  if (!q) {
+    alert('검색어를 입력해주세요.');
+    return;
+  }
+
+  const query = encodeURIComponent(q + ' 정읍 행사 전시 공연 축제');
+
+  window.open(
+    'https://www.google.com/search?q=' + query,
+    '_blank'
+  );
+}
+
 </script>
 </body>
 </html>
