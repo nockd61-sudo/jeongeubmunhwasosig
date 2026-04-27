@@ -832,7 +832,21 @@
         grid-template-columns: 1fr;
         display: grid;
       }
+@media (max-width: 768px) {
+  .hero,
+  .topbar,
+  .menu,
+  header {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
 
+
+  body {
+    padding-top: 0 !important;
+  }
+}
       .cards { grid-template-columns: repeat(2, 1fr); }
       .more-thumb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .topbar { display: flex; flex-direction: column; align-items: start; }
