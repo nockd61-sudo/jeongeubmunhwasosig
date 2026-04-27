@@ -1003,11 +1003,11 @@
 
     <div class="ai-search-wrap">
       <div class="ai-search-title-row">
-        <h3 class="ai-search-title">AI 검색창</h3>
+        <h3 class="ai-search-title">AI 전체검색</h3>
         <span class="ai-search-badge">정읍행사</span>
       </div>
 
-      <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 다양한 문화행사를 한 번에 통합검색합니다.</p>
+      <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 문화행사를 구글에서 검색합니다.</p>
 
       <div class="toolbar ai-toolbar">
         <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
@@ -1025,7 +1025,7 @@
         <button type="button" class="ai-keyword-btn" data-ai-keyword="정읍행사">정읍행사</button>
       </div>
 
-      <div id="aiSearchResultText" class="ai-search-result-text">정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.</div>
+      <div id="aiSearchResultText" class="ai-search-result-text">정읍행사 전체검색으로 축제, 전시, 공연을 구글에서 함께 찾습니다.</div>
     </div>
 
     <div class="cards" id="eventGrid"></div>
@@ -1844,7 +1844,7 @@ function updateAiSearchMessage() {
   if (!aiSearchResultText) return;
   aiSearchResultText.textContent = keyword
     ? `"${keyword}" 관련 정읍행사를 통합검색 중입니다.`
-    : '정읍행사 통합검색으로 축제, 전시, 공연을 함께 찾습니다.';
+    : '정읍행사 전체검색으로 축제, 전시, 공연을 구글에서 함께 찾습니다.';
 }
 
 function moveSearchBarToTop() {
@@ -1857,7 +1857,7 @@ function moveSearchBarToTop() {
 
 function currentFilteredPosts() {
   const typeValue = filterType.value;
-  const keyword = searchInput.value.trim().toLowerCase();
+  const keyword = '';// 외부 구글검색 전용이므로 메인 카드는 검색어로 숨기지 않음
   const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
   let posts = sortPosts(cachedPosts).filter(post => {
@@ -2875,18 +2875,7 @@ mediaTypeSelect?.addEventListener('change', () => {
   renderPreview(file, mediaTypeSelect.value);
 });
 
-searchBtn?.addEventListener('click', async () => {
-  visiblePostCount = 8;
-  await renderPosts();
-});
-
-searchInput?.addEventListener('keydown', async (event) => {
-  if (event.key === 'Enter') {
-    event.preventDefault();
-    visiblePostCount = 8;
-    await renderPosts();
-  }
-});
+// 검색창은 구글 전체검색 전용입니다. 버튼 onclick과 input onkeydown에서 searchGoogle()을 실행합니다.
 
 moreThumbGrid?.addEventListener('click', async (event) => {
   const button = event.target.closest('.more-thumb-item');
@@ -2965,9 +2954,10 @@ function ensureKakaoReady() {
 
   return !!window.Kakao.Share;
 }
-    <script>
+
 function searchGoogle() {
-  const q = document.querySelector('#searchInput').value.trim();
+  const input = document.querySelector('#searchInput');
+  const q = input ? input.value.trim() : '';
 
   if (!q) {
     alert('검색어를 입력해주세요.');
@@ -2975,27 +2965,7 @@ function searchGoogle() {
   }
 
   const query = encodeURIComponent(q + ' 정읍 행사 전시 공연 축제');
-
-  window.open(
-    'https://www.google.com/search?q=' + query,
-    '_blank'
-  );
-}
-    <script>
-function searchGoogle() {
-  const q = document.querySelector('#searchInput').value.trim();
-
-  if (!q) {
-    alert('검색어를 입력해주세요.');
-    return;
-  }
-
-  const query = encodeURIComponent(q + ' 정읍 행사 전시 공연 축제');
-
-  window.open(
-    'https://www.google.com/search?q=' + query,
-    '_blank'
-  );
+  window.open('https://www.google.com/search?q=' + query, '_blank', 'noopener');
 }
 
 </script>
