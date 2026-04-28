@@ -1353,6 +1353,7 @@ const API_POSTS_ENDPOINT = '/api/posts';
 const API_NOTICES_ENDPOINT = '/api/notices';
 const API_VIDEOS_ENDPOINT = '/api/videos';
 const PARTICIPANT_PHOTO_CATEGORY = '참가사진';
+const PARTICIPANT_PHOTOS_LOCAL_KEY = 'jeongeup-participant-photos-v2';
 const API_STATS_ENDPOINT = '/api/stats';
 const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
 const ADMIN_PASSWORD = '1234';
@@ -1938,7 +1939,7 @@ function currentFilteredPosts() {
   const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
   let posts = sortPosts(cachedPosts).filter(post => {
-    if (post.category === PARTICIPANT_PHOTO_CATEGORY || post.place === '행사참가사진') return false;
+    if (isParticipantPhotoPost(post)) return false;
     if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
     if (hiddenBrokenIds.has(String(post.id))) return false;
     if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
@@ -1969,7 +1970,7 @@ function getPastPosts() {
 
   return sortPosts(cachedPosts).filter(post => {
     if (!post) return false;
-    if (post.category === PARTICIPANT_PHOTO_CATEGORY || post.place === '행사참가사진') return false;
+    if (isParticipantPhotoPost(post)) return false;
     if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
     if (hiddenBrokenIds.has(String(post.id))) return false;
     const endDate = String(post.endDate || post.date || '').slice(0, 10);
@@ -2083,9 +2084,56 @@ function renderMoreThumbs(posts) {
   `).join('');
 }
 
+function isParticipantPhotoPost(post) {
+  if (!post) return false;
+  const category = String(post.category || '').trim();
+  const place = String(post.place || '').trim();
+  const description = String(post.description || '').trim();
+  return category === PARTICIPANT_PHOTO_CATEGORY
+    || place === '행사참가사진'
+    || description.startsWith('[참가사진]');
+}
+
+function cleanParticipantDescription(description) {
+  return String(description || '').replace(/^\[참가사진\]\s*/,'').trim();
+}
+
+function getLocalParticipantPhotos() {
+  try {
+    const raw = localStorage.getItem(PARTICIPANT_PHOTOS_LOCAL_KEY);
+    const items = raw ? JSON.parse(raw) : [];
+    return Array.isArray(items) ? items.filter(item => item && isValidMediaUrl(item.mediaUrl)) : [];
+  } catch (error) {
+    localStorage.removeItem(PARTICIPANT_PHOTOS_LOCAL_KEY);
+    return [];
+  }
+}
+
+function saveLocalParticipantPhoto(post) {
+  if (!post || !isValidMediaUrl(post.mediaUrl)) return;
+  const current = getLocalParticipantPhotos();
+  const id = String(post.id || '');
+  const next = [post, ...current.filter(item => String(item.id || '') !== id)].slice(0, 40);
+  localStorage.setItem(PARTICIPANT_PHOTOS_LOCAL_KEY, JSON.stringify(next));
+}
+
 function getParticipantPhotos() {
-  return [...cachedPosts]
-    .filter(post => post && (post.category === PARTICIPANT_PHOTO_CATEGORY || post.place === '행사참가사진') && isValidMediaUrl(post.mediaUrl))
+  const fromServer = [...cachedPosts]
+    .filter(post => isParticipantPhotoPost(post) && isValidMediaUrl(post.mediaUrl))
+    .map(post => ({
+      ...post,
+      description: cleanParticipantDescription(post.description)
+    }));
+
+  const fromLocal = getLocalParticipantPhotos();
+
+  const map = new Map();
+  [...fromServer, ...fromLocal].forEach(post => {
+    const key = String(post.id || post.mediaUrl || Math.random());
+    if (!map.has(key)) map.set(key, post);
+  });
+
+  return Array.from(map.values())
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 }
 
@@ -2852,13 +2900,48 @@ photoUploadForm?.addEventListener('submit', async function(e) {
     setSubmitting(photoUploadSubmitBtn, true, '참가사진 등록');
     const mediaUrl = await uploadFileToWorker(file, 'image');
     const today = new Date().toISOString().slice(0, 10);
-    const saveResult = await savePost({ title, date: today, endDate: today, place: '행사참가사진', author, description: memo, mediaType: 'image', mediaUrl, category: PARTICIPANT_PHOTO_CATEGORY });
-    const savedPostId = saveResult?.post?.id || saveResult?.id || '';
+    const saveResult = await savePost({
+      title,
+      date: today,
+      endDate: today,
+      place: '행사참가사진',
+      author,
+      description: `[참가사진]\n${memo}`,
+      mediaType: 'image',
+      mediaUrl,
+      category: PARTICIPANT_PHOTO_CATEGORY
+    });
+
+    const savedPostId = saveResult?.post?.id || saveResult?.id || `local-photo-${Date.now()}`;
     if (savedPostId) unhideBrokenPostId(savedPostId);
+
+    const immediatePost = {
+      id: String(savedPostId),
+      title,
+      date: today,
+      endDate: today,
+      place: '행사참가사진',
+      author,
+      description: memo,
+      mediaType: 'image',
+      mediaUrl,
+      likes: 0,
+      views: 0,
+      comments: [],
+      category: PARTICIPANT_PHOTO_CATEGORY
+    };
+
+    cachedPosts = [immediatePost, ...cachedPosts.filter(post => String(post.id) !== String(savedPostId))];
+    saveLocalParticipantPhoto(immediatePost);
+
     this.reset();
     renderPreviewInto(photoUploadPreview, null, 'image');
+
     await fetchPosts();
+    cachedPosts = [immediatePost, ...cachedPosts.filter(post => String(post.id) !== String(savedPostId))];
     await renderAll();
+    renderParticipantPhotos();
+
     closeModal('photoUploadModal');
     if (savedPostId) setTimeout(() => openDetail(savedPostId, { incrementView: false }), 200);
     alert('참가사진이 등록되었습니다.');
