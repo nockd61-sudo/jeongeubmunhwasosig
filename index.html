@@ -3068,6 +3068,7 @@ ensureKakaoReady();
 async function renderAll() {
   await loadSiteStats();
   await renderPosts();
+   renderParticipantPhotos();
   await renderNotices();
   await renderBoardList();
   await renderVideoList();
