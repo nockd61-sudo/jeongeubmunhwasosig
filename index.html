@@ -864,6 +864,26 @@
       .modal-body, .modal-head { padding: 16px; }
     }
 
+
+    /* 참가사진 갤러리 */
+    .photo-gallery-panel { background:#fff; border:1px solid var(--line); box-shadow:var(--shadow); border-radius:20px; padding:22px; margin-top:18px; }
+    .photo-gallery-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+    .photo-gallery-head h3 { margin:0; font-size:1.35rem; letter-spacing:-0.03em; }
+    .photo-gallery-head p { margin:6px 0 0; color:var(--muted); font-size:0.92rem; line-height:1.55; }
+    .photo-upload-open-btn { border:0; background:var(--brand); color:#fff; padding:11px 16px; border-radius:999px; cursor:pointer; font-weight:800; white-space:nowrap; }
+    .photo-gallery-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; }
+    .photo-gallery-item { border:1px solid var(--line); background:#f8f8f8; border-radius:16px; overflow:hidden; cursor:pointer; padding:0; text-align:left; box-shadow:var(--shadow); }
+    .photo-gallery-thumb { aspect-ratio:1/1; background:#ececec; overflow:hidden; }
+    .photo-gallery-thumb img { width:100%; height:100%; object-fit:cover; }
+    .photo-gallery-caption { padding:10px 11px 12px; display:grid; gap:4px; }
+    .photo-gallery-caption strong { font-size:0.95rem; line-height:1.35; }
+    .photo-gallery-caption span { color:var(--muted); font-size:0.82rem; line-height:1.35; }
+    .photo-consent-box { display:flex; gap:8px; align-items:flex-start; padding:12px; background:#f8f9fb; border:1px solid var(--line); border-radius:10px; }
+    .photo-consent-box input { width:auto; margin-top:3px; }
+    @media (max-width:820px) { .photo-gallery-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (max-width:560px) { .photo-gallery-grid { grid-template-columns:1fr; } }
+
+
     .board-tab-content { display: none; }
     .board-tab-content.active { display: block; }
 
@@ -1041,6 +1061,18 @@
     <div id="pastTextList" class="past-text-list"></div>
   </section>
 
+
+  <section id="participantPhotoSection" class="wrap photo-gallery-panel">
+    <div class="photo-gallery-head">
+      <div>
+        <h3>행사참가사진 갤러리</h3>
+        <p>행사에 다녀온 시민이 현장 사진과 짧은 소감을 자유롭게 올리는 공간입니다.</p>
+      </div>
+      <button type="button" class="photo-upload-open-btn" data-open="photoUploadModal">참가사진 올리기</button>
+    </div>
+    <div id="participantPhotoGrid" class="photo-gallery-grid"></div>
+  </section>
+
   <section id="noticePreview" class="wrap panel">
     <h3>관리자공지사항 미리보기</h3>
     <div class="notice-list" id="noticePreviewList"></div>
@@ -1209,6 +1241,32 @@
   </div>
 </div>
 
+
+<div class="modal-backdrop" id="photoUploadModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>행사참가사진 올리기</h3>
+      <button class="close-btn" type="button" data-close="photoUploadModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="upload-box" style="margin-top:0;">
+        <h3>시민 현장사진 자유 업로드</h3>
+        <p>행사에 참여하며 찍은 사진과 짧은 소감을 올려주세요. 개인정보, 초상권, 광고성 이미지는 관리자에 의해 삭제될 수 있습니다.</p>
+        <form id="photoUploadForm">
+          <div class="form-grid">
+            <div class="field"><label for="photoEventTitle">행사명</label><input id="photoEventTitle" type="text" placeholder="예: 정읍 벚꽃 행사" required></div>
+            <div class="field"><label for="photoAuthor">작성자 / 닉네임</label><input id="photoAuthor" type="text" placeholder="예: 정읍시민" required></div>
+            <div class="field full"><label for="photoFileInput">참가사진</label><input id="photoFileInput" type="file" accept="image/*" required><div class="upload-preview" id="photoUploadPreview"></div></div>
+            <div class="field full"><label for="photoMemo">한 줄 소감</label><textarea id="photoMemo" placeholder="사진 설명이나 행사 참여 소감을 적어주세요." required></textarea></div>
+            <div class="field full"><label class="photo-consent-box"><input id="photoConsent" type="checkbox" required><span>본인이 올릴 수 있는 사진이며, 부적절한 사진은 관리자에 의해 삭제될 수 있음에 동의합니다.</span></label></div>
+          </div>
+          <div class="form-actions"><button class="submit" type="submit" id="photoUploadSubmitBtn">참가사진 등록</button><button class="reset" type="reset">다시쓰기</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="uploadModal">
   <div class="modal">
     <div class="modal-head">
@@ -1299,6 +1357,7 @@
 const API_POSTS_ENDPOINT = '/api/posts';
 const API_NOTICES_ENDPOINT = '/api/notices';
 const API_VIDEOS_ENDPOINT = '/api/videos';
+const PARTICIPANT_PHOTO_CATEGORY = '참가사진';
 const API_STATS_ENDPOINT = '/api/stats';
 const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
 const ADMIN_PASSWORD = '1234';
@@ -1346,6 +1405,11 @@ const videoViewTab = document.getElementById('videoViewTab');
 const videoWriteTab = document.getElementById('videoWriteTab');
 const videoSubmitButton = document.getElementById('videoSubmitButton');
 const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
+const photoUploadForm = document.getElementById('photoUploadForm');
+const photoFileInput = document.getElementById('photoFileInput');
+const photoUploadPreview = document.getElementById('photoUploadPreview');
+const photoUploadSubmitBtn = document.getElementById('photoUploadSubmitBtn');
+const participantPhotoGrid = document.getElementById('participantPhotoGrid');
 
 let isAdminLoggedIn = false;
 let visiblePostCount = 8;
@@ -1861,6 +1925,7 @@ function currentFilteredPosts() {
   const hiddenBrokenIds = new Set(getHiddenBrokenPostIds());
 
   let posts = sortPosts(cachedPosts).filter(post => {
+    if (post.category === PARTICIPANT_PHOTO_CATEGORY) return false;
     if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
     if (hiddenBrokenIds.has(String(post.id))) return false;
     if (post.mediaType === 'video') return Boolean(post.youtubeId || isValidMediaUrl(post.mediaUrl));
@@ -1891,6 +1956,7 @@ function getPastPosts() {
 
   return sortPosts(cachedPosts).filter(post => {
     if (!post) return false;
+    if (post.category === PARTICIPANT_PHOTO_CATEGORY) return false;
     if (post.category === '문화이야기' || post.place === '시민 문화이야기' || post.mediaType === 'text') return false;
     if (hiddenBrokenIds.has(String(post.id))) return false;
     const endDate = String(post.endDate || post.date || '').slice(0, 10);
@@ -2000,6 +2066,27 @@ function renderMoreThumbs(posts) {
     <button type="button" class="more-thumb-item" data-post-id="${post.id}" aria-label="${escapeHtml(post.title)} 크게 보기">
       ${buildMoreThumbMedia(post)}
       <span class="more-thumb-overlay">${escapeHtml(post.title)}</span>
+    </button>
+  `).join('');
+}
+
+function getParticipantPhotos() {
+  return [...cachedPosts]
+    .filter(post => post && post.category === PARTICIPANT_PHOTO_CATEGORY && isValidMediaUrl(post.mediaUrl))
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+function renderParticipantPhotos() {
+  if (!participantPhotoGrid) return;
+  const photos = getParticipantPhotos();
+  if (!photos.length) {
+    participantPhotoGrid.innerHTML = '<div style="grid-column:1 / -1; background:#fafafa; border:1px dashed #ddd; border-radius:14px; padding:24px; text-align:center; color:#6b7280;">아직 등록된 참가사진이 없습니다. 첫 사진을 올려보세요.</div>';
+    return;
+  }
+  participantPhotoGrid.innerHTML = photos.slice(0, 24).map(post => `
+    <button type="button" class="photo-gallery-item" data-post-id="${post.id}" aria-label="${escapeHtml(post.title)} 크게 보기">
+      <div class="photo-gallery-thumb"><img src="${post.mediaUrl}" alt="${escapeHtml(post.title)}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>
+      <div class="photo-gallery-caption"><strong>${escapeHtml(post.title)}</strong><span>${escapeHtml(post.author)} · ${formatDate(post.date)}</span></div>
     </button>
   `).join('');
 }
@@ -2738,6 +2825,38 @@ alert('문화소식이 등록되었습니다.');
   }
 });
 
+
+photoUploadForm?.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const title = document.getElementById('photoEventTitle').value.trim();
+  const author = document.getElementById('photoAuthor').value.trim();
+  const memo = document.getElementById('photoMemo').value.trim();
+  const consent = document.getElementById('photoConsent').checked;
+  const file = photoFileInput.files && photoFileInput.files[0] ? photoFileInput.files[0] : null;
+  if (!title || !author || !memo || !file) { alert('행사명, 작성자, 사진, 소감을 모두 입력해주세요.'); return; }
+  if (!consent) { alert('사진 업로드 동의가 필요합니다.'); return; }
+  try {
+    setSubmitting(photoUploadSubmitBtn, true, '참가사진 등록');
+    const mediaUrl = await uploadFileToWorker(file, 'image');
+    const today = new Date().toISOString().slice(0, 10);
+    const saveResult = await savePost({ title, date: today, endDate: today, place: '행사참가사진', author, description: memo, mediaType: 'image', mediaUrl, category: PARTICIPANT_PHOTO_CATEGORY });
+    const savedPostId = saveResult?.post?.id || saveResult?.id || '';
+    if (savedPostId) unhideBrokenPostId(savedPostId);
+    this.reset();
+    renderPreviewInto(photoUploadPreview, null, 'image');
+    await fetchPosts();
+    await renderAll();
+    closeModal('photoUploadModal');
+    if (savedPostId) setTimeout(() => openDetail(savedPostId, { incrementView: false }), 200);
+    alert('참가사진이 등록되었습니다.');
+  } catch (error) {
+    console.error(error);
+    alert('참가사진 업로드 실패\n' + friendlyServerError(error));
+  } finally {
+    setSubmitting(photoUploadSubmitBtn, false, '참가사진 등록');
+  }
+});
+
 noticeForm?.addEventListener('submit', async function(e) {
   e.preventDefault();
 
@@ -2841,6 +2960,12 @@ document.addEventListener('click', async (event) => {
   const boardItemBtn = event.target.closest('.board-item-click');
   if (boardItemBtn) {
     await openDetail(boardItemBtn.dataset.postId);
+    return;
+  }
+
+  const participantPhotoBtn = event.target.closest('.photo-gallery-item');
+  if (participantPhotoBtn) {
+    await openDetail(participantPhotoBtn.dataset.postId);
     return;
   }
 
