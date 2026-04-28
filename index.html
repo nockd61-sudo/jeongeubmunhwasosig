@@ -2714,13 +2714,23 @@ uploadForm?.addEventListener('submit', async function(e) {
       unhideBrokenPostId(savedPostId);
     }
 
-    this.reset();
-    renderPreview(null, 'image');
-    await fetchPosts();
-    await renderAll();
-    closeModal('uploadModal');
-    alert('문화소식이 등록되었습니다.');
-  } catch (error) {
+   this.reset();
+renderPreview(null, 'image');
+
+visiblePostCount = 999;
+
+await fetchPosts();
+await renderAll();
+
+closeModal('uploadModal');
+
+if (savedPostId) {
+  setTimeout(() => openDetail(savedPostId, { incrementView: false }), 200);
+}
+
+alert('문화소식이 등록되었습니다.');
+
+} catch (error) {
     console.error(error);
     alert('업로드 실패\n' + friendlyServerError(error));
   } finally {
