@@ -1866,6 +1866,19 @@ async function increaseSiteView() {
 });
 </script>
   <script>
+   function renderPreviewInto(container, file) {
+  if (!container || !file) return;
+
+  const url = URL.createObjectURL(file);
+
+ container.innerHTML = `
+    <img src="${url}" style="
+      width:100%;
+      border-radius:10px;
+      margin-top:10px;
+    ">
+  `;
+}
 async function uploadFileToWorker(file, mediaType) {
   if (!file) throw new Error('업로드할 파일이 없습니다.');
   if (mediaType === 'video') {
