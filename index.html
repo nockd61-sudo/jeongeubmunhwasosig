@@ -716,6 +716,28 @@
     .share-instagram-btn { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af) !important; color: #fff !important; }
     .share-copy-btn { background: #111827 !important; color: #fff !important; }
 
+
+    .card-share-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .card-share-row button {
+      border: 0;
+      padding: 8px 5px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.74rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    @media (max-width: 560px) {
+      .card-share-row button { font-size: 0.78rem; padding: 9px 6px; }
+    }
+
     .comment-box {
       margin-top: 24px;
       border-top: 1px solid var(--line);
@@ -2211,7 +2233,13 @@ async function renderPosts() {
       </div>
       <div class="actions">
         <button type="button" class="detail-btn" data-post-id="${post.id}">자세히</button>
-        <button type="button" class="share-btn" data-post-id="${post.id}">공유</button>
+        <button type="button" class="share-btn" data-post-id="${post.id}">카톡공유</button>
+      </div>
+      <div class="card-share-row">
+        <button type="button" class="card-share-platform-btn share-facebook-btn" data-platform="facebook" data-post-id="${post.id}">페북</button>
+        <button type="button" class="card-share-platform-btn share-instagram-btn" data-platform="instagram" data-post-id="${post.id}">인스타</button>
+        <button type="button" class="card-share-platform-btn share-copy-btn" data-platform="copy" data-post-id="${post.id}">복사</button>
+        <button type="button" class="card-share-platform-btn share-kakao-btn" data-platform="kakao" data-post-id="${post.id}">카톡</button>
       </div>
       <div class="post-admin-actions">
         <button class="mini-btn danger delete-post-btn" type="button" data-post-id="${post.id}">삭제</button>
@@ -3079,9 +3107,15 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
+  const platformShareBtn = event.target.closest('.card-share-platform-btn');
+  if (platformShareBtn) {
+    await sharePost(platformShareBtn.dataset.postId, platformShareBtn.dataset.platform || 'kakao');
+    return;
+  }
+
   const shareBtn = event.target.closest('.share-btn');
   if (shareBtn) {
-    await sharePost(shareBtn.dataset.postId);
+    await sharePost(shareBtn.dataset.postId, 'kakao');
     return;
   }
 
