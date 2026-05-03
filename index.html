@@ -707,6 +707,15 @@
       color: #fff;
     }
 
+    .social-share-actions button {
+      flex: 0 1 auto;
+    }
+
+    .share-kakao-btn { background: #fee500 !important; color: #111 !important; }
+    .share-facebook-btn { background: #1877f2 !important; color: #fff !important; }
+    .share-instagram-btn { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af) !important; color: #fff !important; }
+    .share-copy-btn { background: #111827 !important; color: #fff !important; }
+
     .comment-box {
       margin-top: 24px;
       border-top: 1px solid var(--line);
@@ -1208,9 +1217,12 @@
       <div class="detail-meta" id="detailMeta"></div>
       <div class="detail-media" id="detailMedia"></div>
       <div class="detail-description" id="detailDescription"></div>
-      <div class="detail-actions">
+      <div class="detail-actions social-share-actions">
         <button type="button" id="detailLikeBtn">좋아요</button>
-        <button type="button" id="detailShareBtn">공유하기</button>
+        <button type="button" id="detailShareBtn" class="share-kakao-btn">카톡공유</button>
+        <button type="button" id="detailFacebookBtn" class="share-facebook-btn">페이스북</button>
+        <button type="button" id="detailInstagramBtn" class="share-instagram-btn">인스타</button>
+        <button type="button" id="detailCopyBtn" class="share-copy-btn">링크복사</button>
         <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
       </div>
       <div class="comment-box">
@@ -1380,6 +1392,9 @@ const detailMeta = document.getElementById('detailMeta');
 const detailMedia = document.getElementById('detailMedia');
 const detailDescription = document.getElementById('detailDescription');
 const detailShareBtn = document.getElementById('detailShareBtn');
+const detailFacebookBtn = document.getElementById('detailFacebookBtn');
+const detailInstagramBtn = document.getElementById('detailInstagramBtn');
+const detailCopyBtn = document.getElementById('detailCopyBtn');
 const detailLikeBtn = document.getElementById('detailLikeBtn');
 const detailDeleteBtn = document.getElementById('detailDeleteBtn');
 const noticeForm = document.getElementById('noticeForm');
@@ -2612,7 +2627,10 @@ async function openDetail(id, options = {}) {
 
   detailDescription.textContent = post.description || '';
   syncDetailUrl(id);
-  detailShareBtn.onclick = () => sharePost(id);
+  detailShareBtn.onclick = () => sharePost(id, 'kakao');
+  if (detailFacebookBtn) detailFacebookBtn.onclick = () => sharePost(id, 'facebook');
+  if (detailInstagramBtn) detailInstagramBtn.onclick = () => sharePost(id, 'instagram');
+  if (detailCopyBtn) detailCopyBtn.onclick = () => sharePost(id, 'copy');
   detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
 
   detailLikeBtn.onclick = async () => {
@@ -2649,36 +2667,56 @@ async function openDetail(id, options = {}) {
   }
 }
 
-async function sharePost(id) {
+async function sharePost(id, platform = 'kakao') {
   const post = await findPostById(id);
   if (!post) {
     alert('공유할 글을 찾지 못했습니다.');
     return;
   }
 
-  const shareUrl = SITE_CANONICAL_URL;
+  const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
-  const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
+  const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}` || '정읍문화소식').trim();
+  const shareImage = post.mediaUrl || 'https://jeongeup-art.com/og-image.jpg';
 
   const shareText = [
     shareTitle,
     shareDesc,
     '',
-    '정읍문화소식 메인으로 들어가기',
     shareUrl
   ].join('\n');
+
+  if (platform === 'facebook') {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    window.open(facebookUrl, '_blank', 'width=640,height=640');
+    return;
+  }
+
+  if (platform === 'instagram') {
+    fallbackShare(`${shareTitle}\n${shareUrl}`, '인스타그램은 웹에서 바로 공유가 제한되어 있습니다. 링크를 복사했습니다. 인스타 게시물/스토리에 붙여넣어 주세요.');
+    return;
+  }
+
+  if (platform === 'copy') {
+    fallbackShare(shareText, '공유 링크를 복사했습니다. 원하는 곳에 붙여넣어 주세요.');
+    return;
+  }
 
   if (ensureKakaoReady()) {
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'text',
-        text: shareText,
-        link: {
-          mobileWebUrl: shareUrl,
-          webUrl: shareUrl
+        objectType: 'feed',
+        content: {
+          title: shareTitle,
+          description: shareDesc.slice(0, 90),
+          imageUrl: shareImage,
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl
+          }
         },
         buttons: [{
-          title: '정읍문화소식 메인으로 가기',
+          title: '자세히 보기',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl
@@ -2691,12 +2729,12 @@ async function sharePost(id) {
     }
   }
 
-  fallbackShare(shareText);
+  fallbackShare(shareText, '카카오 공유가 되지 않아 링크를 복사했습니다.');
 }
-function fallbackShare(fullText) {
+function fallbackShare(fullText, message = '공유용 링크를 복사했습니다.') {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(fullText).then(() => {
-      alert('공유용 링크를 복사했습니다.');
+      alert(message);
     }).catch(() => {
       window.prompt('아래 내용을 복사해 공유하세요.', fullText);
     });
