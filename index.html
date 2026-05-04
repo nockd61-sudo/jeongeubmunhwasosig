@@ -14,8 +14,8 @@
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
   <meta property="og:description" content="정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼" />
-  <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg" />
-  <meta property="og:url" content="https://jeongeup-art.com/" />
+  <meta property="og:image" content="https://www.jeongeup-art.com/og-image.jpg" />
+  <meta property="og:url" content="https://www.jeongeup-art.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="정읍문화소식" />
 
@@ -2729,14 +2729,16 @@ async function sharePost(id, platform = 'kakao') {
 
   const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
-  const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}` || '정읍문화소식').trim();
-  const shareImage = post.mediaUrl || 'https://jeongeup-art.com/og-image.jpg';
+  const rawDesc = (post.description || `${post.place} | ${formatDate(post.date)}` || '정읍문화소식').trim();
+  const visibleSiteText = `사이트 바로가기: ${shareUrl}`;
+  const shareDesc = `${rawDesc.slice(0, 55)} · ${visibleSiteText}`;
+  const shareImage = post.mediaUrl || 'https://www.jeongeup-art.com/og-image.jpg';
 
   const shareText = [
     shareTitle,
-    shareDesc,
+    rawDesc,
     '',
-    shareUrl
+    visibleSiteText
   ].join('\n');
 
   if (platform === 'facebook') {
@@ -2761,7 +2763,7 @@ async function sharePost(id, platform = 'kakao') {
         objectType: 'feed',
         content: {
           title: shareTitle,
-          description: shareDesc.slice(0, 90),
+          description: shareDesc.slice(0, 130),
           imageUrl: shareImage,
           link: {
             mobileWebUrl: shareUrl,
@@ -2769,7 +2771,7 @@ async function sharePost(id, platform = 'kakao') {
           }
         },
         buttons: [{
-          title: '자세히 보기',
+          title: '사이트 바로가기',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl
