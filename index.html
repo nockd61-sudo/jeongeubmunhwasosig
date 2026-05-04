@@ -13,7 +13,7 @@
 
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
-  <meta property="og:description" content="정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼" />
+  <meta property="og:description" content="👉 www.jeongeup-art.com | 정읍 행사·전시·공연 문화소식 바로가기" />
   <meta property="og:image" content="https://www.jeongeup-art.com/og-image.jpg" />
   <meta property="og:url" content="https://www.jeongeup-art.com/" />
   <meta property="og:type" content="website" />
@@ -2729,31 +2729,26 @@ async function sharePost(id, platform = 'kakao') {
 
   const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
-  const rawDesc = (post.description || `${post.place} | ${formatDate(post.date)}` || '정읍문화소식').trim();
-  const visibleSiteText = `사이트 바로가기: ${shareUrl}`;
-  const shareDesc = `${rawDesc.slice(0, 55)} · ${visibleSiteText}`;
+  const shareDesc = `👉 www.jeongeup-art.com
+${post.title}`;
   const shareImage = post.mediaUrl || 'https://www.jeongeup-art.com/og-image.jpg';
-
-  const shareText = [
-    shareTitle,
-    rawDesc,
-    '',
-    visibleSiteText
-  ].join('\n');
+  const shareText = `${shareTitle}
+${shareDesc}
+${shareUrl}`;
 
   if (platform === 'facebook') {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
     window.open(facebookUrl, '_blank', 'width=640,height=640');
     return;
   }
 
   if (platform === 'instagram') {
-    fallbackShare(`${shareTitle}\n${shareUrl}`, '인스타그램은 웹에서 바로 공유가 제한되어 있습니다. 링크를 복사했습니다. 인스타 게시물/스토리에 붙여넣어 주세요.');
+    fallbackShare(shareText, '인스타그램용 문구와 주소를 복사했습니다. 인스타 게시물/스토리에 붙여넣어 주세요.');
     return;
   }
 
   if (platform === 'copy') {
-    fallbackShare(shareText, '공유 링크를 복사했습니다. 원하는 곳에 붙여넣어 주세요.');
+    fallbackShare(shareText, '공유 문구와 주소를 복사했습니다. 원하는 곳에 붙여넣어 주세요.');
     return;
   }
 
@@ -2763,7 +2758,7 @@ async function sharePost(id, platform = 'kakao') {
         objectType: 'feed',
         content: {
           title: shareTitle,
-          description: shareDesc.slice(0, 130),
+          description: shareDesc,
           imageUrl: shareImage,
           link: {
             mobileWebUrl: shareUrl,
@@ -2784,8 +2779,9 @@ async function sharePost(id, platform = 'kakao') {
     }
   }
 
-  fallbackShare(shareText, '카카오 공유가 되지 않아 링크를 복사했습니다.');
+  fallbackShare(shareText, '카카오 공유가 되지 않아 공유 문구와 주소를 복사했습니다.');
 }
+
 function fallbackShare(fullText, message = '공유용 링크를 복사했습니다.') {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(fullText).then(() => {
