@@ -6,6 +6,7 @@
 <meta name="naver-site-verification" content="64bafd596432749e7ef3f9374992598b70b111a5" />
 
   <title>정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼</title>
+  <!-- 지호 수정본: 2026-05-04 카드 전체 클릭 상세보기 적용 -->
   <meta name="description" content="정읍문화소식은 정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼입니다." />
   <meta name="keywords" content="정읍문화소식, 정읍행사, 정읍전시, 정읍공연, 정읍축제, 정읍문화" /> 
   <link rel="canonical" href="https://www.jeongeup-art.com/" />
@@ -13,9 +14,8 @@
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
   <meta property="og:description" content="정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼" />
-  <meta property="og:image" content="https://www.jeongeup-art.com/og-image.jpg" />
-  <meta property="og:image:secure_url" content="https://www.jeongeup-art.com/og-image.jpg" />
-  <meta property="og:url" content="https://www.jeongeup-art.com/" />
+  <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg" />
+  <meta property="og:url" content="https://jeongeup-art.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="정읍문화소식" />
 
@@ -309,24 +309,26 @@
       position: relative;
     }
 
-    /* 지호 수정: 이미지/카드 영역을 누르면 상세보기로 이동 */
-    .card.clickable-card {
+
+    /* 지호 수정: 카드/이미지 전체 클릭 이동 */
+    .card.card-click {
       cursor: pointer;
       transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
 
-    .card.clickable-card:hover {
+    .card.card-click:hover {
       transform: translateY(-3px);
-      box-shadow: 0 14px 34px rgba(0,0,0,0.12);
+      box-shadow: 0 16px 34px rgba(0,0,0,0.12);
     }
 
-    .card-click-area {
+    .card.card-click .thumb,
+    .card.card-click .meta {
       cursor: pointer;
     }
 
-    .card-click-area:focus {
-      outline: 3px solid rgba(109,76,255,0.32);
-      outline-offset: 3px;
+    .card.card-click .title {
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
 
     .post-admin-actions {
@@ -2239,12 +2241,12 @@ async function renderPosts() {
   }
 
   eventGrid.innerHTML = posts.map((post) => `
-    <article class="card clickable-card" id="post-${post.id}" data-card-post-id="${post.id}" aria-label="${escapeHtml(post.title)} 상세보기">
-      <div class="thumb thumb-click card-click-area" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+    <article class="card card-click" id="post-${post.id}" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+      <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
         <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
         ${buildMedia(post)}
       </div>
-      <div class="meta card-click-area" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+      <div class="meta">
         <div class="date">${formatDate(post.date)}${post.endDate && post.endDate !== post.date ? ' ~ ' + formatDate(post.endDate) : ''}</div>
         <div class="title">${escapeHtml(post.title)}</div>
         <div class="place">${escapeHtml(post.place)}</div>
@@ -2255,7 +2257,7 @@ async function renderPosts() {
         </div>
       </div>
       <div class="actions">
-        <button type="button" class="detail-btn" data-post-id="${post.id}">자세히 보기</button>
+        <button type="button" class="detail-btn" data-post-id="${post.id}">자세히</button>
        
       </div>
       <div class="card-share-row">
@@ -2728,7 +2730,7 @@ async function sharePost(id, platform = 'kakao') {
   const shareUrl = getPostShareUrl(post.id);
   const shareTitle = `[정읍문화소식] ${post.title}`;
   const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}` || '정읍문화소식').trim();
-  const shareImage = post.mediaUrl || 'https://www.jeongeup-art.com/og-image.jpg';
+  const shareImage = post.mediaUrl || 'https://jeongeup-art.com/og-image.jpg';
 
   const shareText = [
     shareTitle,
@@ -3146,18 +3148,6 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const cardClickArea = event.target.closest('.card-click-area');
-  if (cardClickArea && cardClickArea.dataset.postId) {
-    await openDetail(cardClickArea.dataset.postId);
-    return;
-  }
-
-  const cardArticle = event.target.closest('.clickable-card');
-  if (cardArticle && cardArticle.dataset.cardPostId && !event.target.closest('button, a, input, textarea, select, label')) {
-    await openDetail(cardArticle.dataset.cardPostId);
-    return;
-  }
-
   const thumbBtn = event.target.closest('.thumb-click');
   if (thumbBtn) {
     await openDetail(thumbBtn.dataset.postId);
@@ -3173,6 +3163,13 @@ document.addEventListener('click', async (event) => {
   const participantPhotoBtn = event.target.closest('.photo-gallery-item');
   if (participantPhotoBtn) {
     await openDetail(participantPhotoBtn.dataset.postId);
+    return;
+  }
+
+  // 지호 수정: 카드 안의 이미지/제목/빈 공간을 눌러도 상세보기로 이동
+  const cardBtn = event.target.closest('.card-click');
+  if (cardBtn && !event.target.closest('button, a, input, textarea, select, label')) {
+    await openDetail(cardBtn.dataset.postId);
     return;
   }
 
@@ -3196,10 +3193,16 @@ document.addEventListener('click', async (event) => {
 });
 
 document.addEventListener('keydown', async (event) => {
-  const cardKeyTarget = event.target.closest('.card-click-area');
-  if (cardKeyTarget && cardKeyTarget.dataset.postId && (event.key === 'Enter' || event.key === ' ')) {
+  const thumbBtn = event.target.closest('.thumb-click');
+  if (thumbBtn && (event.key === 'Enter' || event.key === ' ')) {
     event.preventDefault();
-    await openDetail(cardKeyTarget.dataset.postId);
+    await openDetail(thumbBtn.dataset.postId);
+  }
+
+  const cardBtn = event.target.closest('.card-click');
+  if (cardBtn && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    await openDetail(cardBtn.dataset.postId);
   }
 
   if (event.key === 'Escape') {
