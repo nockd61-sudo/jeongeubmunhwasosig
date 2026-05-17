@@ -6,16 +6,15 @@
 <meta name="naver-site-verification" content="64bafd596432749e7ef3f9374992598b70b111a5" />
 
   <title>정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼</title>
-  <!-- 지호 수정본: 2026-05-04 카드 전체 클릭 상세보기 적용 -->
   <meta name="description" content="정읍문화소식은 정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼입니다." />
   <meta name="keywords" content="정읍문화소식, 정읍행사, 정읍전시, 정읍공연, 정읍축제, 정읍문화" /> 
   <link rel="canonical" href="https://www.jeongeup-art.com/" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="정읍문화소식 | 정읍 행사·전시·공연 시민참여 문화플랫폼" />
-  <meta property="og:description" content="👉 www.jeongeup-art.com | 정읍 행사·전시·공연 문화소식 바로가기" />
-  <meta property="og:image" content="https://www.jeongeup-art.com/og-image.jpg" />
-  <meta property="og:url" content="https://www.jeongeup-art.com/" />
+  <meta property="og:description" content="정읍의 행사, 전시, 공연, 문화 이야기를 시민이 직접 올리고 함께 보는 이미지 중심 문화 플랫폼" />
+  <meta property="og:image" content="https://jeongeup-art.com/og-image.jpg" />
+  <meta property="og:url" content="https://jeongeup-art.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="정읍문화소식" />
 
@@ -307,28 +306,6 @@
       box-shadow: var(--shadow);
       padding: 12px;
       position: relative;
-    }
-
-
-    /* 지호 수정: 카드/이미지 전체 클릭 이동 */
-    .card.card-click {
-      cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease;
-    }
-
-    .card.card-click:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 16px 34px rgba(0,0,0,0.12);
-    }
-
-    .card.card-click .thumb,
-    .card.card-click .meta {
-      cursor: pointer;
-    }
-
-    .card.card-click .title {
-      text-decoration: underline;
-      text-underline-offset: 3px;
     }
 
     .post-admin-actions {
@@ -730,37 +707,6 @@
       color: #fff;
     }
 
-    .social-share-actions button {
-      flex: 0 1 auto;
-    }
-
-    .share-kakao-btn { background: #fee500 !important; color: #111 !important; }
-    .share-facebook-btn { background: #1877f2 !important; color: #fff !important; }
-    .share-instagram-btn { background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af) !important; color: #fff !important; }
-    .share-copy-btn { background: #111827 !important; color: #fff !important; }
-
-
-    .card-share-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 6px;
-      margin-top: 8px;
-    }
-
-    .card-share-row button {
-      border: 0;
-      padding: 8px 5px;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.74rem;
-      font-weight: 800;
-      line-height: 1.1;
-    }
-
-    @media (max-width: 560px) {
-      .card-share-row button { font-size: 0.78rem; padding: 9px 6px; }
-    }
-
     .comment-box {
       margin-top: 24px;
       border-top: 1px solid var(--line);
@@ -910,7 +856,30 @@
 
     @media (max-width: 560px) {
       .wrap { width: min(1180px, calc(100% - 24px)); }
-      .cards { grid-template-columns: 1fr; }
+
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .card {
+        padding: 8px;
+      }
+
+      .thumb {
+        aspect-ratio: 3 / 4;
+      }
+
+      .meta .title {
+        font-size: 0.82rem;
+        min-height: auto;
+      }
+
+      .actions button {
+        font-size: 0.7rem;
+        padding: 6px 4px;
+      }
+
       .more-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .quick-row { grid-template-columns: repeat(2, 1fr); }
       .hero-box { height: 230px; }
@@ -1262,12 +1231,9 @@
       <div class="detail-meta" id="detailMeta"></div>
       <div class="detail-media" id="detailMedia"></div>
       <div class="detail-description" id="detailDescription"></div>
-      <div class="detail-actions social-share-actions">
+      <div class="detail-actions">
         <button type="button" id="detailLikeBtn">좋아요</button>
-        <button type="button" id="detailShareBtn" class="share-kakao-btn">카톡공유</button>
-        <button type="button" id="detailFacebookBtn" class="share-facebook-btn">페이스북</button>
-        <button type="button" id="detailInstagramBtn" class="share-instagram-btn">인스타</button>
-        <button type="button" id="detailCopyBtn" class="share-copy-btn">링크복사</button>
+        <button type="button" id="detailShareBtn">공유하기</button>
         <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
       </div>
       <div class="comment-box">
@@ -1437,9 +1403,6 @@ const detailMeta = document.getElementById('detailMeta');
 const detailMedia = document.getElementById('detailMedia');
 const detailDescription = document.getElementById('detailDescription');
 const detailShareBtn = document.getElementById('detailShareBtn');
-const detailFacebookBtn = document.getElementById('detailFacebookBtn');
-const detailInstagramBtn = document.getElementById('detailInstagramBtn');
-const detailCopyBtn = document.getElementById('detailCopyBtn');
 const detailLikeBtn = document.getElementById('detailLikeBtn');
 const detailDeleteBtn = document.getElementById('detailDeleteBtn');
 const noticeForm = document.getElementById('noticeForm');
@@ -1473,7 +1436,6 @@ let cachedPosts = [];
 let cachedNotices = [];
 let cachedVideos = [];
 let likedPostIds = new Set();
-let isPhotoUploading = false;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -2190,8 +2152,7 @@ function getParticipantPhotos() {
 
   const map = new Map();
   [...fromServer, ...fromLocal].forEach(post => {
-    // 같은 사진이 서버와 로컬에 동시에 있을 때 중복 노출 방지
-    const key = String(post.mediaUrl || post.id || Math.random()).trim();
+    const key = String(post.id || post.mediaUrl || Math.random());
     if (!map.has(key)) map.set(key, post);
   });
 
@@ -2241,7 +2202,7 @@ async function renderPosts() {
   }
 
   eventGrid.innerHTML = posts.map((post) => `
-    <article class="card card-click" id="post-${post.id}" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
+    <article class="card" id="post-${post.id}">
       <div class="thumb thumb-click" data-post-id="${post.id}" role="button" tabindex="0" aria-label="${escapeHtml(post.title)} 상세보기">
         <div class="type-badge">${post.mediaType === 'video' ? '영상' : '이미지'}</div>
         ${buildMedia(post)}
@@ -2258,13 +2219,7 @@ async function renderPosts() {
       </div>
       <div class="actions">
         <button type="button" class="detail-btn" data-post-id="${post.id}">자세히</button>
-       
-      </div>
-      <div class="card-share-row">
-        <button type="button" class="card-share-platform-btn share-facebook-btn" data-platform="facebook" data-post-id="${post.id}">페북</button>
-        <button type="button" class="card-share-platform-btn share-instagram-btn" data-platform="instagram" data-post-id="${post.id}">인스타</button>
-        <button type="button" class="card-share-platform-btn share-copy-btn" data-platform="copy" data-post-id="${post.id}">복사</button>
-        <button type="button" class="card-share-platform-btn share-kakao-btn" data-platform="kakao" data-post-id="${post.id}">카톡</button>
+        <button type="button" class="share-btn" data-post-id="${post.id}">공유</button>
       </div>
       <div class="post-admin-actions">
         <button class="mini-btn danger delete-post-btn" type="button" data-post-id="${post.id}">삭제</button>
@@ -2680,10 +2635,7 @@ async function openDetail(id, options = {}) {
 
   detailDescription.textContent = post.description || '';
   syncDetailUrl(id);
-  detailShareBtn.onclick = () => sharePost(id, 'kakao');
-  if (detailFacebookBtn) detailFacebookBtn.onclick = () => sharePost(id, 'facebook');
-  if (detailInstagramBtn) detailInstagramBtn.onclick = () => sharePost(id, 'instagram');
-  if (detailCopyBtn) detailCopyBtn.onclick = () => sharePost(id, 'copy');
+  detailShareBtn.onclick = () => sharePost(id);
   detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
 
   detailLikeBtn.onclick = async () => {
@@ -2720,53 +2672,36 @@ async function openDetail(id, options = {}) {
   }
 }
 
-async function sharePost(id, platform = 'kakao') {
+async function sharePost(id) {
   const post = await findPostById(id);
   if (!post) {
     alert('공유할 글을 찾지 못했습니다.');
     return;
   }
 
-  const shareUrl = getPostShareUrl(post.id);
+  const shareUrl = SITE_CANONICAL_URL;
   const shareTitle = `[정읍문화소식] ${post.title}`;
-  const shareDesc = `👉 www.jeongeup-art.com
-${post.title}`;
-  const shareImage = post.mediaUrl || 'https://www.jeongeup-art.com/og-image.jpg';
-  const shareText = `${shareTitle}
-${shareDesc}
-${shareUrl}`;
+  const shareDesc = (post.description || `${post.place} | ${formatDate(post.date)}`).trim();
 
-  if (platform === 'facebook') {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
-    window.open(facebookUrl, '_blank', 'width=640,height=640');
-    return;
-  }
-
-  if (platform === 'instagram') {
-    fallbackShare(shareText, '인스타그램용 문구와 주소를 복사했습니다. 인스타 게시물/스토리에 붙여넣어 주세요.');
-    return;
-  }
-
-  if (platform === 'copy') {
-    fallbackShare(shareText, '공유 문구와 주소를 복사했습니다. 원하는 곳에 붙여넣어 주세요.');
-    return;
-  }
+  const shareText = [
+    shareTitle,
+    shareDesc,
+    '',
+    '정읍문화소식 메인으로 들어가기',
+    shareUrl
+  ].join('\n');
 
   if (ensureKakaoReady()) {
     try {
       window.Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-          title: shareTitle,
-          description: shareDesc,
-          imageUrl: shareImage,
-          link: {
-            mobileWebUrl: shareUrl,
-            webUrl: shareUrl
-          }
+        objectType: 'text',
+        text: shareText,
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl
         },
         buttons: [{
-          title: '사이트 바로가기',
+          title: '정읍문화소식 메인으로 가기',
           link: {
             mobileWebUrl: shareUrl,
             webUrl: shareUrl
@@ -2779,13 +2714,12 @@ ${shareUrl}`;
     }
   }
 
-  fallbackShare(shareText, '카카오 공유가 되지 않아 공유 문구와 주소를 복사했습니다.');
+  fallbackShare(shareText);
 }
-
-function fallbackShare(fullText, message = '공유용 링크를 복사했습니다.') {
+function fallbackShare(fullText) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(fullText).then(() => {
-      alert(message);
+      alert('공유용 링크를 복사했습니다.');
     }).catch(() => {
       window.prompt('아래 내용을 복사해 공유하세요.', fullText);
     });
@@ -2978,33 +2912,17 @@ alert('문화소식이 등록되었습니다.');
 
 photoUploadForm?.addEventListener('submit', async function(e) {
   e.preventDefault();
-
-  // 중복 클릭 / 중복 submit 방지
-  if (isPhotoUploading) return;
-
   const title = document.getElementById('photoEventTitle').value.trim();
   const author = document.getElementById('photoAuthor').value.trim();
   const memo = document.getElementById('photoMemo').value.trim();
   const consent = document.getElementById('photoConsent').checked;
   const file = photoFileInput.files && photoFileInput.files[0] ? photoFileInput.files[0] : null;
-
-  if (!title || !author || !memo || !file) {
-    alert('행사명, 작성자, 사진, 소감을 모두 입력해주세요.');
-    return;
-  }
-
-  if (!consent) {
-    alert('사진 업로드 동의가 필요합니다.');
-    return;
-  }
-
+  if (!title || !author || !memo || !file) { alert('행사명, 작성자, 사진, 소감을 모두 입력해주세요.'); return; }
+  if (!consent) { alert('사진 업로드 동의가 필요합니다.'); return; }
   try {
-    isPhotoUploading = true;
     setSubmitting(photoUploadSubmitBtn, true, '참가사진 등록');
-
     const mediaUrl = await uploadFileToWorker(file, 'image');
     const today = new Date().toISOString().slice(0, 10);
-
     const saveResult = await savePost({
       title,
       date: today,
@@ -3017,34 +2935,46 @@ photoUploadForm?.addEventListener('submit', async function(e) {
       category: PARTICIPANT_PHOTO_CATEGORY
     });
 
-    const savedPostId = saveResult?.post?.id || saveResult?.id || '';
+    const savedPostId = saveResult?.post?.id || saveResult?.id || `local-photo-${Date.now()}`;
     if (savedPostId) unhideBrokenPostId(savedPostId);
 
-    // 중요: 여기서는 cachedPosts에 직접 넣거나 localStorage에 따로 저장하지 않습니다.
-    // 서버 저장 후 fetchPosts()로 한 번만 다시 불러와야 중복 노출이 생기지 않습니다.
+    const immediatePost = {
+      id: String(savedPostId),
+      title,
+      date: today,
+      endDate: today,
+      place: '행사참가사진',
+      author,
+      description: memo,
+      mediaType: 'image',
+      mediaUrl,
+      likes: 0,
+      views: 0,
+      comments: [],
+      category: PARTICIPANT_PHOTO_CATEGORY
+    };
+
+    cachedPosts = [immediatePost, ...cachedPosts.filter(post => String(post.id) !== String(savedPostId))];
+    saveLocalParticipantPhoto(immediatePost);
+
     this.reset();
-    renderPreviewInto(photoUploadPreview, null);
+    renderPreviewInto(photoUploadPreview, null, 'image');
 
     await fetchPosts();
+    cachedPosts = [immediatePost, ...cachedPosts.filter(post => String(post.id) !== String(savedPostId))];
     await renderAll();
+    renderParticipantPhotos();
 
     closeModal('photoUploadModal');
-
-    if (savedPostId) {
-      setTimeout(() => openDetail(savedPostId, { incrementView: false }), 200);
-    }
-
+    if (savedPostId) setTimeout(() => openDetail(savedPostId, { incrementView: false }), 200);
     alert('참가사진이 등록되었습니다.');
-
   } catch (error) {
     console.error(error);
     alert('참가사진 업로드 실패\n' + friendlyServerError(error));
   } finally {
-    isPhotoUploading = false;
     setSubmitting(photoUploadSubmitBtn, false, '참가사진 등록');
   }
 });
-
 
 noticeForm?.addEventListener('submit', async function(e) {
   e.preventDefault();
@@ -3134,15 +3064,9 @@ document.addEventListener('click', async (event) => {
     return;
   }
 
-  const platformShareBtn = event.target.closest('.card-share-platform-btn');
-  if (platformShareBtn) {
-    await sharePost(platformShareBtn.dataset.postId, platformShareBtn.dataset.platform || 'kakao');
-    return;
-  }
-
   const shareBtn = event.target.closest('.share-btn');
   if (shareBtn) {
-    await sharePost(shareBtn.dataset.postId, 'kakao');
+    await sharePost(shareBtn.dataset.postId);
     return;
   }
 
@@ -3161,13 +3085,6 @@ document.addEventListener('click', async (event) => {
   const participantPhotoBtn = event.target.closest('.photo-gallery-item');
   if (participantPhotoBtn) {
     await openDetail(participantPhotoBtn.dataset.postId);
-    return;
-  }
-
-  // 지호 수정: 카드 안의 이미지/제목/빈 공간을 눌러도 상세보기로 이동
-  const cardBtn = event.target.closest('.card-click');
-  if (cardBtn && !event.target.closest('button, a, input, textarea, select, label')) {
-    await openDetail(cardBtn.dataset.postId);
     return;
   }
 
@@ -3195,12 +3112,6 @@ document.addEventListener('keydown', async (event) => {
   if (thumbBtn && (event.key === 'Enter' || event.key === ' ')) {
     event.preventDefault();
     await openDetail(thumbBtn.dataset.postId);
-  }
-
-  const cardBtn = event.target.closest('.card-click');
-  if (cardBtn && (event.key === 'Enter' || event.key === ' ')) {
-    event.preventDefault();
-    await openDetail(cardBtn.dataset.postId);
   }
 
   if (event.key === 'Escape') {
