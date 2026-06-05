@@ -707,18 +707,6 @@
       color: #fff;
     }
 
-    .edit-help-box {
-      background:#f8f9fb;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:12px;
-      color:var(--muted);
-      font-size:0.9rem;
-      line-height:1.6;
-      margin-bottom:14px;
-    }
-
-
     .comment-box {
       margin-top: 24px;
       border-top: 1px solid var(--line);
@@ -892,7 +880,22 @@
         padding: 6px 4px;
       }
 
-      .more-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      /* 지호 수정: 모바일에서 8개 이후 더보기 썸네일을 기존보다 약 1/4 면적으로 축소 */
+      .more-thumb-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .more-thumb-item {
+        border-radius: 8px;
+        box-shadow: none;
+      }
+
+      .more-thumb-overlay {
+        padding: 4px 5px;
+        font-size: 0.62rem;
+      }
+
       .quick-row { grid-template-columns: repeat(2, 1fr); }
       .hero-box { height: 230px; }
       .hero-overlay h1 { font-size: 1.8rem; }
@@ -1246,7 +1249,6 @@
       <div class="detail-actions">
         <button type="button" id="detailLikeBtn">좋아요</button>
         <button type="button" id="detailShareBtn">공유하기</button>
-        <button type="button" id="detailEditBtn" style="background:#111;">수정하기</button>
         <button type="button" id="detailDeleteBtn" style="display:none; background:#ef4444;">삭제</button>
       </div>
       <div class="comment-box">
@@ -1268,58 +1270,6 @@
         </form>
         <div class="comment-list" id="commentList"></div>
       </div>
-    </div>
-  </div>
-</div>
-
-
-<div class="modal-backdrop" id="editPostModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>게시글 수정하기</h3>
-      <button class="close-btn" type="button" data-close="editPostModal">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="edit-help-box">
-        글을 올릴 때 입력한 <b>수정 비밀번호</b>를 입력해야 저장됩니다. 이미지는 다시 올리지 않고, 제목·기간·장소·작성자·설명만 수정합니다.
-      </div>
-      <form id="editPostForm">
-        <input id="editPostId" type="hidden">
-        <div class="form-grid">
-          <div class="field">
-            <label for="editTitle">행사 제목</label>
-            <input id="editTitle" type="text" required>
-          </div>
-          <div class="field">
-            <label>행사 기간</label>
-            <div class="date-range" style="display:flex; gap:8px; align-items:center;">
-              <input id="editStartDate" type="date" required>
-              <span>~</span>
-              <input id="editEndDate" type="date" required>
-            </div>
-          </div>
-          <div class="field">
-            <label for="editPlace">장소</label>
-            <input id="editPlace" type="text" required>
-          </div>
-          <div class="field">
-            <label for="editAuthor">작성자</label>
-            <input id="editAuthor" type="text" required>
-          </div>
-          <div class="field full">
-            <label for="editDescription">설명</label>
-            <textarea id="editDescription" required></textarea>
-          </div>
-          <div class="field full">
-            <label for="editPasswordCheck">수정 비밀번호</label>
-            <input id="editPasswordCheck" type="password" placeholder="글 올릴 때 입력한 비밀번호" required>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="submit" type="submit" id="editPostSubmitBtn">수정 저장</button>
-          <button class="reset" type="button" data-close="editPostModal">취소</button>
-        </div>
-      </form>
     </div>
   </div>
 </div>
@@ -1384,11 +1334,6 @@
             <div class="field">
               <label for="author">작성자</label>
               <input id="author" type="text" placeholder="예: 시민 제보자" required>
-            </div>
-
-            <div class="field">
-              <label for="editPassword">수정 비밀번호</label>
-              <input id="editPassword" type="password" placeholder="나중에 수정할 때 필요합니다" required>
             </div>
 
             <div class="field">
@@ -1474,7 +1419,6 @@ const detailMedia = document.getElementById('detailMedia');
 const detailDescription = document.getElementById('detailDescription');
 const detailShareBtn = document.getElementById('detailShareBtn');
 const detailLikeBtn = document.getElementById('detailLikeBtn');
-const detailEditBtn = document.getElementById('detailEditBtn');
 const detailDeleteBtn = document.getElementById('detailDeleteBtn');
 const noticeForm = document.getElementById('noticeForm');
 const noticeViewTab = document.getElementById('noticeViewTab');
@@ -1495,8 +1439,6 @@ const videoViewTab = document.getElementById('videoViewTab');
 const videoWriteTab = document.getElementById('videoWriteTab');
 const videoSubmitButton = document.getElementById('videoSubmitButton');
 const uploadSubmitBtn = document.getElementById('uploadSubmitBtn');
-const editPostForm = document.getElementById('editPostForm');
-const editPostSubmitBtn = document.getElementById('editPostSubmitBtn');
 const photoUploadForm = document.getElementById('photoUploadForm');
 const photoFileInput = document.getElementById('photoFileInput');
 const photoUploadPreview = document.getElementById('photoUploadPreview');
@@ -1865,29 +1807,11 @@ async function savePost(post) {
     location: post.place,
     author: post.author,
     image_url: post.mediaType === 'image' ? post.mediaUrl : '',
-    content: post.description,
-    edit_password: post.editPassword || post.edit_password || ''
+    content: post.description
   };
 
   return apiJson(API_POSTS_ENDPOINT, {
     method: 'POST',
-    body: JSON.stringify(payload)
-  });
-}
-
-async function updatePostByAuthor(id, post) {
-  const payload = {
-    title: post.title,
-    start_date: post.date,
-    end_date: post.endDate || post.date,
-    location: post.place,
-    author: post.author,
-    content: post.description,
-    edit_password: post.editPassword || ''
-  };
-
-  return apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`, {
-    method: 'PUT',
     body: JSON.stringify(payload)
   });
 }
@@ -2682,31 +2606,6 @@ function renderComments(post) {
   `).join('');
 }
 
-async function openEditPostModal(id) {
-  const post = await fetchPostDetail(id);
-  if (!post) {
-    alert('수정할 글을 찾지 못했습니다.');
-    return;
-  }
-
-  if (post.mediaType === 'video') {
-    alert('영상행사는 영상행사 메뉴에서 별도로 수정해주세요.');
-    return;
-  }
-
-  document.getElementById('editPostId').value = String(post.id);
-  document.getElementById('editTitle').value = post.title || '';
-  document.getElementById('editStartDate').value = String(post.date || '').slice(0, 10);
-  document.getElementById('editEndDate').value = String(post.endDate || post.date || '').slice(0, 10);
-  document.getElementById('editPlace').value = post.place || '';
-  document.getElementById('editAuthor').value = post.author || '';
-  document.getElementById('editDescription').value = post.description || '';
-  document.getElementById('editPasswordCheck').value = '';
-
-  closeModal('detailModal');
-  openModal('editPostModal');
-}
-
 async function openDetail(id, options = {}) {
   try {
     const { incrementView = true } = options;
@@ -2752,7 +2651,6 @@ async function openDetail(id, options = {}) {
   detailDescription.textContent = post.description || '';
   syncDetailUrl(id);
   detailShareBtn.onclick = () => sharePost(id);
-  if (detailEditBtn) detailEditBtn.onclick = () => openEditPostModal(id);
   detailLikeBtn.textContent = `좋아요 ${post.likes || 0}`;
 
   detailLikeBtn.onclick = async () => {
@@ -2892,7 +2790,6 @@ window.addVideo = addVideo;
 window.editNotice = editNotice;
 window.deleteNotice = deleteNotice;
 window.openDetail = openDetail;
-window.openEditPostModal = openEditPostModal;
 window.playCustomVideo = playCustomVideo;
 window.editVideo = editVideo;
 window.deleteVideo = deleteVideo;
@@ -2968,12 +2865,11 @@ uploadForm?.addEventListener('submit', async function(e) {
   const place = document.getElementById('place').value.trim();
   const author = document.getElementById('author').value.trim();
   const description = document.getElementById('description').value.trim();
-  const editPassword = document.getElementById('editPassword').value.trim();
   const mediaType = mediaTypeSelect.value;
   const file = fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
 
-  if (!title || !startDate || !endDate || !place || !author || !description || !editPassword || !file) {
-    alert('모든 항목을 입력해주세요. 수정 비밀번호도 꼭 필요합니다.');
+  if (!title || !startDate || !endDate || !place || !author || !description || !file) {
+    alert('모든 항목을 입력해주세요.');
     return;
   }
 
@@ -2996,8 +2892,7 @@ uploadForm?.addEventListener('submit', async function(e) {
       description,
       mediaType,
       mediaUrl,
-      category: '행사',
-      editPassword
+      category: '행사'
     });
 
     const savedPostId = saveResult?.post?.id || saveResult?.id || '';
@@ -3026,55 +2921,6 @@ alert('문화소식이 등록되었습니다.');
     alert('업로드 실패\n' + friendlyServerError(error));
   } finally {
     setSubmitting(uploadSubmitBtn, false);
-  }
-});
-
-
-editPostForm?.addEventListener('submit', async function(e) {
-  e.preventDefault();
-
-  const id = document.getElementById('editPostId').value;
-  const title = document.getElementById('editTitle').value.trim();
-  const startDate = document.getElementById('editStartDate').value;
-  const endDate = document.getElementById('editEndDate').value;
-  const place = document.getElementById('editPlace').value.trim();
-  const author = document.getElementById('editAuthor').value.trim();
-  const description = document.getElementById('editDescription').value.trim();
-  const editPassword = document.getElementById('editPasswordCheck').value.trim();
-
-  if (!id || !title || !startDate || !endDate || !place || !author || !description || !editPassword) {
-    alert('수정할 내용을 모두 입력해주세요.');
-    return;
-  }
-
-  if (startDate > endDate) {
-    alert('행사 시작일이 종료일보다 늦을 수 없습니다.');
-    return;
-  }
-
-  try {
-    setSubmitting(editPostSubmitBtn, true, '수정 저장');
-
-    await updatePostByAuthor(id, {
-      title,
-      date: startDate,
-      endDate,
-      place,
-      author,
-      description,
-      editPassword
-    });
-
-    await fetchPosts();
-    await renderAll();
-    closeModal('editPostModal');
-    setTimeout(() => openDetail(id, { incrementView: false }), 150);
-    alert('게시글이 수정되었습니다.');
-  } catch (error) {
-    console.error(error);
-    alert('게시글 수정 실패\n비밀번호가 다르거나 서버에 수정 API가 아직 없을 수 있습니다.\n\n' + friendlyServerError(error));
-  } finally {
-    setSubmitting(editPostSubmitBtn, false, '수정 저장');
   }
 });
 
