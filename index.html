@@ -1017,7 +1017,57 @@
       .modal { max-height: calc(100vh - 96px); border-radius: 16px; }
     }
 
-  </style>
+  
+    /* 지호 최종 수정: 지난 행사 아카이브 */
+    .past-archive-section {
+      padding-top: 0;
+      padding-bottom: 28px;
+    }
+    .past-toggle-btn {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto 12px;
+      padding: 14px 18px;
+      border: 1px solid #dedede;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #333;
+      box-shadow: 0 6px 18px rgba(0,0,0,.07);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .past-toggle-btn:hover {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #fff;
+    }
+    .past-text-list {
+      display: none;
+      max-width: 900px;
+      margin: 0 auto 12px;
+      padding: 8px 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+    .past-text-list.show { display: block; }
+    .past-text-item {
+      padding: 14px 6px;
+      border-bottom: 1px dashed var(--line);
+      cursor: pointer;
+    }
+    .past-text-item:last-child { border-bottom: 0; }
+    .past-text-item:hover { background: #f8f7ff; }
+    @media (max-width:560px) {
+      .past-toggle-btn { max-width: 100%; }
+      .past-text-list { padding: 6px 12px; }
+      .past-text-title { font-size: .92rem; }
+      .past-text-meta { font-size: .8rem; }
+    }
+
+</style>
 </head>
 <body>
 <header>
@@ -1100,8 +1150,8 @@
     </div>
   </section>
 
-  <section class="wrap">
-    <button type="button" class="past-toggle-btn" id="pastToggleBtn" onclick="togglePastTextList()">📁 지난행사 목록 보기</button>
+  <section class="wrap past-archive-section">
+    <button type="button" class="past-toggle-btn" id="pastToggleBtn" onclick="togglePastTextList()">지난 행사 전체보기</button>
     <div id="pastTextList" class="past-text-list"></div>
   </section>
 
@@ -2041,7 +2091,7 @@ function togglePastTextList() {
 
   if (isOpen) {
     pastTextList.style.display = 'none';
-    if (pastToggleBtn) pastToggleBtn.textContent = '📁 지난행사 목록 보기';
+    if (pastToggleBtn) pastToggleBtn.textContent = '지난 행사 전체보기';
     return;
   }
 
@@ -3239,5 +3289,35 @@ function searchGoogle() {
 }
 
 </script>
+
+<script>
+/* 지호 최종 수정: 지난 행사 전체 목록 열기/닫기 */
+function togglePastTextList() {
+  const list = document.getElementById('pastTextList');
+  const btn = document.getElementById('pastToggleBtn');
+  if (!list || !btn) return;
+
+  renderPastTextList();
+  const isOpen = list.classList.toggle('show');
+  list.style.display = isOpen ? 'block' : 'none';
+
+  const count = getPastPosts().length;
+  btn.textContent = isOpen
+    ? '지난 행사 목록 닫기 ▲'
+    : `지난 행사 전체보기 (${count}개) ▼`;
+}
+
+function updatePastArchiveButton() {
+  const btn = document.getElementById('pastToggleBtn');
+  if (!btn) return;
+  const count = getPastPosts().length;
+  btn.textContent = `지난 행사 전체보기 (${count}개) ▼`;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  setTimeout(updatePastArchiveButton, 1200);
+});
+</script>
+
 </body>
 </html>
