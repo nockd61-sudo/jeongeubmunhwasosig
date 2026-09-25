@@ -1111,20 +1111,7 @@
   <section id="board" class="wrap">
    <select id="filterType" style="display:none"><option value="all" selected>전체</option></select>
 
-      <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 문화행사를 구글에서 검색합니다.</p>
-
-      <div class="toolbar ai-toolbar">
-        <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
-          <option value="all" selected>전체</option>
-          <option value="image">이미지</option>
-          <option value="video">영상</option>
-        </select>
-       <input id="searchInput" type="text"
-  placeholder="정읍 행사명을 검색해보세요"
-  onkeydown="if(event.key==='Enter') searchGoogle()">
-      <button id="searchBtn" type="button" onclick="searchGoogle()">전체검색</button>
-      </div>
-    </div>
+    <h2 class="section-title">가까운 날짜순 문화소식</h2>
 
     <div class="cards" id="eventGrid"></div>
     <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
