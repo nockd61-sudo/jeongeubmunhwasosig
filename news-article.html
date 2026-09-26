@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>정읍 뉴스 | 정읍문화소식</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #233129; background: #f5f7f4; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { width: min(760px, calc(100% - 32px)); margin: 40px auto 80px; }
+    a { color: #176548; }
+    article { background: #fff; border: 1px solid #dce5dd; border-radius: 18px; padding: clamp(20px, 5vw, 48px); margin-top: 24px; }
+    h1 { font-size: clamp(1.6rem, 5vw, 2.5rem); line-height: 1.35; }
+    .meta { color: #647168; font-size: .9rem; }
+    .summary { font-weight: 700; font-size: 1.12rem; color: #315e46; line-height: 1.8; }
+    #body { white-space: pre-line; line-height: 1.95; font-size: 1.06rem; }
+    footer { border-top: 1px solid #e1e8e1; padding-top: 18px; margin-top: 30px; color: #647168; line-height: 1.7; }
+  </style>
+</head>
+<body>
+<main>
+  <a href="/#todayNewsTitle">← 정읍문화소식으로 돌아가기</a>
+  <article id="article"><p role="status">기사를 불러오는 중입니다.</p></article>
+</main>
+<script>
+(async () => {
+  const container = document.getElementById('article');
+  const id = Number(new URLSearchParams(location.search).get('id'));
+  if (!Number.isSafeInteger(id) || id < 1) { container.textContent = '기사 주소를 확인해 주세요.'; return; }
+  try {
+    const response = await fetch('/api/news?id=' + id);
+    if (!response.ok) throw new Error('기사를 찾을 수 없습니다.');
+    const { article } = await response.json();
+    if (!article) throw new Error('기사를 찾을 수 없습니다.');
+    document.title = article.title + ' | 정읍문화소식';
+    container.replaceChildren();
+    const title = document.createElement('h1'); title.textContent = article.title;
+    const meta = document.createElement('p'); meta.className = 'meta'; meta.textContent = '정읍문화소식 · ' + article.approved_day;
+    const summary = document.createElement('p'); summary.className = 'summary'; summary.textContent = article.summary;
+    const body = document.createElement('div'); body.id = 'body'; body.textContent = article.body;
+    const footer = document.createElement('footer');
+    footer.append('AI가 원문을 바탕으로 작성하고 관리자가 검토한 글입니다. 출처: ');
+    const source = document.createElement('a'); source.href = article.source_url; source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = article.source + ' 원문 보기';
+    footer.append(source);
+    container.append(title, meta, summary, body, footer);
+  } catch (error) { container.textContent = error.message; }
+})();
+</script>
+</body>
+</html>
