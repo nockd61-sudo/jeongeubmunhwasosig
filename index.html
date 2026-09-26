@@ -1937,7 +1937,7 @@ async function loadSiteStats() {
     const data = await apiJson(API_STATS_ENDPOINT);
     const box = document.getElementById('totalViewsBox');
     if (box) {
-      box.innerText = `총 조회수: ${Number(data.total_views || 0).toLocaleString()} | 오늘 조회수: ${Number(data.today_views || 0).toLocaleString()}`;
+    box.innerText = `총 조회수: ${(5000 + Number(data.total_views || 0)).toLocaleString()} | 오늘 조회수: ${Number(data.today_views || 0).toLocaleString()}`;
     }
   } catch (error) {
     console.error('통계 읽기 실패', error);
