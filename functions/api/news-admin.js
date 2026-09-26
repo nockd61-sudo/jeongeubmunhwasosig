@@ -44,6 +44,52 @@ async function init(db) {
   await db.prepare(`CREATE TABLE IF NOT EXISTS news_login_attempts (
     ip TEXT PRIMARY KEY, attempts INTEGER NOT NULL DEFAULT 0, first_attempt INTEGER NOT NULL
   )`).run();
+  const columns = await db.prepare('PRAGMA table_info(news_items)').all();
+  const names = new Set((columns.results || []).map(column => column.name));
+  for (const [name, type] of [['article_title', 'TEXT'], ['article_summary', 'TEXT'], ['article_body', 'TEXT'], ['article_reviewed', 'INTEGER NOT NULL DEFAULT 0']]) {
+    if (!names.has(name)) await db.prepare(`ALTER TABLE news_items ADD COLUMN ${name} ${type}`).run();
+  }
+}
+
+function readableText(html) {
+  const description = [...html.matchAll(/<meta\s+[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/gi)]
+    .map(match => decodeXml(match[1]));
+  const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1] || html;
+  const paragraphs = [...article.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)]
+    .map(match => decodeXml(match[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()))
+    .filter(value => value.length >= 35).slice(0, 24);
+  return [...description, ...paragraphs].join('\n').slice(0, 10000);
+}
+
+async function sourceText(url) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== 'https:' || !/^(news\.google\.com|[a-z\d.-]+)$/i.test(parsed.hostname)) throw new Error('원문 주소가 올바르지 않습니다.');
+  const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; JeongeupCultureNews/1.0)' } });
+  if (!response.ok || !response.headers.get('content-type')?.includes('html')) throw new Error('원문 내용을 읽을 수 없습니다. 다른 기사를 선택해 주세요.');
+  const html = (await response.text()).slice(0, 300000);
+  const content = readableText(html);
+  if (content.length < 450) throw new Error('원문에서 확인할 정보가 부족합니다. 다른 기사를 선택해 주세요.');
+  return content;
+}
+
+async function draft(row, ai) {
+  if (!ai) throw new Error('Cloudflare Workers AI 바인딩 AI를 먼저 연결해 주세요.');
+  const content = await sourceText(row.url);
+  const result = await ai.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
+    messages: [
+      { role: 'system', content: '당신은 정읍문화소식 편집자입니다. 제공된 원문 텍스트에 명시된 사실만 사용하여 한국어 지역 뉴스를 새 문장으로 작성하세요. 추측, 인용문 창작, 원문 문장 복사를 금지합니다. 내용이 부족하면 ERROR만 출력하세요. 제목 1줄, 요약 1줄, 본문 2~3문단을 아래 JSON만으로 출력하세요: {"title":"...","summary":"...","body":"..."}. 출처 표시는 별도로 처리합니다.' },
+      { role: 'user', content: `원문 제목: ${row.title}\n언론사: ${row.source}\n원문 게시: ${row.published_at}\n확인된 원문 텍스트:\n${content}` }
+    ], max_tokens: 700, temperature: 0.2
+  });
+  const raw = String(result.response || '');
+  let article;
+  try { article = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] || ''); }
+  catch { throw new Error('AI 초안 작성에 실패했습니다. 다시 시도해 주세요.'); }
+  const title = String(article.title || '').trim().slice(0, 130);
+  const summary = String(article.summary || '').trim().slice(0, 300);
+  const body = String(article.body || '').trim().slice(0, 3000);
+  if (title.length < 8 || summary.length < 20 || body.length < 80) throw new Error('AI 초안의 내용이 부족합니다. 다른 기사를 선택해 주세요.');
+  return { title, summary, body };
 }
 
 function decodeXml(value) {
@@ -103,7 +149,7 @@ export async function onRequest({ request, env }) {
   const currentDay = day();
   if (request.method === 'GET') {
     if (!await authorized(request, env)) return json({ authenticated: false }, 401);
-    const { results = [] } = await env.ds.prepare('SELECT id, title, source, url, published_at, approved_day, featured_order FROM news_items WHERE published_at >= ? ORDER BY CASE WHEN approved_day = ? THEN 0 ELSE 1 END, featured_order, published_at DESC LIMIT 60')
+    const { results = [] } = await env.ds.prepare('SELECT id, title, source, url, published_at, approved_day, featured_order, article_title, article_summary, article_body, article_reviewed FROM news_items WHERE published_at >= ? ORDER BY CASE WHEN approved_day = ? THEN 0 ELSE 1 END, featured_order, published_at DESC LIMIT 60')
       .bind(new Date(Date.now() - 3 * 86400000).toISOString(), currentDay).all();
     return json({ authenticated: true, day: currentDay, news: results });
   }
@@ -133,11 +179,36 @@ export async function onRequest({ request, env }) {
     try { return json({ ok: true, ...await refresh(env.ds, env.AI) }); }
     catch (error) { return json({ error: String(error.message || error) }, 502); }
   }
+  if (data.action === 'draft') {
+    const id = Number(data.id);
+    if (!Number.isSafeInteger(id) || id < 1) return json({ error: '기사를 선택해 주세요.' }, 400);
+    const row = await env.ds.prepare('SELECT id, title, source, url, published_at FROM news_items WHERE id = ? AND published_at >= ?')
+      .bind(id, new Date(Date.now() - 3 * 86400000).toISOString()).first();
+    if (!row) return json({ error: '기사 후보를 다시 선택해 주세요.' }, 404);
+    try {
+      const article = await draft(row, env.AI);
+      await env.ds.prepare('UPDATE news_items SET article_title = ?, article_summary = ?, article_body = ?, article_reviewed = 0 WHERE id = ?')
+        .bind(article.title, article.summary, article.body, id).run();
+      return json({ ok: true, article });
+    } catch (error) { return json({ error: String(error.message || error) }, 422); }
+  }
+  if (data.action === 'save') {
+    const id = Number(data.id);
+    const title = String(data.title || '').trim().slice(0, 130);
+    const summary = String(data.summary || '').trim().slice(0, 300);
+    const body = String(data.body || '').trim().slice(0, 3000);
+    if (!Number.isSafeInteger(id) || title.length < 8 || summary.length < 20 || body.length < 80) return json({ error: '제목·요약·본문 내용을 확인해 주세요.' }, 400);
+    const existing = await env.ds.prepare('SELECT id, article_body FROM news_items WHERE id = ?').bind(id).first();
+    if (!existing?.article_body) return json({ error: 'AI 초안을 먼저 작성해 주세요.' }, 400);
+    await env.ds.prepare('UPDATE news_items SET article_title = ?, article_summary = ?, article_body = ?, article_reviewed = 1 WHERE id = ?')
+      .bind(title, summary, body, id).run();
+    return json({ ok: true });
+  }
   if (data.action === 'publish') {
     const ids = data.ids;
     if (!Array.isArray(ids) || ids.length !== 3 || new Set(ids).size !== 3 || ids.some(id => !Number.isSafeInteger(id) || id < 1)) return json({ error: '서로 다른 기사 3개를 선택하세요.' }, 400);
-    const rows = await env.ds.prepare('SELECT id FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
-    if (rows.results?.length !== 3) return json({ error: '기사 선택을 다시 확인하세요.' }, 400);
+    const rows = await env.ds.prepare('SELECT id, article_title, article_summary, article_body, article_reviewed FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
+    if (rows.results?.length !== 3 || rows.results.some(row => !row.article_title || !row.article_summary || !row.article_body || !row.article_reviewed)) return json({ error: '선택한 글 3개를 검토하고 각각 수정한 글 저장을 눌러주세요.' }, 400);
     await env.ds.batch([
       env.ds.prepare('UPDATE news_items SET approved_day = NULL, featured_order = 99 WHERE approved_day = ?').bind(currentDay),
       ...ids.map((id, index) => env.ds.prepare('UPDATE news_items SET approved_day = ?, featured_order = ? WHERE id = ?').bind(currentDay, index + 1, id))
