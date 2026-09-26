@@ -1,141 +1,148 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,nofollow">
-  <title>정읍 뉴스 승인 | 정읍문화소식</title>
-  <style>
-    :root { font-family: system-ui, sans-serif; color: #24302b; background: #f5f7f4; }
-    * { box-sizing: border-box; }
-    body { margin: 0; }
-    main { width: min(980px, calc(100% - 32px)); margin: 36px auto 80px; }
-    h1 { font-size: clamp(1.5rem, 4vw, 2rem); margin-bottom: 8px; }
-    p { line-height: 1.6; color: #52615a; }
-    .panel { background: white; padding: 24px; border: 1px solid #d9e2dc; border-radius: 18px; margin-top: 20px; }
-    input[type=password] { width: min(100%, 340px); padding: 12px; border: 1px solid #bbc9bf; border-radius: 10px; font: inherit; }
-    button { border: 0; border-radius: 10px; padding: 12px 16px; background: #176548; color: white; font: inherit; font-weight: 700; cursor: pointer; }
-    button:disabled { opacity: .55; cursor: wait; }
-    button.secondary { color: #176548; background: #e4f1e9; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
-    #list { display: grid; gap: 12px; margin: 16px 0; }
-    .item { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid #d9e2dc; border-radius: 12px; background: #fff; }
-    .item.selected { border-color: #176548; background: #f0f8f2; }
-    .item input { margin-top: 5px; width: 19px; height: 19px; }
-    .item strong { display: block; line-height: 1.5; }
-    .item small { display: block; margin-top: 8px; color: #586760; }
-    .item a { color: #176548; }
-    #status { min-height: 25px; font-weight: 700; }
-  </style>
-</head>
-<body>
-<main>
-  <a href="/">← 정읍문화소식</a>
-  <h1>오늘의 정읍 뉴스 승인</h1>
-  <p>기사 후보를 확인하고 3개를 선택해 게시합니다. 원문은 제목을 눌러 확인하세요.</p>
-  <section id="loginPanel" class="panel" hidden>
-    <h2>관리자 로그인</h2>
-    <form id="loginForm">
-      <input id="password" type="password" autocomplete="current-password" aria-label="관리자 비밀번호" required>
-      <button type="submit">로그인</button>
-    </form>
-  </section>
-  <section id="adminPanel" class="panel" hidden>
-    <h2 id="dateLabel">기사 후보</h2>
-    <p>최근 정읍 기사를 가져와 AI가 관심도가 높을 만한 순서로 추천합니다. 최종 게시 기사는 직접 결정합니다.</p>
-    <div class="actions">
-      <button id="refreshBtn" type="button">새 기사 후보 찾기</button>
-      <button id="publishBtn" type="button">선택한 3개 게시</button>
-      <button id="logoutBtn" type="button" class="secondary">로그아웃</button>
-    </div>
-    <div id="list"></div>
-  </section>
-  <p id="status" role="status" aria-live="polite"></p>
-</main>
-<script>
-const endpoint = '/api/news-admin';
-const statusBox = document.getElementById('status');
-let items = [];
-async function call(data) {
-  const response = await fetch(endpoint, {
-    method: 'POST', credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || '요청에 실패했습니다.');
-  return result;
+const cookieName = 'jeongeup_news_admin';
+const encoder = new TextEncoder();
+
+function json(body, status = 200, headers = {}) {
+  return Response.json(body, { status, headers: { 'Cache-Control': 'no-store', ...headers } });
 }
-function message(text) { statusBox.textContent = text; }
-function busy(value) { for (const b of document.querySelectorAll('button')) b.disabled = value; }
-async function load() {
-  const response = await fetch(endpoint, { credentials: 'same-origin', cache: 'no-store' });
-  if (response.status === 401) {
-    document.getElementById('loginPanel').hidden = false;
-    document.getElementById('adminPanel').hidden = true;
-    return;
-  }
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || '불러오기에 실패했습니다.');
-  document.getElementById('loginPanel').hidden = true;
-  document.getElementById('adminPanel').hidden = false;
-  document.getElementById('dateLabel').textContent = data.day + ' 기사 후보';
-  items = data.news || [];
-  const list = document.getElementById('list');
-  list.replaceChildren();
-  if (!items.length) { list.textContent = '후보가 없습니다. 새 기사 후보 찾기를 눌러주세요.'; return; }
-  for (const item of items) {
-    const row = document.createElement('label');
-    row.className = 'item';
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox'; checkbox.value = item.id;
-    checkbox.checked = item.approved_day === data.day;
-    checkbox.addEventListener('change', () => {
-      row.classList.toggle('selected', checkbox.checked);
-      if (list.querySelectorAll('input:checked').length > 3) {
-        checkbox.checked = false; row.classList.remove('selected');
-        message('기사는 3개까지 선택할 수 있습니다.');
+
+function day() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+
+async function sign(value, secret) {
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const bytes = new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(value)));
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function equal(a, b) {
+  if (a.length !== b.length) return false;
+  let difference = 0;
+  for (let i = 0; i < a.length; i++) difference |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return difference === 0;
+}
+
+async function authorized(request, env) {
+  const cookie = request.headers.get('Cookie')?.split(';').map(x => x.trim()).find(x => x.startsWith(cookieName + '='))?.slice(cookieName.length + 1);
+  if (!cookie || !env.NEWS_ADMIN_PASSWORD) return false;
+  const [expiry, signature] = cookie.split('.');
+  if (!expiry || !signature || Number(expiry) < Date.now() || Number(expiry) > Date.now() + 86400000) return false;
+  return equal(signature, await sign(expiry, env.NEWS_ADMIN_PASSWORD));
+}
+
+async function init(db) {
+  await db.prepare(`CREATE TABLE IF NOT EXISTS news_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    source TEXT NOT NULL,
+    url TEXT NOT NULL UNIQUE,
+    published_at TEXT NOT NULL,
+    approved_day TEXT,
+    featured_order INTEGER NOT NULL DEFAULT 99,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`).run();
+  await db.prepare(`CREATE TABLE IF NOT EXISTS news_login_attempts (
+    ip TEXT PRIMARY KEY, attempts INTEGER NOT NULL DEFAULT 0, first_attempt INTEGER NOT NULL
+  )`).run();
+}
+
+function decodeXml(value) {
+  return value.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&#(x[\da-f]+|\d+);/gi, (entity, n) => {
+      const codepoint = parseInt(n[0]?.toLowerCase() === 'x' ? n.slice(1) : n, n[0]?.toLowerCase() === 'x' ? 16 : 10);
+      return codepoint > 0 && codepoint <= 0x10ffff && !(codepoint >= 0xd800 && codepoint <= 0xdfff)
+        ? String.fromCodePoint(codepoint) : entity;
+    })
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+}
+
+function tag(xml, name) {
+  return decodeXml(xml.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${name}>`, 'i'))?.[1] || '').trim();
+}
+
+async function refresh(db, ai) {
+  const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent('정읍 when:2d') + '&hl=ko&gl=KR&ceid=KR:ko';
+  const response = await fetch(url, { headers: { 'User-Agent': 'JeongeupCultureNews/1.0' }, signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error('기사 검색에 실패했습니다.');
+  const xml = await response.text();
+  const candidates = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 30).map(m => {
+    const body = m[1];
+    const fullTitle = tag(body, 'title');
+    const source = tag(body, 'source') || fullTitle.split(' - ').pop() || '언론사';
+    const title = fullTitle.endsWith(' - ' + source) ? fullTitle.slice(0, -source.length - 3) : fullTitle;
+    const published = new Date(tag(body, 'pubDate'));
+    return { title, source, url: tag(body, 'link'), published_at: Number.isNaN(published.valueOf()) ? '' : published.toISOString() };
+  }).filter(x => x.title.includes('정읍') && x.published_at && /^https:\/\//.test(x.url));
+  let ranked = candidates;
+  let usedAi = false;
+  if (ai && candidates.length) {
+    try {
+      const result = await ai.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
+        messages: [
+          { role: 'system', content: '정읍 지역 뉴스 편집자입니다. 제공된 제목만 보고 지역 주민의 관심도가 높고 서로 다른 이슈의 기사 3개를 고르세요. 사실을 만들지 말고 번호 3개만 쉼표로 출력하세요.' },
+          { role: 'user', content: candidates.map((x, i) => `${i + 1}. ${x.title} (${x.source})`).join('\n') }
+        ], max_tokens: 50
+      });
+      const numbers = (String(result.response || '').match(/\d+/g) || []).map(Number).filter(n => n >= 1 && n <= candidates.length);
+      if (new Set(numbers).size >= 3) {
+        ranked = [...new Set(numbers)].map(n => candidates[n - 1]).concat(candidates.filter((_, i) => !numbers.includes(i + 1)));
+        usedAi = true;
       }
-    });
-    row.classList.toggle('selected', checkbox.checked);
-    const body = document.createElement('div');
-    const link = document.createElement('a');
-    link.href = item.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-    link.textContent = item.title;
-    const strong = document.createElement('strong'); strong.append(link);
-    const small = document.createElement('small');
-    small.textContent = item.source + ' · ' + item.published_at.slice(0, 10) + (checkbox.checked ? ' · 현재 게시 중' : '');
-    body.append(strong, small); row.append(checkbox, body); list.append(row);
+    } catch (error) { console.error('AI 추천 실패', error); }
   }
+  for (const item of ranked) {
+    await db.prepare('INSERT OR IGNORE INTO news_items (title, source, url, published_at) VALUES (?, ?, ?, ?)')
+      .bind(item.title, item.source, item.url, item.published_at).run();
+  }
+  return { count: ranked.length, usedAi };
 }
-document.getElementById('loginForm').addEventListener('submit', async event => {
-  event.preventDefault(); busy(true);
-  try {
-    await call({ action: 'login', password: document.getElementById('password').value });
-    document.getElementById('password').value = '';
-    message('로그인했습니다.'); await load();
-  } catch (error) { message(error.message); } finally { busy(false); }
-});
-document.getElementById('refreshBtn').addEventListener('click', async () => {
-  busy(true); message('기사 후보를 찾는 중입니다.');
-  try {
-    const data = await call({ action: 'refresh' });
-    await load();
-    message(data.count + '개 후보를 찾았습니다.' + (data.usedAi ? ' AI 추천 순서로 표시합니다.' : ' AI 연결이 없거나 응답하지 않아 최신순으로 표시합니다.'));
-  } catch (error) { message(error.message); } finally { busy(false); }
-});
-document.getElementById('publishBtn').addEventListener('click', async () => {
-  const ids = [...document.querySelectorAll('#list input:checked')].map(input => Number(input.value));
-  if (ids.length !== 3) { message('기사 3개를 선택하세요.'); return; }
-  busy(true);
-  try { await call({ action: 'publish', ids }); await load(); message('선택한 기사 3개가 오늘의 뉴스에 게시됐습니다.'); }
-  catch (error) { message(error.message); } finally { busy(false); }
-});
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  try { await call({ action: 'logout' }); await load(); message('로그아웃했습니다.'); }
-  catch (error) { message(error.message); }
-});
-load().catch(error => message(error.message));
-</script>
-</body>
-</html>
+
+export async function onRequest({ request, env }) {
+  if (!env.ds || !env.NEWS_ADMIN_PASSWORD || env.NEWS_ADMIN_PASSWORD.length < 16) return json({ error: '서버 설정이 필요합니다.' }, 503);
+  await init(env.ds);
+  const currentDay = day();
+  if (request.method === 'GET') {
+    if (!await authorized(request, env)) return json({ authenticated: false }, 401);
+    const { results = [] } = await env.ds.prepare('SELECT id, title, source, url, published_at, approved_day, featured_order FROM news_items WHERE published_at >= ? ORDER BY CASE WHEN approved_day = ? THEN 0 ELSE 1 END, featured_order, published_at DESC LIMIT 60')
+      .bind(new Date(Date.now() - 3 * 86400000).toISOString(), currentDay).all();
+    return json({ authenticated: true, day: currentDay, news: results });
+  }
+  if (request.method !== 'POST') return json({ error: '허용되지 않은 요청' }, 405);
+  const origin = request.headers.get('Origin');
+  if (!origin || origin !== new URL(request.url).origin) return json({ error: '요청 출처가 올바르지 않습니다.' }, 403);
+  let data;
+  try { data = await request.json(); } catch { return json({ error: '요청 형식 오류' }, 400); }
+  if (data.action === 'login') {
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const previous = await env.ds.prepare('SELECT attempts, first_attempt FROM news_login_attempts WHERE ip = ?').bind(ip).first();
+    if (previous?.attempts >= 5 && Date.now() - previous.first_attempt < 900000) return json({ error: '15분 후 다시 시도해 주세요.' }, 429);
+    const password = String(data.password || '');
+    if (!equal(password, env.NEWS_ADMIN_PASSWORD)) {
+      const attempts = previous && Date.now() - previous.first_attempt < 900000 ? previous.attempts + 1 : 1;
+      const first = attempts === 1 ? Date.now() : previous.first_attempt;
+      await env.ds.prepare('INSERT INTO news_login_attempts (ip, attempts, first_attempt) VALUES (?, ?, ?) ON CONFLICT(ip) DO UPDATE SET attempts = excluded.attempts, first_attempt = excluded.first_attempt').bind(ip, attempts, first).run();
+      return json({ error: '비밀번호가 올바르지 않습니다.' }, 401);
+    }
+    await env.ds.prepare('DELETE FROM news_login_attempts WHERE ip = ?').bind(ip).run();
+    const expiry = String(Date.now() + 8 * 3600000);
+    return json({ ok: true }, 200, { 'Set-Cookie': `${cookieName}=${expiry}.${await sign(expiry, password)}; Path=/api/news-admin; HttpOnly; Secure; SameSite=Strict; Max-Age=28800` });
+  }
+  if (!await authorized(request, env)) return json({ error: '관리자 로그인이 필요합니다.' }, 401);
+  if (data.action === 'logout') return json({ ok: true }, 200, { 'Set-Cookie': `${cookieName}=; Path=/api/news-admin; HttpOnly; Secure; SameSite=Strict; Max-Age=0` });
+  if (data.action === 'refresh') {
+    try { return json({ ok: true, ...await refresh(env.ds, env.AI) }); }
+    catch (error) { return json({ error: String(error.message || error) }, 502); }
+  }
+  if (data.action === 'publish') {
+    const ids = data.ids;
+    if (!Array.isArray(ids) || ids.length !== 3 || new Set(ids).size !== 3 || ids.some(id => !Number.isSafeInteger(id) || id < 1)) return json({ error: '서로 다른 기사 3개를 선택하세요.' }, 400);
+    const rows = await env.ds.prepare('SELECT id FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
+    if (rows.results?.length !== 3) return json({ error: '기사 선택을 다시 확인하세요.' }, 400);
+    await env.ds.batch([
+      env.ds.prepare('UPDATE news_items SET approved_day = NULL, featured_order = 99 WHERE approved_day = ?').bind(currentDay),
+      ...ids.map((id, index) => env.ds.prepare('UPDATE news_items SET approved_day = ?, featured_order = ? WHERE id = ?').bind(currentDay, index + 1, id))
+    ]);
+    return json({ ok: true, day: currentDay });
+  }
+  return json({ error: '알 수 없는 작업' }, 400);
+}
