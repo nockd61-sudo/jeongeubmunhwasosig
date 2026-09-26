@@ -52,13 +52,16 @@ async function init(db) {
 }
 
 function readableText(html) {
-  const description = [...html.matchAll(/<meta\s+[^>]*(?:name|property)=["'](?:description|og:description)["'][^>]*content=["']([^"']+)["']/gi)]
-    .map(match => decodeXml(match[1]));
+  const description = [...html.matchAll(/<meta\b[^>]*>/gi)].filter(match => /(?:name|property)=["'](?:description|og:description)["']/i.test(match[0]))
+    .map(match => decodeXml(match[0].match(/\bcontent=["']([^"']+)["']/i)?.[1] || '')).filter(Boolean);
+  const structured = [...html.matchAll(/"articleBody"\s*:\s*"((?:\\.|[^"\\])*)"/gi)]
+    .map(match => { try { return JSON.parse('"' + match[1] + '"'); } catch { return ''; } })
+    .map(value => value.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()).filter(value => value.length >= 180);
   const article = html.match(/<article\b[^>]*>([\s\S]*?)<\/article>/i)?.[1] || html;
   const paragraphs = [...article.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)]
     .map(match => decodeXml(match[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()))
     .filter(value => value.length >= 35).slice(0, 24);
-  return [...description, ...paragraphs].join('\n').slice(0, 10000);
+  return [...structured, ...paragraphs, ...description].filter((value, index, all) => all.indexOf(value) === index).join('\n').slice(0, 10000);
 }
 
 function publisherUrl(link) {
@@ -99,7 +102,7 @@ async function sourceText(row) {
   if (!response.ok || !response.headers.get('content-type')?.includes('html')) throw new Error('원문 내용을 읽을 수 없습니다. 아래 칸에 원문을 붙여 넣어 주세요.');
   const html = (await response.text()).slice(0, 300000);
   const content = readableText(html);
-  if (content.length < 450) throw new Error('원문에서 확인할 정보가 부족합니다. 아래 칸에 원문을 붙여 넣어 주세요.');
+  if (content.length < 240) throw new Error('원문에서 확인할 정보가 부족합니다. 아래 칸에 원문을 붙여 넣어 주세요.');
   return { content, url };
 }
 
