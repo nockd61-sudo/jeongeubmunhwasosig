@@ -209,6 +209,20 @@
       cursor: pointer;
     }
 
+
+    .today-news { margin-top: 26px; margin-bottom: 32px; }
+    .today-news-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .today-news-heading .section-title { margin: 2px 0 0; }
+    .today-news-eyebrow { margin: 0; color: var(--brand); font-size: .85rem; font-weight: 700; }
+    .today-news-date { color: var(--muted); font-size: .86rem; white-space: nowrap; }
+    .today-news-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .today-news-card { display: flex; min-height: 168px; flex-direction: column; justify-content: space-between; gap: 22px; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: var(--shadow); color: inherit; text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
+    .today-news-card:hover, .today-news-card:focus-visible { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,.1); }
+    .today-news-card h3 { margin: 0; font-size: 1.1rem; line-height: 1.48; word-break: keep-all; }
+    .today-news-card-meta { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: .83rem; }
+    .today-news-empty { grid-column: 1 / -1; padding: 32px 22px; border: 1px solid var(--line); border-radius: 18px; background: #fff; color: var(--muted); text-align: center; }
+    @media (max-width: 760px) { .today-news-grid { grid-template-columns: 1fr; } .today-news-card { min-height: 130px; } .today-news-heading { align-items: start; flex-direction: column; gap: 5px; } }
+
     .ai-search-wrap {
       background: #fff;
       border: 1px solid var(--line);
@@ -1109,28 +1123,23 @@
     </div>
   </section>
 
+  <section class="wrap today-news" aria-labelledby="todayNewsTitle">
+    <div class="today-news-heading">
+      <div><p class="today-news-eyebrow">정읍에서 지금 주목받는 이야기</p><h2 id="todayNewsTitle" class="section-title">오늘의 정읍 뉴스</h2></div>
+      <span id="todayNewsDate" class="today-news-date"></span>
+    </div>
+    <div id="todayNewsGrid" class="today-news-grid" aria-live="polite">
+      <div class="today-news-empty">오늘의 뉴스가 준비 중입니다.</div>
+    </div>
+  </section>
+
   <section id="board" class="wrap">
     <h2 class="section-title">가까운 날짜순 문화소식</h2>
-
-    <div class="ai-search-wrap">
-      <div class="ai-search-title-row">
-        <h3 class="ai-search-title">AI 전체검색</h3>
-      </div>
-
-      <p class="ai-search-desc">정읍의 축제, 전시, 공연, 체험 등 문화행사를 구글에서 검색합니다.</p>
-
-      <div class="toolbar ai-toolbar">
-        <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1">
-          <option value="all" selected>전체</option>
-          <option value="image">이미지</option>
-          <option value="video">영상</option>
-        </select>
-       <input id="searchInput" type="text"
-  placeholder="정읍 행사명을 검색해보세요"
-  onkeydown="if(event.key==='Enter') searchGoogle()">
-      <button id="searchBtn" type="button" onclick="searchGoogle()">전체검색</button>
-      </div>
-    </div>
+    <select id="filterType" class="ai-hidden-select" aria-hidden="true" tabindex="-1" hidden>
+      <option value="all" selected>전체</option>
+      <option value="image">이미지</option>
+      <option value="video">영상</option>
+    </select>
 
     <div class="cards" id="eventGrid"></div>
     <div class="pagination" id="paginationInfo">가까운 날짜순 8개 노출</div>
@@ -3285,19 +3294,6 @@ function ensureKakaoReady() {
   return !!window.Kakao.Share;
 }
 
-function searchGoogle() {
-  const input = document.querySelector('#searchInput');
-  const q = input ? input.value.trim() : '';
-
-  if (!q) {
-    alert('검색어를 입력해주세요.');
-    return;
-  }
-
-  const query = encodeURIComponent(q + ' 정읍 행사 전시 공연 축제');
-  window.open('https://www.google.com/search?q=' + query, '_blank', 'noopener');
-}
-
 </script>
 
 <script>
@@ -3327,6 +3323,46 @@ function updatePastArchiveButton() {
 document.addEventListener('DOMContentLoaded', function () {
   setTimeout(updatePastArchiveButton, 1200);
 });
+</script>
+
+
+<script>
+async function loadTodayNews() {
+  const grid = document.getElementById('todayNewsGrid');
+  const date = document.getElementById('todayNewsDate');
+  if (!grid) return;
+  if (date) date.textContent = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
+  try {
+    const response = await fetch('/api/news', { cache: 'no-store' });
+    if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('뉴스 응답 오류');
+    const data = await response.json();
+    const items = Array.isArray(data.news) ? data.news.slice(0, 3) : [];
+    if (!items.length) return;
+    grid.replaceChildren();
+    for (const item of items) {
+      if (!item.title || !item.url || !/^https:\/\//i.test(item.url)) continue;
+      const link = document.createElement('a');
+      link.className = 'today-news-card';
+      link.href = item.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      const title = document.createElement('h3');
+      title.textContent = item.title;
+      const meta = document.createElement('div');
+      meta.className = 'today-news-card-meta';
+      const source = document.createElement('span');
+      source.textContent = item.source || '정읍 소식';
+      const published = document.createElement('span');
+      published.textContent = item.published_at ? String(item.published_at).slice(0, 10) : '';
+      meta.append(source, published);
+      link.append(title, meta);
+      grid.append(link);
+    }
+  } catch (error) {
+    console.info('뉴스를 불러오지 못했습니다.', error);
+  }
+}
+document.addEventListener('DOMContentLoaded', loadTodayNews);
 </script>
 
 </body>
