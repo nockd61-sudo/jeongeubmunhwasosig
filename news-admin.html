@@ -23,7 +23,8 @@
     #list { display: grid; gap: 12px; margin: 16px 0; }
     .item { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border: 1px solid #d9e2dc; border-radius: 12px; background: #fff; }
     .item.selected { border-color: #176548; background: #f0f8f2; }
-    .item input { margin-top: 5px; width: 19px; height: 19px; }
+    .item input[type=checkbox] { margin-top: 5px; width: 19px; height: 19px; flex: 0 0 19px; }
+    .item > div { flex: 1; min-width: 0; }
     .item strong { display: block; line-height: 1.5; }
     .item small { display: block; margin-top: 8px; color: #586760; }
     .item a { color: #176548; }
