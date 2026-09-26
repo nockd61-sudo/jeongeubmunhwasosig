@@ -211,6 +211,9 @@
 
 
     .today-news { margin-top: 26px; margin-bottom: 32px; }
+    .today-news-tools { display: flex; align-items: center; gap: 14px; }
+    .admin-news-link { display: none; color: var(--brand); font-weight: 700; text-decoration: none; }
+    body.admin-mode .admin-news-link { display: inline; }
     .today-news-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
     .today-news-heading .section-title { margin: 2px 0 0; }
     .today-news-eyebrow { margin: 0; color: var(--brand); font-size: .85rem; font-weight: 700; }
@@ -1126,7 +1129,7 @@
   <section class="wrap today-news" aria-labelledby="todayNewsTitle">
     <div class="today-news-heading">
       <div><p class="today-news-eyebrow">정읍에서 지금 주목받는 이야기</p><h2 id="todayNewsTitle" class="section-title">오늘의 정읍 뉴스</h2></div>
-      <span id="todayNewsDate" class="today-news-date"></span>
+      <div class="today-news-tools"><span id="todayNewsDate" class="today-news-date"></span><a class="admin-news-link" href="/news-admin.html">뉴스 승인 →</a></div>
     </div>
     <div id="todayNewsGrid" class="today-news-grid" aria-live="polite">
       <div class="today-news-empty">오늘의 뉴스가 준비 중입니다.</div>
@@ -1454,7 +1457,6 @@ const PARTICIPANT_PHOTO_CATEGORY = '참가사진';
 const PARTICIPANT_PHOTOS_LOCAL_KEY = 'jeongeup-participant-photos-v2';
 const API_STATS_ENDPOINT = '/api/stats';
 const API_STATS_VIEW_ENDPOINT = '/api/stats/view';
-const ADMIN_PASSWORD = '1234';
 const R2_UPLOAD_ENDPOINT = 'https://jeongeup-upload.nockd61.workers.dev';
 const HIDDEN_BROKEN_POST_IDS_KEY = 'jeongeup-hidden-broken-post-ids-v1';
 const SITE_CANONICAL_URL = 'https://www.jeongeup-art.com/';
@@ -2546,15 +2548,8 @@ function showNoticeList() {
   delete noticeForm.dataset.editId;
 }
 
-function showNoticeWrite() {
-  if (!isAdminLoggedIn) {
-    const password = prompt('관리자 비밀번호를 입력하세요');
-    if (password !== ADMIN_PASSWORD) {
-      alert('관리자만 접근 가능합니다');
-      return;
-    }
-    setAdminMode(true);
-  }
+async function showNoticeWrite() {
+  if (!isAdminLoggedIn && !await authenticateAdmin()) return;
   noticeListPanel.style.display = 'none';
   noticeWritePanel.style.display = 'block';
   noticeViewTab.className = 'reset';
@@ -2863,21 +2858,48 @@ window.playCustomVideo = playCustomVideo;
 window.editVideo = editVideo;
 window.deleteVideo = deleteVideo;
 
-adminLoginBtn.addEventListener('click', () => {
+async function authenticateAdmin() {
+  const password = prompt('관리자 비밀번호를 입력하세요');
+  if (password === null) return false;
+  try {
+    const response = await fetch('/api/news-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'login', password })
+    });
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || '관리자 로그인 실패');
+    }
+    setAdminMode(true);
+    return true;
+  } catch (error) {
+    alert(error.message);
+    return false;
+  }
+}
+
+adminLoginBtn.addEventListener('click', async () => {
   if (isAdminLoggedIn) {
+    await fetch('/api/news-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ action: 'logout' })
+    });
     setAdminMode(false);
-    alert('관리자 로그아웃 되었습니다.');
     return;
   }
-
-  const password = prompt('관리자 비밀번호를 입력하세요');
-  if (password === ADMIN_PASSWORD) {
-    setAdminMode(true);
-    alert('관리자 로그인 완료');
-  } else {
-    alert('비밀번호가 올바르지 않습니다');
+  if (await authenticateAdmin()) {
+    document.getElementById('todayNewsTitle')?.scrollIntoView({ behavior: 'smooth' });
+    alert('로그인했습니다. 오늘의 정읍 뉴스 옆의 뉴스 승인을 눌러주세요.');
   }
 });
+
+fetch('/api/news-admin', { credentials: 'same-origin', cache: 'no-store' })
+  .then(response => { if (response.ok) setAdminMode(true); })
+  .catch(error => console.info('관리자 상태 확인 실패', error));
 
 noticeViewTab.addEventListener('click', showNoticeList);
 noticeWriteTab.addEventListener('click', showNoticeWrite);
