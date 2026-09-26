@@ -37,11 +37,13 @@ function normalizeRow(row) {
 }
 
 async function listPosts(env) {
-  if (!env.DB) {
+  if (!env.ds) {
     throw new Error('D1 binding DB가 연결되어 있지 않습니다.');
   }
 
-  const { results } = await env.DB.prepare(`
+  const { results } = await env.ds
+    
+    .prepare(`
     SELECT
       id,
       title,
@@ -112,7 +114,7 @@ export async function onRequestPost(context) {
       }, 400);
     }
 
-    await context.env.DB.prepare(`
+    await context.env.ds.prepare(`
       INSERT INTO posts (
         id,
         title,
@@ -172,13 +174,13 @@ export async function onRequestPatch(context) {
     }
 
     if (action === 'view') {
-      await context.env.DB.prepare(`
+      await context.env.ds.prepare(`
         UPDATE posts
         SET views = COALESCE(views, 0) + 1
         WHERE id = ?
       `).bind(id).run();
 
-      const row = await context.env.DB.prepare(`
+      const row = await context.env.ds.prepare(`
         SELECT views
         FROM posts
         WHERE id = ?
@@ -190,13 +192,13 @@ export async function onRequestPatch(context) {
       });
     }
 
-    await context.env.DB.prepare(`
+    await context.env.ds.prepare(`
       UPDATE posts
       SET likes = COALESCE(likes, 0) + 1
       WHERE id = ?
     `).bind(id).run();
 
-    const row = await context.env.DB.prepare(`
+    const row = await context.env.ds.prepare(`
       SELECT likes
       FROM posts
       WHERE id = ?
@@ -235,12 +237,12 @@ export async function onRequestDelete(context) {
       }, 400);
     }
 
-    await context.env.DB.prepare(`
+    await context.env.ds.prepare(`
       DELETE FROM comments
       WHERE post_id = ?
     `).bind(id).run();
 
-    await context.env.DB.prepare(`
+    await context.env.ds.prepare(`
       DELETE FROM posts
       WHERE id = ?
     `).bind(id).run();
