@@ -72,9 +72,9 @@ async function sourceText(url) {
   return content;
 }
 
-async function draft(row, ai) {
+async function draft(row, ai, suppliedText = '') {
   if (!ai) throw new Error('Cloudflare Workers AI 바인딩 AI를 먼저 연결해 주세요.');
-  const content = await sourceText(row.url);
+  const content = suppliedText || await sourceText(row.url);
   const result = await ai.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
     messages: [
       { role: 'system', content: '당신은 정읍문화소식 편집자입니다. 제공된 원문 텍스트에 명시된 사실만 사용하여 한국어 지역 뉴스를 새 문장으로 작성하세요. 추측, 인용문 창작, 원문 문장 복사를 금지합니다. 내용이 부족하면 ERROR만 출력하세요. 제목 1줄, 요약 1줄, 본문 2~3문단을 아래 JSON만으로 출력하세요: {"title":"...","summary":"...","body":"..."}. 출처 표시는 별도로 처리합니다.' },
@@ -182,11 +182,13 @@ export async function onRequest({ request, env }) {
   if (data.action === 'draft') {
     const id = Number(data.id);
     if (!Number.isSafeInteger(id) || id < 1) return json({ error: '기사를 선택해 주세요.' }, 400);
+    const suppliedText = String(data.sourceText || '').trim();
+    if (suppliedText && (suppliedText.length < 250 || suppliedText.length > 10000)) return json({ error: '원문 내용을 250~10,000자로 입력해 주세요.' }, 400);
     const row = await env.ds.prepare('SELECT id, title, source, url, published_at FROM news_items WHERE id = ? AND published_at >= ?')
       .bind(id, new Date(Date.now() - 3 * 86400000).toISOString()).first();
     if (!row) return json({ error: '기사 후보를 다시 선택해 주세요.' }, 404);
     try {
-      const article = await draft(row, env.AI);
+      const article = await draft(row, env.AI, suppliedText);
       await env.ds.prepare('UPDATE news_items SET article_title = ?, article_summary = ?, article_body = ?, article_reviewed = 0 WHERE id = ?')
         .bind(article.title, article.summary, article.body, id).run();
       return json({ ok: true, article });
