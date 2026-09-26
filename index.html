@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="naver-site-verification" content="64bafd596432749e7ef3f9374992598b70b111a5" />
 
@@ -1792,12 +1793,21 @@ function sortPosts(posts) {
 async function fetchPosts() {
   try {
     const data = await apiJson(API_POSTS_ENDPOINT);
-    const items = Array.isArray(data.posts) ? data.posts : [];
-    cachedPosts = sortPosts(items.map(normalizePost).filter(Boolean));
+
+    const items = Array.isArray(data)
+      ? data
+      : (Array.isArray(data.posts) ? data.posts : []);
+
+    cachedPosts = sortPosts(
+      items.map(normalizePost).filter(Boolean)
+    );
+
+    console.log('게시글 불러오기 성공:', cachedPosts.length);
   } catch (error) {
     console.error('게시글 읽기 실패', error);
     cachedPosts = [];
   }
+
   return cachedPosts;
 }
 
