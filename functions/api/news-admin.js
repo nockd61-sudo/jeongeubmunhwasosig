@@ -61,20 +61,52 @@ function readableText(html) {
   return [...description, ...paragraphs].join('\n').slice(0, 10000);
 }
 
-async function sourceText(url) {
+function publisherUrl(link) {
+  try {
+    const url = new URL(link);
+    const target = url.hostname.endsWith('bing.com') ? url.searchParams.get('url') : link;
+    const parsed = new URL(target);
+    if (parsed.protocol !== 'https:' || /(^|\.)(google|bing)\.com$/i.test(parsed.hostname)) return '';
+    return parsed.href;
+  } catch { return ''; }
+}
+
+function comparable(value) {
+  return value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+}
+
+async function findOriginal(row) {
+  const query = 'https://www.bing.com/news/search?format=rss&mkt=ko-KR&q=' + encodeURIComponent(row.title);
+  const response = await fetch(query, { signal: AbortSignal.timeout(9000) });
+  if (!response.ok) return '';
+  const xml = await response.text();
+  const wanted = comparable(row.title);
+  for (const match of xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)) {
+    const title = comparable(tag(match[1], 'title').replace(/\s+-\s+[^-]+$/, ''));
+    if (title.length < 12 || !wanted || !(title.includes(wanted) || wanted.includes(title))) continue;
+    const url = publisherUrl(tag(match[1], 'link'));
+    if (url) return url;
+  }
+  return '';
+}
+
+async function sourceText(row) {
+  const url = publisherUrl(row.url) || await findOriginal(row);
+  if (!url) throw new Error('원문 주소를 자동으로 찾지 못했습니다. 아래 칸에 원문을 붙여 넣어 주세요.');
   const parsed = new URL(url);
-  if (parsed.protocol !== 'https:' || !/^(news\.google\.com|[a-z\d.-]+)$/i.test(parsed.hostname)) throw new Error('원문 주소가 올바르지 않습니다.');
+  if (parsed.protocol !== 'https:' || !/^[a-z\d.-]+$/i.test(parsed.hostname)) throw new Error('원문 주소가 올바르지 않습니다.');
   const response = await fetch(url, { signal: AbortSignal.timeout(12000), redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0 (compatible; JeongeupCultureNews/1.0)' } });
-  if (!response.ok || !response.headers.get('content-type')?.includes('html')) throw new Error('원문 내용을 읽을 수 없습니다. 다른 기사를 선택해 주세요.');
+  if (!response.ok || !response.headers.get('content-type')?.includes('html')) throw new Error('원문 내용을 읽을 수 없습니다. 아래 칸에 원문을 붙여 넣어 주세요.');
   const html = (await response.text()).slice(0, 300000);
   const content = readableText(html);
-  if (content.length < 450) throw new Error('원문에서 확인할 정보가 부족합니다. 다른 기사를 선택해 주세요.');
-  return content;
+  if (content.length < 450) throw new Error('원문에서 확인할 정보가 부족합니다. 아래 칸에 원문을 붙여 넣어 주세요.');
+  return { content, url };
 }
 
 async function draft(row, ai, suppliedText = '') {
   if (!ai) throw new Error('Cloudflare Workers AI 바인딩 AI를 먼저 연결해 주세요.');
-  const content = suppliedText || await sourceText(row.url);
+  const source = suppliedText ? { content: suppliedText, url: publisherUrl(row.url) || row.url } : await sourceText(row);
+  const content = source.content;
   const result = await ai.run('@cf/meta/llama-3.1-8b-instruct-fp8', {
     messages: [
       { role: 'system', content: '당신은 정읍문화소식 편집자입니다. 제공된 원문 텍스트에 명시된 사실만 사용하여 한국어 지역 뉴스를 새 문장으로 작성하세요. 추측, 인용문 창작, 원문 문장 복사를 금지합니다. 내용이 부족하면 ERROR만 출력하세요. 제목 1줄, 요약 1줄, 본문 2~3문단을 아래 JSON만으로 출력하세요: {"title":"...","summary":"...","body":"..."}. 출처 표시는 별도로 처리합니다.' },
@@ -89,7 +121,7 @@ async function draft(row, ai, suppliedText = '') {
   const summary = String(article.summary || '').trim().slice(0, 300);
   const body = String(article.body || '').trim().slice(0, 3000);
   if (title.length < 8 || summary.length < 20 || body.length < 80) throw new Error('AI 초안의 내용이 부족합니다. 다른 기사를 선택해 주세요.');
-  return { title, summary, body };
+  return { title, summary, body, sourceUrl: source.url };
 }
 
 function decodeXml(value) {
@@ -189,8 +221,8 @@ export async function onRequest({ request, env }) {
     if (!row) return json({ error: '기사 후보를 다시 선택해 주세요.' }, 404);
     try {
       const article = await draft(row, env.AI, suppliedText);
-      await env.ds.prepare('UPDATE news_items SET article_title = ?, article_summary = ?, article_body = ?, article_reviewed = 0 WHERE id = ?')
-        .bind(article.title, article.summary, article.body, id).run();
+      await env.ds.prepare('UPDATE news_items SET article_title = ?, article_summary = ?, article_body = ?, article_reviewed = 0, url = ? WHERE id = ?')
+        .bind(article.title, article.summary, article.body, article.sourceUrl, id).run();
       return json({ ok: true, article });
     } catch (error) { return json({ error: String(error.message || error) }, 422); }
   }
