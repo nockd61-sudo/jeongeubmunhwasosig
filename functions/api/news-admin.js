@@ -244,8 +244,8 @@ export async function onRequest({ request, env }) {
   if (data.action === 'publish') {
     const ids = data.ids;
     if (!Array.isArray(ids) || ids.length !== 3 || new Set(ids).size !== 3 || ids.some(id => !Number.isSafeInteger(id) || id < 1)) return json({ error: '서로 다른 기사 3개를 선택하세요.' }, 400);
-    const rows = await env.ds.prepare('SELECT id, article_title, article_summary, article_body, article_reviewed FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
-    if (rows.results?.length !== 3 || rows.results.some(row => !row.article_title || !row.article_summary || !row.article_body || !row.article_reviewed)) return json({ error: '선택한 글 3개를 검토하고 각각 수정한 글 저장을 눌러주세요.' }, 400);
+    const rows = await env.ds.prepare('SELECT id FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
+    if (rows.results?.length !== 3) return json({ error: '최근 기사 후보 3개를 다시 선택해 주세요.' }, 400);
     await env.ds.batch([
       env.ds.prepare('UPDATE news_items SET approved_day = NULL, featured_order = 99 WHERE approved_day = ?').bind(currentDay),
       ...ids.map((id, index) => env.ds.prepare('UPDATE news_items SET approved_day = ?, featured_order = ? WHERE id = ?').bind(currentDay, index + 1, id))
