@@ -3369,27 +3369,27 @@ async function loadTodayNews() {
     if (heading) heading.textContent = isToday || !items.length ? '오늘의 정읍 뉴스' : '최근 정읍 뉴스';
     if (date) date.textContent = isToday ? '오늘 승인한 기사' : items.length ? '최근 승인한 기사' : '';
     if (!items.length) {
-      grid.innerHTML = '<div class="today-news-empty">게시된 뉴스가 없습니다. 잠시 후 다시 확인해 주세요.</div>';
+      grid.innerHTML = '<div class="today-news-empty">게시된 정읍 이슈가 없습니다. 관리자에서 기사 3개를 선택해 주세요.</div>';
       return;
     }
     grid.replaceChildren();
     for (const item of items) {
-      if (!item.title || !Number.isSafeInteger(item.id) || item.id < 1) continue;
+      if (!item.title || !/^https:\/\//i.test(item.url || '')) continue;
       const link = document.createElement('a');
       link.className = 'today-news-card';
-      link.href = '/news-article.html?id=' + encodeURIComponent(item.id);
+      link.href = item.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
       const title = document.createElement('h3');
       title.textContent = item.title;
-      const summary = document.createElement('p');
-      summary.textContent = item.summary || '';
       const meta = document.createElement('div');
       meta.className = 'today-news-card-meta';
       const source = document.createElement('span');
       source.textContent = item.source || '정읍 소식';
       const published = document.createElement('span');
-      published.textContent = item.approved_day ? '게시 ' + item.approved_day : '';
+      published.textContent = item.published_at ? item.published_at.slice(0, 10) : '';
       meta.append(source, published);
-      link.append(title, summary, meta);
+      link.append(title, meta);
       grid.append(link);
     }
   } catch (error) {
