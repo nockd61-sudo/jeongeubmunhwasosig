@@ -146,7 +146,7 @@ async function refresh(db, ai) {
   const response = await fetch(url, { headers: { 'User-Agent': 'JeongeupCultureNews/1.0' }, signal: AbortSignal.timeout(10000) });
   if (!response.ok) throw new Error('기사 검색에 실패했습니다.');
   const xml = await response.text();
-  const candidates = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 30).map(m => {
+  const candidates = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 60).map(m => {
     const body = m[1];
     const fullTitle = tag(body, 'title');
     const source = tag(body, 'source') || fullTitle.split(' - ').pop() || '언론사';
@@ -184,9 +184,11 @@ export async function onRequest({ request, env }) {
   const currentDay = day();
   if (request.method === 'GET') {
     if (!await authorized(request, env)) return json({ authenticated: false }, 401);
-    const { results = [] } = await env.ds.prepare('SELECT id, title, source, url, published_at, approved_day, featured_order, article_title, article_summary, article_body, article_reviewed FROM news_items WHERE published_at >= ? ORDER BY CASE WHEN approved_day = ? THEN 0 ELSE 1 END, featured_order, published_at DESC LIMIT 60')
-      .bind(new Date(Date.now() - 3 * 86400000).toISOString(), currentDay).all();
-    return json({ authenticated: true, day: currentDay, news: results });
+    const active = await env.ds.prepare('SELECT MAX(approved_day) AS day FROM news_items WHERE approved_day IS NOT NULL').first();
+    const activeDay = active?.day || null;
+    const { results = [] } = await env.ds.prepare('SELECT id, title, source, url, published_at, approved_day, featured_order FROM news_items WHERE published_at >= ? ORDER BY CASE WHEN approved_day = ? THEN 0 ELSE 1 END, featured_order, published_at DESC LIMIT 120')
+      .bind(new Date(Date.now() - 3 * 86400000).toISOString(), activeDay).all();
+    return json({ authenticated: true, day: currentDay, activeDay, news: results });
   }
   if (request.method !== 'POST') return json({ error: '허용되지 않은 요청' }, 405);
   const origin = request.headers.get('Origin');
@@ -247,7 +249,7 @@ export async function onRequest({ request, env }) {
     const rows = await env.ds.prepare('SELECT id FROM news_items WHERE id IN (?, ?, ?) AND published_at >= ?').bind(...ids, new Date(Date.now() - 3 * 86400000).toISOString()).all();
     if (rows.results?.length !== 3) return json({ error: '최근 기사 후보 3개를 다시 선택해 주세요.' }, 400);
     await env.ds.batch([
-      env.ds.prepare('UPDATE news_items SET approved_day = NULL, featured_order = 99 WHERE approved_day = ?').bind(currentDay),
+      env.ds.prepare('UPDATE news_items SET approved_day = NULL, featured_order = 99 WHERE approved_day IS NOT NULL'),
       ...ids.map((id, index) => env.ds.prepare('UPDATE news_items SET approved_day = ?, featured_order = ? WHERE id = ?').bind(currentDay, index + 1, id))
     ]);
     return json({ ok: true, day: currentDay });
