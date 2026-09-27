@@ -212,6 +212,8 @@
 
     .today-news { margin-top: 26px; margin-bottom: 32px; }
     .today-news-tools { display: flex; align-items: center; gap: 14px; }
+    .today-news-refresh { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 7px 10px; cursor: pointer; }
+    .today-news-refresh:hover, .today-news-refresh:focus-visible { border-color: var(--brand); color: var(--brand-dark); }
     .admin-news-link { display: none; color: var(--brand); font-weight: 700; text-decoration: none; }
     body.admin-mode .admin-news-link { display: inline; }
     .today-news-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
@@ -1130,7 +1132,7 @@
   <section class="wrap today-news" aria-labelledby="todayNewsTitle">
     <div class="today-news-heading">
       <div><p class="today-news-eyebrow">정읍에서 지금 주목받는 이야기</p><h2 id="todayNewsTitle" class="section-title">오늘의 정읍 뉴스</h2></div>
-      <div class="today-news-tools"><span id="todayNewsDate" class="today-news-date"></span><a class="admin-news-link" href="/news-admin.html">뉴스 승인 →</a></div>
+      <div class="today-news-tools"><span id="todayNewsDate" class="today-news-date"></span><button id="todayNewsRefresh" class="today-news-refresh" type="button">새로고침</button><a class="admin-news-link" href="/news-admin.html">뉴스 승인 →</a></div>
     </div>
     <div id="todayNewsGrid" class="today-news-grid" aria-live="polite">
       <div class="today-news-empty">오늘의 뉴스가 준비 중입니다.</div>
@@ -3354,13 +3356,22 @@ async function loadTodayNews() {
   const grid = document.getElementById('todayNewsGrid');
   const date = document.getElementById('todayNewsDate');
   if (!grid) return;
-  if (date) date.textContent = new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric' }).format(new Date());
+  const heading = document.getElementById('todayNewsTitle');
+  const refresh = document.getElementById('todayNewsRefresh');
+  if (refresh) refresh.disabled = true;
+  grid.innerHTML = '<div class="today-news-empty">뉴스를 불러오는 중입니다.</div>';
   try {
     const response = await fetch('/api/news', { cache: 'no-store' });
     if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error('뉴스 응답 오류');
     const data = await response.json();
     const items = Array.isArray(data.news) ? data.news.slice(0, 3) : [];
-    if (!items.length) return;
+    const isToday = items.some(item => item.approved_day === data.today);
+    if (heading) heading.textContent = isToday || !items.length ? '오늘의 정읍 뉴스' : '최근 정읍 뉴스';
+    if (date) date.textContent = isToday ? '오늘 승인한 기사' : items.length ? '최근 승인한 기사' : '';
+    if (!items.length) {
+      grid.innerHTML = '<div class="today-news-empty">게시된 뉴스가 없습니다. 잠시 후 다시 확인해 주세요.</div>';
+      return;
+    }
     grid.replaceChildren();
     for (const item of items) {
       if (!item.title || !Number.isSafeInteger(item.id) || item.id < 1) continue;
@@ -3376,16 +3387,20 @@ async function loadTodayNews() {
       const source = document.createElement('span');
       source.textContent = item.source || '정읍 소식';
       const published = document.createElement('span');
-      published.textContent = item.published_at ? String(item.published_at).slice(0, 10) : '';
+      published.textContent = item.approved_day ? '게시 ' + item.approved_day : '';
       meta.append(source, published);
       link.append(title, summary, meta);
       grid.append(link);
     }
   } catch (error) {
     console.info('뉴스를 불러오지 못했습니다.', error);
+    grid.innerHTML = '<div class="today-news-empty">뉴스를 불러오지 못했습니다. 새로고침을 눌러 다시 시도해 주세요.</div>';
+  } finally {
+    if (refresh) refresh.disabled = false;
   }
 }
 document.addEventListener('DOMContentLoaded', loadTodayNews);
+document.getElementById('todayNewsRefresh')?.addEventListener('click', loadTodayNews);
 </script>
 
 </body>
