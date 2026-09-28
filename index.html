@@ -1992,7 +1992,7 @@ async function increaseSiteView() {
     ">
   `;
 }
-async function uploadFileToWorker(file, mediaType) {
+async function uploadFileToWorker(file, mediaType, title, startDate) {
   if (!file) throw new Error('업로드할 파일이 없습니다.');
   if (mediaType === 'video') {
     throw new Error('영상 파일 직접 업로드는 현재 지원하지 않습니다. 영상행사 메뉴에서 유튜브 링크를 등록해주세요.');
@@ -2975,7 +2975,7 @@ uploadForm?.addEventListener('submit', async function(e) {
   try {
     setSubmitting(uploadSubmitBtn, true);
 
-    const mediaUrl = await uploadFileToWorker(file, mediaType);
+    const mediaUrl = await uploadFileToWorker(file, mediaType, title, startDate);
 
     const saveResult = await savePost({
       title,
