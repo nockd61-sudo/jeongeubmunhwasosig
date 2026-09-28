@@ -1876,12 +1876,13 @@ async function savePost(post) {
   const payload = {
     category: post.category || (post.place === '시민 문화이야기' ? '문화이야기' : '행사'),
     title: post.title,
-    start_date: post.date,
-    end_date: post.endDate || post.date,
-    location: post.place,
+    startDate: post.date,
+    endDate: post.endDate || post.date,
+    place: post.place,
     author: post.author,
-    image_url: post.mediaType === 'image' ? post.mediaUrl : '',
-    content: post.description
+    mediaType: post.mediaType || 'image',
+    mediaUrl: post.mediaUrl || '',
+    content: post.description || ''
   };
 
   return apiJson(API_POSTS_ENDPOINT, {
@@ -1889,7 +1890,6 @@ async function savePost(post) {
     body: JSON.stringify(payload)
   });
 }
-
 async function saveNoticeToServer(payload) {
   return apiJson(API_NOTICES_ENDPOINT, {
     method: 'POST',
