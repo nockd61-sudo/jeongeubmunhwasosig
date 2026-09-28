@@ -1941,9 +1941,12 @@ async function addPostView(id) {
 }
 
 async function deletePostFromServer(id) {
-  return apiJson(`${API_POSTS_ENDPOINT}/${encodeURIComponent(String(id))}`, {
-    method: 'DELETE'
-  });
+  return apiJson(
+    `${API_POSTS_ENDPOINT}?id=${encodeURIComponent(String(id))}`,
+    {
+      method: 'DELETE'
+    }
+  );
 }
 
 async function loadSiteStats() {
