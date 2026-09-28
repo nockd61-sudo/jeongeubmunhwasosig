@@ -20,6 +20,9 @@ export async function onRequestPost({ env }) {
 
     return Response.json({ success: true });
   } catch (error) {
-    return Response.json({ error: String(error.message || error) }, { status: 500 });
+    return Response.json(
+      { error: String(error.message || error) },
+      { status: 500 }
+    );
   }
 }
