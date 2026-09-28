@@ -2002,8 +2002,10 @@ async function uploadFileToWorker(file, mediaType, title, startDate) {
     throw new Error('이미지는 10MB 이하 파일만 올려주세요.');
   }
 
-  const formData = new FormData();
-  formData.append('file', file);
+ const formData = new FormData();
+formData.append('file', file);
+formData.append('title', title);
+formData.append('startDate', startDate);
 
   const response = await fetch(R2_UPLOAD_ENDPOINT, {
     method: 'POST',
