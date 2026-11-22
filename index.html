@@ -1741,7 +1741,6 @@ function isValidMediaUrl(value) {
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
   if (!trimmed) return false;
-  if (trimmed === '/event-placeholder.svg') return true;
   if (/^data:(image|video)\//i.test(trimmed)) return true;
   if (/^https?:\/\//i.test(trimmed)) {
     try {
