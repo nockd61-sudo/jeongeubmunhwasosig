@@ -1,3 +1,4 @@
+import { collect, eventList, reviewEvent } from '../../lib/city-events.js';
 const cookieName = 'jeongeup_news_admin';
 const encoder = new TextEncoder();
 
@@ -212,6 +213,13 @@ export async function onRequest({ request, env }) {
   }
   if (!await authorized(request, env)) return json({ error: '관리자 로그인이 필요합니다.' }, 401);
   if (data.action === 'logout') return json({ ok: true }, 200, { 'Set-Cookie': `${cookieName}=; Path=/api/news-admin; HttpOnly; Secure; SameSite=Strict; Max-Age=0` });
+  if (data.action === 'city-list' || data.action === 'city-collect' || data.action === 'city-approve' || data.action === 'city-reject') {
+    try {
+      if (data.action === 'city-list') return json(await eventList(env.ds));
+      if (data.action === 'city-collect') return json({ ok: true, ...await collect(env) });
+      return json(await reviewEvent(env.ds, String(data.key || ''), data.action === 'city-reject' ? 'reject' : 'approve', String(data.revision || '')));
+    } catch (error) { return json({ error: String(error.message || error) }, 422); }
+  }
   if (data.action === 'refresh') {
     try { return json({ ok: true, ...await refresh(env.ds, env.AI) }); }
     catch (error) { return json({ error: String(error.message || error) }, 502); }
