@@ -1,0 +1,8 @@
+name = "jeongeup-city-events-scheduler"
+main = "scheduler.js"
+compatibility_date = "2026-11-22"
+# Cloudflare uses UTC: 22:00 UTC = next day 07:00 KST; 08:00 UTC = 17:00 KST.
+[triggers]
+crons = ["0 22 * * *", "0 8 * * *"]
+[observability]
+enabled = true
